@@ -240,3 +240,17 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
+# Project Specifics
+
+lib/freeglut/*
+lib/glew/*
+
+!lib/freeglut/include/
+!lib/freeglut/bin/
+!lib/freeglut/lib/
+!lib/glew/include/
+!lib/glew/bin/
+!lib/glew/lib/
+
+!avt.vcxproj.user

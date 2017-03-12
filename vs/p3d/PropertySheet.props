@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <ProjSrcDir>$(ProjectDir)..\..\src\</ProjSrcDir>
+    <ProjLibDir>$(ProjectDir)..\..\lib\</ProjLibDir>
+    <ProjOutDir>$(ProjectDir)..\..\bin\</ProjOutDir>
+    <ProjFreeglutDir>$(ProjLibDir)freeglut\</ProjFreeglutDir>
+    <ProjGlewDir>$(ProjLibDir)glew\</ProjGlewDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(ProjOutDir)x86\$(Configuration)\</OutDir>
+    <IncludePath>$(ProjSrcDir);$(ProjFreeglutDir)include\;$(ProjGlewDir)include\;$(ProjLibDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjFreeglutDir)lib;$(ProjGlewDir)lib;$(LibraryPath)</LibraryPath>
+    <ExtensionsToDeleteOnClean>$(ProjOutDir)x86\$(Configuration)\freeglut.dll;$(ProjOutDir)x86\$(Configuration)\glew32.dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;freeglut.lib;glew32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /y "$(ProjFreeglutDir)bin\freeglut.dll" "$(ProjOutDir)x86\$(Configuration)\"
+copy /y "$(ProjGlewDir)bin\glew32.dll" "$(ProjOutDir)x86\$(Configuration)\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="ProjSrcDir">
+      <Value>$(ProjSrcDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="ProjLibDir">
+      <Value>$(ProjLibDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="ProjOutDir">
+      <Value>$(ProjOutDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="ProjFreeglutDir">
+      <Value>$(ProjFreeglutDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="ProjGlewDir">
+      <Value>$(ProjGlewDir)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
