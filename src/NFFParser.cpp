@@ -240,8 +240,10 @@ void NFFParser::parseMaterial(Scene& scene) {
     float diff = parseFloat();
     float spec = parseFloat();
     float shininess = parseFloat();
+    float transmit = parseFloat();
+    float ior = parseFloat();
 
-    Material mtl(color, diff, spec, shininess);
+    Material mtl(color, diff, spec, shininess, transmit, ior);
 
     _material = mtl;
 }

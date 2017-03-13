@@ -31,7 +31,7 @@ using namespace Photon;
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
 
-#define MAX_DEPTH 6
+#define MAX_DEPTH 8
 
 // Points defined by 2 attributes: positions which are stored in vertices array and colors which are stored in colors array
 float *colors;
@@ -228,15 +228,207 @@ void drawPoints() {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    Utils::checkOpenGLError("ERROR: Could not draw scene.");
+    /*Utils::checkOpenGLError("ERROR: Could not draw scene.");*/
 }
 
 /////////////////////////////////////////////////////////////////////// CALLBACKS
 
 // Render function by primary ray casting from the eye towards the scene's objects
 
-void tracePatch() {
+void tracePatch(const Vec2u& xRange, const Vec2u& yRange) {
+    
+}
 
+HitInfo getIntersection(const Ray& ray, const Scene& scene) {
+    const std::vector<std::shared_ptr<Geometry>> objs = scene.getGeometry();
+
+    HitInfo info, curr;
+    curr._t = 1000000000;
+    curr._hit = false;
+    for (std::shared_ptr<Geometry> obj : objs)
+        if (obj->intersectRay(ray, info))
+            if (info._t > 0.0f && curr._t > info._t)
+                curr = info;
+
+    return curr;
+}
+
+Color3 trace(const Scene& scene, const Ray& ray, float ior, unsigned int depth) {
+    const std::vector <PointLight> lights = scene.getLights();
+    const Camera cam = scene.getCamera();
+
+    // Calculate intersection
+    HitInfo info = getIntersection(ray, scene);
+
+    // Calculate lighting
+    Color3 color = scene.getBackgroundColor();
+    if (info._hit) {
+        const Material mtl = info._obj->getMaterial();
+        color = Vec3(0.0f);
+
+        // View vector
+        Vec3 v = glm::normalize(info._point - cam.getPosition());
+
+        for (PointLight light : lights) {
+            Vec3 l = glm::normalize(light.getPosition() - info._point);
+            float NdotL = glm::dot(info._normal, l);
+            if (NdotL > 0) {
+                // Trace shadow ray
+                Ray shadowRay = Ray(Vec3(info._point) + (1e-4f * info._normal), l);
+                /*if (!getIntersection(shadowRay, scene)._hit) {
+                    // Reflected direction
+                    Vec3 r = glm::normalize(2.0f * NdotL * info._normal - l);
+                    float RdotV = std::pow(std::abs(glm::dot(r, v)), mtl.getShininess());
+
+                    color += NdotL * mtl.getDiff() * light.getColor() * mtl.getColor();
+                    color += RdotV * mtl.getSpec() * light.getColor() * mtl.getColor();
+                }*/
+
+                if (!getIntersection(shadowRay, scene)._hit) 
+                    color += mtl.calcRadiance(light, v, info);
+            }
+        }
+
+        if (depth >= MAX_DEPTH)
+            return color;
+
+        // If it is reflective
+        if (mtl.getSpec() > 0) {
+            // Reflected direction
+            float NdotD = glm::dot(info._normal, -ray.getDirection());
+            Vec3 r = glm::normalize(2.0f * NdotD * info._normal - (-ray.getDirection()));
+            Ray reflect = Ray(Vec3(info._point) + (1e-4f * info._normal), r);
+
+            color += mtl.getSpec() * trace(scene, reflect, mtl.getIor(), depth + 1);
+        }
+
+        // If it is transmissive
+        if (mtl.getTransmit() > 0) {
+            // Transmitted direction
+            Vec3 vt = glm::dot(-ray.getDirection(), info._normal) * info._normal - (-ray.getDirection());
+            float sinIn = glm::length(vt);
+            float sinTr = (ior / mtl.getIor()) * sinIn;
+            float cosTr = std::sqrt(1.0f - (sinTr * sinTr));
+            Vec3 dt = sinTr * glm::normalize(vt) + cosTr * (-info._normal);
+            Ray refract = Ray(Vec3(info._point) + (1e-4f * -info._normal), dt);
+
+            color += mtl.getTransmit() * trace(scene, refract, mtl.getIor(), depth + 1);
+        }
+    }
+
+    return color;
+}
+
+#include <thread>
+
+#define NUM_THREADS 4
+
+void renderSceneMT() {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    int index_pos = 0;
+    int index_col = 0;
+
+    std::thread t[NUM_THREADS];
+
+    for (int y = 0; y < RES_Y; y++) {
+
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = std::thread([&](int id) {
+                for (int x = id * (RES_X / NUM_THREADS); x < (id + 1) * (RES_X / NUM_THREADS); x++) {
+                    // Build ray from camera
+                    Ray r = calculateRay(x, y);
+
+                    // Get color
+                    Color3 color = trace(*scene, r, 1, 1);
+
+                    colors[3*x] = (float)color.r;
+                    colors[3*x+1] = (float)color.g;
+                    colors[3*x+2] = (float)color.b;
+
+                    vertices[2*x] = (float)x;
+                    vertices[2*x+1] = (float)y;
+
+                    if (drawMode == DrawMode::DRAW_POINTS) {  // desenhar o conteudo da janela ponto a ponto
+                        drawPoints();
+                        index_pos = 0;
+                        index_col = 0;
+                    }
+                }
+            }, i);
+        }
+
+        //Join the threads with the main thread
+        for (int i = 0; i < NUM_THREADS; i++)
+            t[i].join();
+
+        //std::cout << "Line " << y << std::endl;
+        if (drawMode == DrawMode::DRAW_LINE) {  // desenhar o conteudo da janela linha a linha
+            drawPoints();
+            index_pos = 0;
+            index_col = 0;
+        }
+
+    }
+
+    if (drawMode == DrawMode::DRAW_FRAME) //preenchar o conteudo da janela com uma imagem completa
+        drawPoints();
+
+    std::cout << "Finished!" << std::endl;
+}
+
+void renderSceneMT2() {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    int index_pos = 0;
+    int index_col = 0;
+
+    std::thread t[NUM_THREADS];
+
+    for (int y = 0; y < RES_Y; y++) {
+
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = std::thread([&](int id) {
+                for (int x = id * (RES_X / NUM_THREADS); x < (id + 1) * (RES_X / NUM_THREADS); x++) {
+                    // Build ray from camera
+                    Ray r = calculateRay(x, y);
+
+                    // Get color
+                    Color3 color = trace(*scene, r, 1, 1);
+
+                    colors[3 * x] = (float)color.r;
+                    colors[3 * x + 1] = (float)color.g;
+                    colors[3 * x + 2] = (float)color.b;
+
+                    vertices[2 * x] = (float)x;
+                    vertices[2 * x + 1] = (float)y;
+
+                    if (drawMode == DrawMode::DRAW_POINTS) {  // desenhar o conteudo da janela ponto a ponto
+                        drawPoints();
+                        index_pos = 0;
+                        index_col = 0;
+                    }
+                }
+            }, i);
+        }
+
+        //Join the threads with the main thread
+        for (int i = 0; i < NUM_THREADS; i++)
+            t[i].join();
+
+        //std::cout << "Line " << y << std::endl;
+        if (drawMode == DrawMode::DRAW_LINE) {  // desenhar o conteudo da janela linha a linha
+            drawPoints();
+            index_pos = 0;
+            index_col = 0;
+        }
+
+    }
+
+    if (drawMode == DrawMode::DRAW_FRAME) //preenchar o conteudo da janela com uma imagem completa
+        drawPoints();
+
+    std::cout << "Finished!" << std::endl;
 }
 
 void renderScene() {
@@ -247,45 +439,11 @@ void renderScene() {
 
     for (int y = 0; y < RES_Y; y++) {
         for (int x = 0; x < RES_X; x++) {
-            const std::vector<std::shared_ptr<Geometry>> objs = scene->getGeometry();
-            const std::vector <PointLight> lights = scene->getLights();
-            const Camera cam = scene->getCamera();
-
+            // Build ray from camera
             Ray r = calculateRay(x, y);
             
-            // Calculate intersection
-            HitInfo info, curr;
-            curr._t = 1000000000;
-            curr._hit = false;
-            for (std::shared_ptr<Geometry> obj : objs)
-                if (obj->intersectRay(r, info))
-                    if (info._t > 0.0f && curr._t > info._t) 
-                        curr = info;
-
-            // Calculate lighting
-            Color3 color = scene->getBackgroundColor();
-            if (curr._hit) {
-                const Material mtl = curr._obj->getMaterial();
-                color = Vec3(0.0f);
-
-                // View vector
-                Vec3 v = glm::normalize(curr._point - cam.getPosition());
-
-                for (PointLight light : lights) {
-                    Vec3 l = glm::normalize(light.getPosition() - curr._point);
-                    float NdotL = glm::dot(curr._normal, l);
-                    if (NdotL <= 0)
-                        continue;
-
-                    // Reflected direction
-                    Vec3 r = glm::normalize(2.0f * NdotL * curr._normal - l);
-                    float RdotV = std::pow(std::abs(glm::dot(r, v)), mtl.getShininess());
-                   
-                    color += NdotL * mtl.getDiff() * light.getColor() * mtl.getColor();
-                    color += RdotV * mtl.getSpec() * light.getColor() * mtl.getColor();
-                }
-
-            } 
+            // Get color
+            Color3 color = trace(*scene, r, 1, 1);
 
             colors[index_col++] = (float)color.r;
             colors[index_col++] = (float)color.g;
@@ -352,7 +510,12 @@ void reshape(int w, int h) {
 /////////////////////////////////////////////////////////////////////// SETUP
 void setupCallbacks() {
     glutCloseFunc(cleanup);
+    
+#if USE_MULTITHREADING
+    glutDisplayFunc(renderSceneMT2);
+#else
     glutDisplayFunc(renderScene);
+#endif
     glutReshapeFunc(reshape);
 }
 
@@ -379,7 +542,7 @@ void setupGLUT(int argc, char* argv[]) {
 
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
-    glutInitWindowPosition(640, 100);
+    glutInitWindowPosition(0, 0);
     glutInitWindowSize(RES_X, RES_Y);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
     glDisable(GL_DEPTH_TEST);
@@ -418,7 +581,7 @@ int main(int argc, char* argv[]) {
 
     // Parse scene
     //std::string filePath(argv[1]);
-    std::string filePath("mount_very_high.nff");
+    std::string filePath("balls_high.nff");
     scene = Utils::NFFParser::fromFile(filePath);
     if (!scene)
         Utils::throwError("Failed to load scene.");

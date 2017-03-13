@@ -64,7 +64,7 @@ namespace Photon {
             _u = glm::normalize(glm::cross(_up, _n));
             _v = glm::normalize(glm::cross(_n, _u));
             
-            _h = 2.0f * glm::length(_pos - _target) * std::tan(_fov / 2.0f);
+            _h = 2.0f * glm::length(_pos - _target) * std::tan(glm::radians(_fov) / 2.0f);
             _w = _width / _height * _h;
         }
 
