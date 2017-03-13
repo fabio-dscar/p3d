@@ -138,6 +138,7 @@
     <ClInclude Include="..\..\src\Definitions.h" />
     <ClInclude Include="..\..\src\Geometry.h" />
     <ClInclude Include="..\..\src\Light.h" />
+    <ClInclude Include="..\..\src\MathDefs.h" />
     <ClInclude Include="..\..\src\Polygon.h" />
     <ClInclude Include="..\..\src\PolygonPatch.h" />
     <ClInclude Include="..\..\src\Triangle.h" />

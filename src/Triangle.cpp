@@ -43,6 +43,11 @@ bool Triangle::intersectRay(const Ray& ray, HitInfo& info) const {
 
         // Compute intersection with triangle's plane
         info._t = (dist - NdotO) / NdotD;
+        if (!ray.isValidTime(info._t)) {
+            info._hit = false;
+            return false;
+        }
+
         info._point = ray.getPoint(info._t);
         info._normal = _normal;
         info._obj = (Geometry*)this;

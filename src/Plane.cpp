@@ -16,12 +16,12 @@ bool Plane::intersectRay(const Ray& ray, HitInfo& info) const {
         float NdotO = glm::dot(_normal, ray.getOrigin());
 
         info._t = (_distance - NdotO) / NdotD;
+        info._hit = ray.isValidTime(info._t);
         info._point = ray.getPoint(info._t);
         info._normal = _normal;
         info._obj = (Geometry*)this;
-        info._hit = true;
 
-        return true;
+        return info._hit;
     }
 
     return false;

@@ -16,31 +16,80 @@ const Vec3 Ray::getPoint(float arg) const {
     return _origin + arg * _dir;
 }
 
-float Ray::getArg(const Vec3& point) const {
+float Ray::getTime(const Vec3& point) const {
     return glm::length(point - _origin);
 }
 
-Ray Ray::reflect(const HitInfo& info) const {
-    // Offset slightly in normal direction
-    Vec3 origin = Vec3(info._point) + (1e-4f * info._normal);
+float Ray::getFarTime() const {
+    return _farT;
+}
 
+float Ray::getNearTime() const {
+    return _nearT;
+}
+
+bool Ray::isValidTime(float t) const {
+    return t > _nearT && t < _farT;
+}
+
+Ray Ray::reflect(const HitInfo& info) const {
     // Calculate reflected vector
     float NdotD = glm::dot(info._normal, -_dir);
     Vec3 r = glm::normalize(2.0f * NdotD * info._normal - (-_dir));
 
-    return Ray(origin, r);
+    return Ray(info._point, r);
 }
 
-Ray Ray::refract(const HitInfo& info, float inIOR) const {
-    // Offset slightly in inverse normal direction
-    Vec3 origin = Vec3(info._point) + (1e-4f * -info._normal);
-
+Ray Ray::refract(const HitInfo& info, float inIOR, float outIOR) const {
     // Calculate refracted vector
-    Vec3 vt = glm::dot(-_dir, info._normal) * info._normal - (-_dir);
+    /*Vec3 vt = glm::dot(-_dir, info._normal) * info._normal - (-_dir);
     float sinIn = glm::length(vt);
     float sinTr = (inIOR / info._obj->getMaterial().getIor()) * sinIn;
     float cosTr = std::sqrt(1.0f - (sinTr * sinTr));
     Vec3 t = sinTr * glm::normalize(vt) + cosTr * (-info._normal);
+    */
 
-    return Ray(origin, t);
+    /*float cosThetaI = glm::dot(info._normal, -_dir);
+    float eta = info._obj->getMaterial().getIor();
+
+    /*if (info._backface)
+        eta = 1.0f / eta;
+    */
+
+    /*float temp = std::sqrt(1.0f - (1.0f - cosThetaI * cosThetaI) / (eta * eta));
+
+    Vec3 vt = glm::normalize(-_dir / eta - (temp - cosThetaI / eta) * info._normal);
+    */
+
+    /*float cosI = glm::dot(info._normal, -_dir);
+    float cosT = std::sqrt(1.0 - 1.0 / (eta * eta) * (1.0 - cosI * cosI));
+    Vec3 t = 1.0f / eta * (-_dir) - (cosT - 1.0f / eta * cosI) * info._normal;
+    */
+
+    /*float eta = 1.0f / info._obj->getMaterial().getIor();
+
+    if (info._backface)
+        eta = 1.0f / eta;
+
+    Vec3 t = eta * (-_dir);
+    float NdotI = glm::dot(info._normal, -_dir);
+    float temp = eta * NdotI - std::sqrt(1.0f - (eta * eta) * (1.0f - NdotI * NdotI));
+
+    Vec3 rt = t + info._normal * temp;
+
+    return Ray(info._point, rt);
+
+    */
+
+    float eta = inIOR / outIOR;
+    //if (info._backface)
+    //    eta = 1.0f / eta;
+
+    Vec3 vt = glm::dot(-_dir, info._normal) * info._normal - (-_dir);
+    float sinIn = glm::length(vt);
+    float sinTr = eta * sinIn;
+    float cosTr = std::sqrt(1.0f - (sinTr * sinTr));
+    Vec3 t = sinTr * glm::normalize(vt) + cosTr * (-info._normal);
+    
+    return Ray(info._point, glm::normalize(t));
 }

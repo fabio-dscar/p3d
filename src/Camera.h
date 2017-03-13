@@ -97,7 +97,7 @@ namespace Photon {
 
             dir = glm::normalize(dir);
 
-            return Ray(_pos, dir);
+            return Ray(_pos, dir, _near);
         }
 
     private:

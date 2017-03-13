@@ -125,5 +125,8 @@
     <ClInclude Include="..\..\src\Light.h">
       <Filter>Header Files\Lights</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\MathDefs.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
