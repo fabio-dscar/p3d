@@ -31,7 +31,7 @@ using namespace Photon;
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
 
-#define MAX_DEPTH 8
+#define MAX_DEPTH 6
 
 // Points defined by 2 attributes: positions which are stored in vertices array and colors which are stored in colors array
 float *colors;
@@ -243,7 +243,7 @@ HitInfo getIntersection(const Ray& ray, const Scene& scene) {
     const std::vector<std::shared_ptr<Geometry>> objs = scene.getGeometry();
 
     HitInfo info, curr;
-    curr._t = 1000000000;
+    curr._t = FLT_MAX;
     curr._hit = false;
     for (std::shared_ptr<Geometry> obj : objs)
         if (obj->intersectRay(ray, info))
@@ -253,8 +253,17 @@ HitInfo getIntersection(const Ray& ray, const Scene& scene) {
     return curr;
 }
 
+HitInfo getIntersection(const Ray& ray, const Scene& scene, float threshold) {
+    HitInfo info = getIntersection(ray, scene);
+
+    info._hit = (info._t < threshold);
+
+    return info;
+}
+
+// Whitted integrator
 Color3 trace(const Scene& scene, const Ray& ray, float ior, unsigned int depth) {
-    const std::vector <PointLight> lights = scene.getLights();
+    const std::vector<std::shared_ptr<Light>> lights = scene.getLights();
     const Camera cam = scene.getCamera();
 
     // Calculate intersection
@@ -263,60 +272,72 @@ Color3 trace(const Scene& scene, const Ray& ray, float ior, unsigned int depth) 
     // Calculate lighting
     Color3 color = scene.getBackgroundColor();
     if (info._hit) {
-        const Material mtl = info._obj->getMaterial();
         color = Vec3(0.0f);
+        const Material mtl = info._obj->getMaterial();
 
         // View vector
-        Vec3 v = glm::normalize(info._point - cam.getPosition());
+        Vec3 view = glm::normalize(info._point - cam.getPosition());
 
-        for (PointLight light : lights) {
-            Vec3 l = glm::normalize(light.getPosition() - info._point);
-            float NdotL = glm::dot(info._normal, l);
-            if (NdotL > 0) {
+        // -> Direct Illumination
+        // Calculate each light's contribution
+        for (std::shared_ptr<Light> light : lights) {
+            const Vec3 lightPos = light->getPosition();
+            const Vec3 lightDir = glm::normalize(lightPos - info._point);
+            if (glm::dot(info._normal, lightDir) > 0) {
                 // Trace shadow ray
-                Ray shadowRay = Ray(Vec3(info._point) + (1e-4f * info._normal), l);
-                /*if (!getIntersection(shadowRay, scene)._hit) {
-                    // Reflected direction
-                    Vec3 r = glm::normalize(2.0f * NdotL * info._normal - l);
-                    float RdotV = std::pow(std::abs(glm::dot(r, v)), mtl.getShininess());
+                Vec3 origin = Vec3(info._point) + (1e-4f * info._normal);
+                Ray shadowRay = Ray(origin, lightDir);
 
-                    color += NdotL * mtl.getDiff() * light.getColor() * mtl.getColor();
-                    color += RdotV * mtl.getSpec() * light.getColor() * mtl.getColor();
-                }*/
-
-                if (!getIntersection(shadowRay, scene)._hit) 
-                    color += mtl.calcRadiance(light, v, info);
+                // If it does not hit, calculate radiance at that point
+                if (!getIntersection(shadowRay, scene, shadowRay.getArg(lightPos))._hit) 
+                    color += mtl.calcRadiance(light, view, info);
             }
         }
 
         if (depth >= MAX_DEPTH)
             return color;
 
-        // If it is reflective
-        if (mtl.getSpec() > 0) {
-            // Reflected direction
-            float NdotD = glm::dot(info._normal, -ray.getDirection());
-            Vec3 r = glm::normalize(2.0f * NdotD * info._normal - (-ray.getDirection()));
-            Ray reflect = Ray(Vec3(info._point) + (1e-4f * info._normal), r);
+        // -> Indirect Illumination
+        if (mtl.isReflector()) {
+            // Reflected ray
+            Ray reflected = ray.reflect(info);
 
-            color += mtl.getSpec() * trace(scene, reflect, mtl.getIor(), depth + 1);
+            // Reflected ray contribution
+            color += mtl.getSpec() * trace(scene, reflected, mtl.getIor(), depth + 1);
         }
 
-        // If it is transmissive
-        if (mtl.getTransmit() > 0) {
+        if (mtl.isTransmissive()) {
             // Transmitted direction
-            Vec3 vt = glm::dot(-ray.getDirection(), info._normal) * info._normal - (-ray.getDirection());
-            float sinIn = glm::length(vt);
-            float sinTr = (ior / mtl.getIor()) * sinIn;
-            float cosTr = std::sqrt(1.0f - (sinTr * sinTr));
-            Vec3 dt = sinTr * glm::normalize(vt) + cosTr * (-info._normal);
-            Ray refract = Ray(Vec3(info._point) + (1e-4f * -info._normal), dt);
+            Ray refracted = ray.refract(info, ior);
 
-            color += mtl.getTransmit() * trace(scene, refract, mtl.getIor(), depth + 1);
+            // Transmitted ray contribution
+            color += mtl.getTransmit() * trace(scene, refracted, mtl.getIor(), depth + 1);
         }
     }
 
     return color;
+}
+
+void renderPatch(int id, int xi, int xf, int yi, int yf) {
+    for (int y = yi; y < yf; y++) {
+        for (int x = xi; x < xf; x++) {
+            // Build ray from camera
+            Ray r = calculateRay(x, y);
+
+            // Get color
+            Color3 color = trace(*scene, r, 1, 1);
+
+            colors[3*x] = (float)color.r;
+            colors[3*x+1] = (float)color.g;
+            colors[3*x+2] = (float)color.b;
+
+            vertices[3*x] = (float)x;
+            vertices[3*x+1] = (float)y;
+        }
+
+        if (drawMode == DrawMode::DRAW_LINE)  // desenhar o conteudo da janela linha a linha
+            drawPoints();
+    }
 }
 
 #include <thread>
@@ -437,13 +458,14 @@ void renderScene() {
     int index_pos = 0;
     int index_col = 0;
 
+    const Camera& camera = scene->getCamera();
     for (int y = 0; y < RES_Y; y++) {
         for (int x = 0; x < RES_X; x++) {
             // Build ray from camera
-            Ray r = calculateRay(x, y);
+            Ray ray = camera.getPrimaryRay(x, y);
             
             // Get color
-            Color3 color = trace(*scene, r, 1, 1);
+            Color3 color = trace(*scene, ray, 1, 1);
 
             colors[index_col++] = (float)color.r;
             colors[index_col++] = (float)color.g;
@@ -581,7 +603,7 @@ int main(int argc, char* argv[]) {
 
     // Parse scene
     //std::string filePath(argv[1]);
-    std::string filePath("balls_high.nff");
+    std::string filePath("balls_medium.nff");
     scene = Utils::NFFParser::fromFile(filePath);
     if (!scene)
         Utils::throwError("Failed to load scene.");

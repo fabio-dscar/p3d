@@ -1,34 +1,16 @@
 #pragma once
 
 #include <Vector.h>
+#include <Light.h>
 
 namespace Photon {
 
-    class PointLight {
+    class PointLight : public Light {
     public:
-        PointLight() : _pos(0.0f), _color(1.0f) { }
-        PointLight(const Vec3& pos) : _pos(pos), _color(1.0f) { }
-        PointLight(const Vec3& pos, const Color3& color) : _pos(pos), _color(color) { }
+        PointLight() : Light() { }
+        PointLight(const Vec3& pos) : Light(pos) { }
+        PointLight(const Vec3& pos, const Color3& color) : Light(pos, color) { }
 
-        void setPosition(const Vec3& pos) {
-            _pos = pos;
-        }
-
-        const Vec3& getPosition() const {
-            return _pos;
-        }
-
-        void setColor(const Color3& color) {
-            _color = color;
-        }
-
-        const Color3& getColor() const {
-            return _color;
-        }
-
-    private:
-        Vec3 _pos;
-        Color3 _color;
     };
 
 }

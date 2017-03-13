@@ -82,14 +82,14 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
 }
 
 void NFFParser::parseLight(Scene& scene) {
-    PointLight l;
+    std::shared_ptr<PointLight> l = std::make_shared<PointLight>();
 
     // Parse position
-    l.setPosition(parseVector3());
+    l->setPosition(parseVector3());
 
     // Parse color if available
     if (!isBufferEmpty())
-        l.setColor(parseVector3());
+        l->setColor(parseVector3());
 
     // Add light to scene
     scene.addLight(l);

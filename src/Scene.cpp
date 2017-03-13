@@ -18,11 +18,11 @@ const Camera& Scene::getCamera() const {
     return _camera;
 }
 
-void Scene::addLight(const PointLight& light) {
+void Scene::addLight(const std::shared_ptr<Light>& light) {
     _lights.push_back(light);
 }
 
-const std::vector<PointLight>& Scene::getLights() const {
+const std::vector<std::shared_ptr<Light>>& Scene::getLights() const {
     return _lights;
 }
 

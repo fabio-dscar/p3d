@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Vector.h>
+#include <memory>
 
+#include <Vector.h>
 #include <PointLight.h>
 #include <Ray.h>
 
@@ -37,18 +38,26 @@ namespace Photon {
             return _ior;
         }
 
-        Color3 calcRadiance(const PointLight& light, const Vec3& view, const HitInfo& surfInfo) const {
+        bool isReflector() const {
+            return _spec > 0;
+        }
+
+        bool isTransmissive() const {
+            return _transmit > 0;
+        }
+
+        Color3 calcRadiance(const std::shared_ptr<Light>& light, const Vec3& view, const HitInfo& surfInfo) const {
             Color3 color = Vec3(0.0f);
 
-            Vec3 l = glm::normalize(light.getPosition() - surfInfo._point);
+            Vec3 l = glm::normalize(light->getPosition() - surfInfo._point);
             float NdotL = glm::dot(surfInfo._normal, l);
 
             // Reflected direction
             Vec3 r = glm::normalize(2.0f * NdotL * surfInfo._normal - l);
             float RdotV = std::pow(std::abs(glm::dot(r, view)), _shininess);
 
-            color += NdotL * _diff * light.getColor() * _color;
-            color += RdotV * _spec * light.getColor() * _color;
+            color += NdotL * _diff * light->getColor() * _color;
+            color += RdotV * _spec * light->getColor() * _color;
 
             return color;
         }

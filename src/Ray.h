@@ -4,25 +4,24 @@
 
 namespace Photon {
 
-    // Forward declaration
+    // Forward declarations
     class Geometry;
+
+    struct HitInfo;
 
     class Ray {
     public:
         Ray() : _origin(0.0f), _dir(0.0f) { }
-        Ray(const Vec3& origin, const Vec3& direction) : _origin(origin), _dir(direction) { }
+        Ray(const Vec3& origin, const Vec3& direction) 
+            : _origin(origin), _dir(direction) { }
 
-        const Vec3& getOrigin() const {
-            return _origin;
-        }
+        const Vec3& getOrigin() const;
+        const Vec3& getDirection() const;
+        const Vec3 getPoint(float arg) const;
+        float getArg(const Vec3& point) const;
 
-        const Vec3& getDirection() const {
-            return _dir;
-        }
-
-        const Vec3 getPoint(float arg) const {
-            return _origin + arg * _dir;
-        }
+        Ray reflect(const HitInfo& info) const;
+        Ray refract(const HitInfo& info, float inIOR) const;
 
     private:
         Vec3 _origin;

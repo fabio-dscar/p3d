@@ -2,6 +2,8 @@
 
 #include <Vector.h>
 
+#include <Ray.h>
+
 namespace Photon {
 
     class Camera {
@@ -86,6 +88,16 @@ namespace Photon {
 
         float getH() const {
             return _h;
+        }
+
+        Ray getPrimaryRay(int x, int y) const {
+            Vec3 dir = -glm::length(_pos - _target) * _n 
+                + _h * ((float)y / (float)_height - 0.5f) * _v
+                + _w * ((float)x / (float)_width - 0.5f) * _u;
+
+            dir = glm::normalize(dir);
+
+            return Ray(_pos, dir);
         }
 
     private:

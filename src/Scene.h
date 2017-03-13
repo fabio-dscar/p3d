@@ -20,8 +20,8 @@ namespace Photon {
         void addCamera(const Camera& camera);
         const Camera& getCamera() const;
 
-        void addLight(const PointLight& light);
-        const std::vector<PointLight>& getLights() const;
+        void addLight(const std::shared_ptr<Light>& light);
+        const std::vector<std::shared_ptr<Light>>& getLights() const;
 
         void addGeometry(const std::shared_ptr<Geometry> object);
         const std::vector<std::shared_ptr<Geometry>>& getGeometry() const;
@@ -29,7 +29,7 @@ namespace Photon {
     private:
         Color3 _background;
         Camera _camera;
-        std::vector<PointLight> _lights;
+        std::vector<std::shared_ptr<Light>> _lights;
         std::vector<std::shared_ptr<Geometry>> _objects;
     };
 
