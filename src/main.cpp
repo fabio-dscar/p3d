@@ -20,12 +20,13 @@
 #include <Utils.h>
 #include <Scene.h>
 #include <NFFParser.h>
+#include <Ray.h>
 
 using namespace Photon;
 
 //#include "scene.h"
 
-#define CAPTION "ray tracer"
+#define CAPTION "Photon Tracer"
 
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
@@ -75,18 +76,35 @@ struct Color {
     float r, g, b;
 };
 
-struct Ray {
-
-};
-
 Color3 rayTracing(Ray ray, int depth, float RefrIndex) {
     //INSERT HERE YOUR CODE
     return Color3(0.5f, 0.5f, 0.0f);
 }
 
-Color rayTracing2(Ray ray, int depth, float RefrIndex) {
+Color rayTracing2(int depth, float RefrIndex) {
     //INSERT HERE YOUR CODE
     return { 0.5f, 0.5f, 0.0f };
+}
+
+Ray calculateRay(int x, int y) {
+    const Camera cam = scene->getCamera();
+    Vec3 origin = cam.getPosition();
+
+    Vec3 dir = -glm::length(cam.getPosition() - cam.getTarget()) * cam.getN() //glm::length(cam.getPosition() - cam.getTarget())
+             + cam.getH() * ((float)y / (float)cam.getHeight() - 0.5f) * cam.getV()
+             + cam.getW() * ((float)x / (float)cam.getWidth() - 0.5f) * cam.getU();
+
+    dir = glm::normalize(dir);
+
+    /*dir = -glm::length(cam.getPosition() - cam.getTarget()) * cam.getN() //glm::length(cam.getPosition() - cam.getTarget())
+        + (-cam.getH() + (cam.getH()*2.0f) * ( ((float)y + 0.5f*y) / (float)cam.getHeight() )) * cam.getV()
+        + (-cam.getW() + (cam.getW()*2.0f) * ( ((float)x + 0.5f*x) / (float)cam.getWidth() )) * cam.getU();
+
+    dir = glm::normalize(dir);
+    */
+
+    Ray r(origin, dir);
+    return r;
 }
 
 /////////////////////////////////////////////////////////////////////// SHADERs
@@ -203,7 +221,7 @@ void drawPoints() {
     glBufferData(GL_ARRAY_BUFFER, size_colors, colors, GL_DYNAMIC_DRAW);
 
     glUniformMatrix4fv(UniformId, 1, GL_FALSE, m);
-    glDrawArrays(GL_POINTS, 0, RES_X*RES_Y);
+    glDrawArrays(GL_POINTS, 0, RES_X * RES_Y);
     glFinish();
 
     glUseProgram(0);
@@ -217,6 +235,10 @@ void drawPoints() {
 
 // Render function by primary ray casting from the eye towards the scene's objects
 
+void tracePatch() {
+
+}
+
 void renderScene() {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -225,23 +247,52 @@ void renderScene() {
 
     for (int y = 0; y < RES_Y; y++) {
         for (int x = 0; x < RES_X; x++) {
+            const std::vector<std::shared_ptr<Geometry>> objs = scene->getGeometry();
+            const std::vector <PointLight> lights = scene->getLights();
+            const Camera cam = scene->getCamera();
 
-            // YOUR 2 FUNTIONS:
-            //ray = calculate PrimaryRay(x, y);
-            Color color = rayTracing2({}, 1, 1.0);
+            Ray r = calculateRay(x, y);
+            
+            // Calculate intersection
+            HitInfo info, curr;
+            curr._t = 1000000000;
+            curr._hit = false;
+            for (std::shared_ptr<Geometry> obj : objs)
+                if (obj->intersectRay(r, info))
+                    if (info._t > 0.0f && curr._t > info._t) 
+                        curr = info;
 
-            vertices[index_pos++] = (float)x;
-            vertices[index_pos++] = (float)y;
+            // Calculate lighting
+            Color3 color = scene->getBackgroundColor();
+            if (curr._hit) {
+                const Material mtl = curr._obj->getMaterial();
+                color = Vec3(0.0f);
+
+                // View vector
+                Vec3 v = glm::normalize(curr._point - cam.getPosition());
+
+                for (PointLight light : lights) {
+                    Vec3 l = glm::normalize(light.getPosition() - curr._point);
+                    float NdotL = glm::dot(curr._normal, l);
+                    if (NdotL <= 0)
+                        continue;
+
+                    // Reflected direction
+                    Vec3 r = glm::normalize(2.0f * NdotL * curr._normal - l);
+                    float RdotV = std::pow(std::abs(glm::dot(r, v)), mtl.getShininess());
+                   
+                    color += NdotL * mtl.getDiff() * light.getColor() * mtl.getColor();
+                    color += RdotV * mtl.getSpec() * light.getColor() * mtl.getColor();
+                }
+
+            } 
+
             colors[index_col++] = (float)color.r;
             colors[index_col++] = (float)color.g;
             colors[index_col++] = (float)color.b;
 
-            /*vertices[index_pos] = Vec2(x, y);
-            colors[index_col] = color;   
-
-            index_pos++;
-            index_col++;
-            */
+            vertices[index_pos++] = (float)x;
+            vertices[index_pos++] = (float)y;
 
             if (drawMode == DrawMode::DRAW_POINTS) {  // desenhar o conteudo da janela ponto a ponto
                 drawPoints();
@@ -359,8 +410,16 @@ int main(int argc, char* argv[]) {
     RES_Y = scene->GetCamera()->GetResY();
     */
 
+    if (argc < 1) {
+        std::cerr << "Usage: " << argv[0] << " <NFF_file>" << std::endl;
+        std::cin.get();
+        return EXIT_FAILURE;
+    }
+
     // Parse scene
-    scene = Utils::NFFParser::fromFile("test.nff");
+    //std::string filePath(argv[1]);
+    std::string filePath("mount_very_high.nff");
+    scene = Utils::NFFParser::fromFile(filePath);
     if (!scene)
         Utils::throwError("Failed to load scene.");
 

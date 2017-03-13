@@ -2,99 +2,11 @@
 #include <fstream>
 #include <iostream>
 #include <GL/glew.h>
+#include <sstream>
 
 #include <Scene.h>
 
-#include <sstream>
-
 using namespace Photon;
-
-const Vec3 parseVector3(const std::string& line) {
-    std::istringstream istr(line);
-
-    float x, y, z;
-    istr >> x;
-    istr >> y;
-    istr >> z;
-
-    return Vec3(x, y, z);
-}
-
-void parseLight(Scene* scene, const std::string& line) {
-    std::istringstream istr(line.substr(1));
-
-    PointLight l;
-
-    Vec3 v = parseVector3(istr.str());
-
-    float x, y, z;
-    istr >> x;
-    istr >> y;
-    istr >> z;
-
-    l.setPosition(Vec3(x, y, z));
-
-    if (istr.rdbuf()->in_avail()) {
-        istr >> x;
-        istr >> y;
-        istr >> z;
-
-        l.setColor(Color3(x, y, z));
-    }
-
-    scene->addLight(l);
-}
-
-void parseView(Scene* scene, std::ifstream& file) {
-    std::string line;
-
-    Camera cam;
-
-    /*while (std::getline(file, line)) {
-        if (line.compare(0, 1, "from") == 0) {
-            cam.setPosition(parseVector3(line.substr(4)));
-        } 
-        else if (line.compare(0, 1, "up") == 0) {
-            cam.setUp(parseVector3(line.substr(2)));
-        }
-    }*/
-}
-
-Scene* Photon::Utils::parseNFF(const std::string& filePath) {
-    std::ifstream file(filePath, std::ios_base::in);
-    if (file.fail()) {
-        perror(filePath.c_str());
-        throwError("Couldn't read file " + filePath);
-    }
-
-    Scene* scene = new Scene();
-
-    std::string line;
-
-    while (std::getline(file, line)) {
-
-        // Background color
-        if (line.compare(0, 1, "b") == 0) {
-            std::istringstream istr(line.substr(1));
-
-            float r, g, b;
-            istr >> r;
-            istr >> g;
-            istr >> b;
-
-            scene->setBackgroundColor(Color3(r, g, b));
-        } else if (line.compare(0, 1, "l") == 0) {
-            parseLight(scene, line);
-        } else if (line.compare(0, 1, "v") == 0) {
-            parseView(scene, file);
-        }
-
-    }
-
-    file.close();
-
-    return scene;
-}
 
 bool Utils::readFileToBuffer(const std::string& filePath, std::ios_base::openmode mode, std::vector<unsigned char>& buffer) {
     std::ifstream file(filePath, mode);

@@ -132,6 +132,10 @@
     <ClInclude Include="..\..\src\Camera.h" />
     <ClInclude Include="..\..\src\Cylinder.h" />
     <ClInclude Include="..\..\src\Definitions.h" />
+    <ClInclude Include="..\..\src\Geometry.h" />
+    <ClInclude Include="..\..\src\Polygon.h" />
+    <ClInclude Include="..\..\src\PolygonPatch.h" />
+    <ClInclude Include="..\..\src\Triangle.h" />
     <ClInclude Include="..\..\src\Vector.h" />
     <ClInclude Include="..\..\src\Material.h" />
     <ClInclude Include="..\..\src\NFFParser.h" />

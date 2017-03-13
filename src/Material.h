@@ -10,6 +10,22 @@ namespace Photon {
         Material(const Color3& color, float diff, float spec, float shininess) : 
             _color(color), _diff(diff), _spec(spec), _shininess(shininess) { }
 
+        const Vec3& getColor() const {
+            return _color;
+        }
+
+        float getDiff() const {
+            return _diff;
+        }
+
+        float getSpec() const {
+            return _spec;
+        }
+
+        float getShininess() const {
+            return _shininess;
+        }
+
     private:
         Color3 _color;
         float _diff;

@@ -25,3 +25,11 @@ void Scene::addLight(const PointLight& light) {
 const std::vector<PointLight>& Scene::getLights() const {
     return _lights;
 }
+
+void Scene::addGeometry(const std::shared_ptr<Geometry> object) {
+    _objects.push_back(object);
+}
+
+const std::vector<std::shared_ptr<Geometry>>& Scene::getGeometry() const {
+    return _objects;
+}
