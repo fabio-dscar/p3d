@@ -31,7 +31,7 @@ using namespace Photon;
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
 
-#define MAX_DEPTH 8
+#define MAX_DEPTH 6
 
 // Points defined by 2 attributes: positions which are stored in vertices array and colors which are stored in colors array
 float *colors;
@@ -269,6 +269,14 @@ bool getIntersection(const Ray& ray, const Scene& scene) {
 
 #include <stack>
 
+bool tir(const Ray& ray, const HitInfo& info, float inIOR, float outIOR) {
+    Vec3 wo = -ray.getDirection();
+    float cosThetaI = glm::dot(info._normal, wo);
+    float eta = inIOR / outIOR;
+
+    return ((1.0f - (1.0f - cosThetaI * cosThetaI) / (eta * eta)) < 0.0f);
+}
+
 // Whitted integrator
 Color3 trace(const Scene& scene, const Ray& ray, std::stack<float> ior, unsigned int depth) {
     const std::vector<std::shared_ptr<Light>> lights = scene.getLights();
@@ -320,16 +328,17 @@ Color3 trace(const Scene& scene, const Ray& ray, std::stack<float> ior, unsigned
             if (info._backface) {
                 ior.pop();
                 outIOR = ior.top();
+            } else {
+                ior.push(mtl.getIor());
             }
 
-            // Transmitted direction
+            //if (!tir(ray, info, inIOR, outIOR)) {
+                // Transmitted direction
             Ray refracted = ray.refract(info, inIOR, outIOR);
 
             // Transmitted ray contribution
-            if (!info._backface)
-                ior.push(mtl.getIor());
-
             color += mtl.getTransmit() * trace(scene, refracted, ior, depth + 1);
+            //}
         }
     }
 
