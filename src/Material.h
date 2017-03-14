@@ -46,7 +46,7 @@ namespace Photon {
             return (_transmit > 0.0f);
         }
 
-        Color3 calcRadiance(const std::shared_ptr<Light>& light, const Vec3& view, const HitInfo& surfInfo) const {
+        Color3 calcRadiance(const std::shared_ptr<Light>& light, const Vec3& wi, const HitInfo& surfInfo) const {
             Color3 color = Vec3(0.0f);
 
             Vec3 l = glm::normalize(light->getPosition() - surfInfo._point);
@@ -54,10 +54,13 @@ namespace Photon {
 
             // Reflected direction
             Vec3 r = glm::normalize(2.0f * NdotL * surfInfo._normal - l);
-            float RdotV = std::pow(std::abs(glm::dot(r, view)), _shininess);
 
-            color += NdotL * _diff * light->getColor() * _color;
-            color += RdotV * _spec * light->getColor();
+            float RdotV = 0;
+            if (glm::dot(r, wi) > 0)
+                RdotV = std::pow(glm::dot(r, wi), _shininess);
+
+            color += NdotL * _diff * _color * light->getColor();
+            color += RdotV * _spec * _color * light->getColor();
 
             return color;
         }

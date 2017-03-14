@@ -35,7 +35,7 @@ namespace Photon {
         float getTime(const Vec3& point) const;
 
         Ray reflect(const HitInfo& info) const;
-        Ray refract(const HitInfo& info, float inIOR, float outIOR) const;
+        Ray refract(const HitInfo& info, float inIOR) const;
 
     private:
         Vec3 _origin;

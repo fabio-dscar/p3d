@@ -278,7 +278,7 @@ bool tir(const Ray& ray, const HitInfo& info, float inIOR, float outIOR) {
 }
 
 // Whitted integrator
-Color3 trace(const Scene& scene, const Ray& ray, std::stack<float> ior, unsigned int depth) {
+Color3 trace(const Scene& scene, const Ray& ray, float ior, unsigned int depth) {
     const std::vector<std::shared_ptr<Light>> lights = scene.getLights();
     const Camera cam = scene.getCamera();
     HitInfo info;
@@ -291,9 +291,6 @@ Color3 trace(const Scene& scene, const Ray& ray, std::stack<float> ior, unsigned
         color = Vec3(0.0f);
         const Material mtl = info._obj->getMaterial();
 
-        // View vector
-        Vec3 view = glm::normalize(info._point - cam.getPosition());
-
         // -> Direct Illumination
         // Calculate each light's contribution
         for (std::shared_ptr<Light> light : lights) {
@@ -305,7 +302,7 @@ Color3 trace(const Scene& scene, const Ray& ray, std::stack<float> ior, unsigned
 
                 // If it does not hit, calculate radiance at that point
                 if (!getIntersection(shadowRay, scene)) 
-                    color += mtl.calcRadiance(light, view, info);
+                    color += mtl.calcRadiance(light, -ray.getDirection(), info);
             }
         }
 
@@ -313,33 +310,21 @@ Color3 trace(const Scene& scene, const Ray& ray, std::stack<float> ior, unsigned
             return color;
 
         // -> Indirect Illumination
+        if (mtl.isTransmissive()) {
+            // Transmitted direction
+            Ray refracted = ray.refract(info, ior);
+
+            // Transmitted ray contribution
+            color += mtl.getTransmit() * trace(scene, refracted, ior, depth + 1);
+        }
+
         if (mtl.isReflector()) {
             // Reflected ray
             Ray reflected = ray.reflect(info);
 
             // Reflected ray contribution
             color += mtl.getSpec() * trace(scene, reflected, ior, depth + 1);
-        }
-
-        if (mtl.isTransmissive()) {
-            float inIOR = ior.top();
-            float outIOR = mtl.getIor();
-
-            if (info._backface) {
-                ior.pop();
-                outIOR = ior.top();
-            } else {
-                ior.push(mtl.getIor());
-            }
-
-            //if (!tir(ray, info, inIOR, outIOR)) {
-                // Transmitted direction
-            Ray refracted = ray.refract(info, inIOR, outIOR);
-
-            // Transmitted ray contribution
-            color += mtl.getTransmit() * trace(scene, refracted, ior, depth + 1);
-            //}
-        }
+        }   
     }
 
     return color;
@@ -351,11 +336,8 @@ void renderPatch(int id, int xi, int xf, int yi, int yf) {
             // Build ray from camera
             Ray r = calculateRay(x, y);
 
-            std::stack<float> iorStack;
-            iorStack.push(1.0f);
-
             // Get color
-            Color3 color = trace(*scene, r, iorStack, 1);
+            Color3 color = trace(*scene, r, 1.0f, 1);
 
             colors[3*x] = (float)color.r;
             colors[3*x+1] = (float)color.g;
@@ -494,11 +476,8 @@ void renderScene() {
             // Build ray from camera
             Ray ray = camera.getPrimaryRay(x, y);
             
-            std::stack<float> iorStack;
-            iorStack.push(1.0f);
-
             // Get color
-            Color3 color = trace(*scene, ray, iorStack, 1);
+            Color3 color = trace(*scene, ray, 1.0f, 1);
 
             colors[index_col++] = (float)color.r;
             colors[index_col++] = (float)color.g;

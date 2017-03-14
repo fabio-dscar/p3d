@@ -40,7 +40,7 @@ Ray Ray::reflect(const HitInfo& info) const {
     return Ray(info._point, r);
 }
 
-Ray Ray::refract(const HitInfo& info, float inIOR, float outIOR) const {
+Ray Ray::refract(const HitInfo& info, float inIOR) const {
     // Calculate refracted vector
     /*Vec3 vt = glm::dot(-_dir, info._normal) * info._normal - (-_dir);
     float sinIn = glm::length(vt);
@@ -81,9 +81,9 @@ Ray Ray::refract(const HitInfo& info, float inIOR, float outIOR) const {
 
     */
 
-    float eta = inIOR / outIOR;
-    //if (info._backface)
-    //    eta = 1.0f / eta;
+    float eta = 1.0f / info._obj->getMaterial().getIor();
+    if (info._backface)
+        eta = 1.0f / eta;
 
     Vec3 vt = glm::dot(-_dir, info._normal) * info._normal - (-_dir);
     float sinIn = glm::length(vt);
