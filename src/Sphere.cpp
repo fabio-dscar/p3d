@@ -10,77 +10,52 @@ float Sphere::getRadius() const {
     return _radius;
 }
 
-bool Sphere::intersectRay(const Ray& ray, HitInfo& info) const {
-    /*float dSqr = glm::length2(ray.getOrigin() - _pos);
-    float radiusSqr = _radius * _radius;
-    if (dSqr == radiusSqr)
-        return false;
+bool Sphere::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
+    Vec3 p = ray.origin() - _pos;
 
-    float b = glm::dot(ray.getDirection(), _pos - ray.getOrigin());
-
-    if (dSqr > radiusSqr)
-        if (b < 0)
-            return false;
-
-    float r = b * b - dSqr + radiusSqr;
-    if (r < 0)
-        return false;
-
-    float t;
-    if (dSqr > radiusSqr)
-        t = b - std::sqrt(r);
-    else if (dSqr < radiusSqr)
-        t = b + std::sqrt(r);
-
-    info._hit = ray.isValidTime(t);
-    if (!info._hit)
-        return false;
-
-    info._t = t;
-    info._point = ray.getPoint(t);
-    info._obj = (Geometry*)this;
-    info._normal = glm::normalize((info._point - _pos) / _radius);
-    if (dSqr < (radiusSqr - 1e-6)) {
-        info._normal = -info._normal;
-        info._backface = true;
-    }
-
-    return true;*/
-
-    Vec3 p = ray.getOrigin() - _pos;
-    float B = glm::dot(p, ray.getDirection());
-//    float C = p.lengthSq() - _radius*_radius;
-
+    // Solve quadratic
+    float B = glm::dot(p, ray.dir());
     float C = glm::length2(p) - _radius * _radius;
     float detSq = B*B - C;
     if (detSq >= 0.0f) {
         float det = std::sqrt(detSq);
         float t = -B - det;
-        if (ray.isValidTime(t)) {
-            //ray.setFarT(t);
-            /*data.primitive = this;
-            data.as<SphereIntersection>()->backSide = false;*/
-            info._t = t;
-            info._point = ray.getPoint(t);
-            info._obj = (Geometry*)this;
-            info._normal = glm::normalize((info._point - _pos));
-            info._backface = false;
-            info._hit = true;
+
+        if (ray.inRange(t)) {
+            ray.setMaxT(t);
+            evt->setEvent(ray, this, glm::normalize(ray(t) - _pos));
             return true;
         }
+
         t = -B + det;
-        if (ray.isValidTime(t)) {
-            //ray.setFarT(t);
-            /*data.primitive = this;
-            data.as<SphereIntersection>()->backSide = true;*/
-            info._t = t;
-            info._point = ray.getPoint(t);
-            info._obj = (Geometry*)this;
-            info._normal = -glm::normalize((info._point - _pos));
-            info._backface = true;
-            info._hit = true;
+        if (ray.inRange(t)) {
+            ray.setMaxT(t);
+            evt->setEvent(ray, this, -glm::normalize(ray(t) - _pos));
+            evt->setBackface(true);  // Hit from inside sphere
             return true;
         }
+    }
+
+    return false;
+}
+
+bool Sphere::isOccluded(const Ray& ray) const {
+    Vec3 p = ray.origin() - _pos;
+
+    // Solve quadratic
+    float B = glm::dot(p, ray.dir());
+    float C = glm::length2(p) - _radius * _radius;
+    float detSq = B*B - C;
+    if (detSq >= 0.0f) {
+        float det = std::sqrt(detSq);
+        float t = -B - det;
+
+        if (ray.inRange(t))
+            return true;
+
+        t = -B + det;
+        if (ray.inRange(t))
+            return true;
     }
 
     return false;

@@ -29,8 +29,8 @@ namespace Photon {
             static void parseMaterial(Scene& scene);
             static void parseCamera(Scene& scene);
 
-            static float parseFloat();
-            static int parseInt();
+            static float      parseFloat();
+            static int        parseInt();
             static const Vec2 parseVector2();
             static const Vec3 parseVector3();
 

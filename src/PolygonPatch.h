@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <Vector.h>
+#include <Vertex.h>
 #include <Geometry.h>
 
 namespace Photon {
@@ -20,7 +20,11 @@ namespace Photon {
             _vertices.push_back({ vertex, normal });
         }
 
-        const std::vector<PatchVertex>& getVertices() const {
+        void addVertex(const Vec3& vertex, const Vec3& normal, const Vec2& uv) {
+            _vertices.push_back({ vertex, normal, uv });
+        }
+
+        const std::vector<Vertex>& getVertices() const {
             return _vertices;
         }
 
@@ -33,7 +37,7 @@ namespace Photon {
         }
 
     private:
-        std::vector<PatchVertex> _vertices;
+        std::vector<Vertex> _vertices;
         Vec3 _normal;
     };
 

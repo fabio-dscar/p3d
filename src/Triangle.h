@@ -18,7 +18,8 @@ namespace Photon {
 
         const Vec3& getNormal() const;
 
-        bool intersectRay(const Ray& ray, HitInfo& info) const;
+        bool intersectRay(const Ray& ray, SurfaceEvent* info) const;
+        bool isOccluded(const Ray& ray) const;
     private:
         std::array<Vec3, 3> _vertices;
         Vec3 _normal;

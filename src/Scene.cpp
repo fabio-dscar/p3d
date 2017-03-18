@@ -33,3 +33,18 @@ void Scene::addGeometry(const std::shared_ptr<Geometry> object) {
 const std::vector<std::shared_ptr<Geometry>>& Scene::getGeometry() const {
     return _objects;
 }
+
+bool Scene::intersectRay(const Ray& ray, SurfaceEvent* info) const {
+    for (const std::shared_ptr<Geometry> obj : _objects)
+        obj->intersectRay(ray, info);
+
+    return info->hit();
+}
+
+bool Scene::isOccluded(const Ray& ray) const {
+    for (const std::shared_ptr<Geometry> obj : _objects)
+        if (obj->isOccluded(ray))
+            return true;
+
+    return false;
+}

@@ -17,7 +17,11 @@ namespace Photon {
             return _material;
         }
 
-        virtual bool intersectRay(const Ray& ray, HitInfo& info) const {
+        virtual bool intersectRay(const Ray& ray, SurfaceEvent* evt) const {
+            return false;
+        }
+
+        virtual bool isOccluded(const Ray& ray) const {
             return false;
         }
 

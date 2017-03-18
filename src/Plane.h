@@ -14,8 +14,8 @@ namespace Photon {
         const Vec3& getNormal() const;
         float getDistance() const;
 
-        bool intersectRay(const Ray& ray, HitInfo& info) const;
-
+        bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
+        bool isOccluded(const Ray& ray) const;
     private:
         Vec3 _normal;
         float _distance; // Distance to origin

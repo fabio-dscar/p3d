@@ -15,8 +15,8 @@ namespace Photon {
         const Vec3& getPosition() const;
         float getRadius() const;
 
-        bool intersectRay(const Ray& ray, HitInfo& info) const;
-
+        bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
+        bool isOccluded(const Ray& ray) const;
     private:
         Vec3 _pos;
         float _radius;

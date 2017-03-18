@@ -7,17 +7,18 @@
     <ProjOutDir>$(ProjectDir)..\..\bin\</ProjOutDir>
     <ProjFreeglutDir>$(ProjLibDir)freeglut\</ProjFreeglutDir>
     <ProjGlewDir>$(ProjLibDir)glew\</ProjGlewDir>
+    <ProjFreeimageDir>$(ProjLibDir)freeimage\</ProjFreeimageDir>
   </PropertyGroup>
   <PropertyGroup>
     <_PropertySheetDisplayName>PropertySheet64</_PropertySheetDisplayName>
     <OutDir>$(ProjOutDir)x64\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjFreeglutDir)include;$(ProjSrcDir);$(ProjGlewDir)include;$(ProjLibDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjFreeglutDir)lib\x64;$(ProjGlewDir)lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjFreeglutDir)include;$(ProjSrcDir);$(ProjGlewDir)include;$(ProjLibDir);$(ProjFreeimageDir)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjFreeglutDir)lib\x64;$(ProjGlewDir)lib\x64;$(ProjFreeimageDir)lib\x64;$(LibraryPath)</LibraryPath>
     <ExtensionsToDeleteOnClean>$(ProjOutDir)x64\$(Configuration)\freeglut.dll;$(ProjOutDir)x64\$(Configuration)\glew32.dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>opengl32.lib;freeglut.lib;glew32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;freeglut.lib;glew32.lib;glu32.lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /y "$(ProjFreeglutDir)bin\x64\freeglut.dll" "$(ProjOutDir)x64\$(Configuration)"
@@ -39,6 +40,9 @@ copy /y "$(ProjGlewDir)bin\x64\glew32.dll" "$(ProjOutDir)x64\$(Configuration)"</
     </BuildMacro>
     <BuildMacro Include="ProjGlewDir">
       <Value>$(ProjGlewDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="ProjFreeimageDir">
+      <Value>$(ProjFreeimageDir)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

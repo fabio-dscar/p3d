@@ -31,7 +31,7 @@ using namespace Photon;
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
 
-#define MAX_DEPTH 6
+#define MAX_DEPTH 8
 
 // Points defined by 2 attributes: positions which are stored in vertices array and colors which are stored in colors array
 float *colors;
@@ -233,76 +233,30 @@ void drawPoints() {
 
 /////////////////////////////////////////////////////////////////////// CALLBACKS
 
-// Render function by primary ray casting from the eye towards the scene's objects
-
-void tracePatch(const Vec2u& xRange, const Vec2u& yRange) {
-    
-}
-
-bool getIntersection(const Ray& ray, const Scene& scene, HitInfo& info) {
-    const std::vector<std::shared_ptr<Geometry>> objs = scene.getGeometry();
-
-    HitInfo temp, curr;
-    curr._t = F_INFINITY;
-    curr._hit = false;
-    for (std::shared_ptr<Geometry> obj : objs)
-        if (obj->intersectRay(ray, temp))
-            if (curr._t > temp._t)
-                curr = temp;
-
-    info = curr;
-
-    return info._hit;
-}
-
-bool getIntersection(const Ray& ray, const Scene& scene) {
-    return getIntersection(ray, scene, HitInfo());
-}
-
-/*HitInfo getIntersection(const Ray& ray, const Scene& scene, float threshold) {
-    HitInfo info = getIntersection(ray, scene);
-
-    info._hit = (info._t < threshold);
-
-    return info;
-}*/
-
-#include <stack>
-
-bool tir(const Ray& ray, const HitInfo& info, float inIOR, float outIOR) {
-    Vec3 wo = -ray.getDirection();
-    float cosThetaI = glm::dot(info._normal, wo);
-    float eta = inIOR / outIOR;
-
-    return ((1.0f - (1.0f - cosThetaI * cosThetaI) / (eta * eta)) < 0.0f);
-}
-
-// Whitted integrator
-Color3 trace(const Scene& scene, const Ray& ray, float ior, unsigned int depth) {
-    const std::vector<std::shared_ptr<Light>> lights = scene.getLights();
-    const Camera cam = scene.getCamera();
-    HitInfo info;
- 
+// Whitted algorithm
+Color3 trace(const Scene& scene, Ray& ray, float ior, unsigned int depth) {
     // Default color
     Color3 color = scene.getBackgroundColor();
 
-    // Calculate intersection
-    if (getIntersection(ray, scene, info)) {
+    // Calculate intersection with scene
+    SurfaceEvent event;
+    if (scene.intersectRay(ray, &event)) {
         color = Vec3(0.0f);
-        const Material mtl = info._obj->getMaterial();
+        const Material mtl = event.obj()->getMaterial();
+        const std::vector<std::shared_ptr<Light>>& lights = scene.getLights();
 
         // -> Direct Illumination
         // Calculate each light's contribution
-        for (std::shared_ptr<Light> light : lights) {
-            const Vec3 lightPos = light->getPosition();
-            const Vec3 lightDir = glm::normalize(lightPos - info._point);
-            if (glm::dot(info._normal, lightDir) > 0) {
+        for (const std::shared_ptr<Light> light : lights) {
+            const Vec3& lightPos = light->getPosition();
+            const Vec3& lightDir = glm::normalize(lightPos - event.point());
+            if (glm::dot(event.normal(), lightDir) > 0) {
                 // Trace shadow ray from point to light position
-                Ray shadowRay = Ray(info._point, lightDir, lightPos);
+                Ray shadowRay = Ray(event.point(), lightDir, lightPos);
 
-                // If it does not hit, calculate radiance at that point
-                if (!getIntersection(shadowRay, scene)) 
-                    color += mtl.calcRadiance(light, -ray.getDirection(), info);
+                // If it is not occluded, calculate radiance at that point
+                if (!scene.isOccluded(shadowRay))
+                    color += mtl.calcRadiance(light, event);
             }
         }
 
@@ -312,7 +266,8 @@ Color3 trace(const Scene& scene, const Ray& ray, float ior, unsigned int depth) 
         // -> Indirect Illumination
         if (mtl.isTransmissive()) {
             // Transmitted direction
-            Ray refracted = ray.refract(info, ior);
+            // If there is total internal reflection, the returned ray is the reflection ray
+            Ray refracted = ray.refract(event, ior);
 
             // Transmitted ray contribution
             color += mtl.getTransmit() * trace(scene, refracted, ior, depth + 1);
@@ -320,7 +275,7 @@ Color3 trace(const Scene& scene, const Ray& ray, float ior, unsigned int depth) 
 
         if (mtl.isReflector()) {
             // Reflected ray
-            Ray reflected = ray.reflect(info);
+            Ray reflected = ray.reflect(event);
 
             // Reflected ray contribution
             color += mtl.getSpec() * trace(scene, reflected, ior, depth + 1);
@@ -351,118 +306,6 @@ void renderPatch(int id, int xi, int xf, int yi, int yf) {
             drawPoints();
     }
 }
-
-#include <thread>
-
-#define NUM_THREADS 4
-
-/*void renderSceneMT() {
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    int index_pos = 0;
-    int index_col = 0;
-
-    std::thread t[NUM_THREADS];
-
-    for (int y = 0; y < RES_Y; y++) {
-
-        for (int i = 0; i < NUM_THREADS; i++) {
-            t[i] = std::thread([&](int id) {
-                for (int x = id * (RES_X / NUM_THREADS); x < (id + 1) * (RES_X / NUM_THREADS); x++) {
-                    // Build ray from camera
-                    Ray r = calculateRay(x, y);
-
-                    // Get color
-                    Color3 color = trace(*scene, r, 1, 1);
-
-                    colors[3*x] = (float)color.r;
-                    colors[3*x+1] = (float)color.g;
-                    colors[3*x+2] = (float)color.b;
-
-                    vertices[2*x] = (float)x;
-                    vertices[2*x+1] = (float)y;
-
-                    if (drawMode == DrawMode::DRAW_POINTS) {  // desenhar o conteudo da janela ponto a ponto
-                        drawPoints();
-                        index_pos = 0;
-                        index_col = 0;
-                    }
-                }
-            }, i);
-        }
-
-        //Join the threads with the main thread
-        for (int i = 0; i < NUM_THREADS; i++)
-            t[i].join();
-
-        //std::cout << "Line " << y << std::endl;
-        if (drawMode == DrawMode::DRAW_LINE) {  // desenhar o conteudo da janela linha a linha
-            drawPoints();
-            index_pos = 0;
-            index_col = 0;
-        }
-
-    }
-
-    if (drawMode == DrawMode::DRAW_FRAME) //preenchar o conteudo da janela com uma imagem completa
-        drawPoints();
-
-    std::cout << "Finished!" << std::endl;
-}
-
-void renderSceneMT2() {
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    int index_pos = 0;
-    int index_col = 0;
-
-    std::thread t[NUM_THREADS];
-
-    for (int y = 0; y < RES_Y; y++) {
-
-        for (int i = 0; i < NUM_THREADS; i++) {
-            t[i] = std::thread([&](int id) {
-                for (int x = id * (RES_X / NUM_THREADS); x < (id + 1) * (RES_X / NUM_THREADS); x++) {
-                    // Build ray from camera
-                    Ray r = calculateRay(x, y);
-
-                    // Get color
-                    Color3 color = trace(*scene, r, 1, 1);
-
-                    colors[3 * x] = (float)color.r;
-                    colors[3 * x + 1] = (float)color.g;
-                    colors[3 * x + 2] = (float)color.b;
-
-                    vertices[2 * x] = (float)x;
-                    vertices[2 * x + 1] = (float)y;
-
-                    if (drawMode == DrawMode::DRAW_POINTS) {  // desenhar o conteudo da janela ponto a ponto
-                        drawPoints();
-                        index_pos = 0;
-                        index_col = 0;
-                    }
-                }
-            }, i);
-        }
-
-        //Join the threads with the main thread
-        for (int i = 0; i < NUM_THREADS; i++)
-            t[i].join();
-
-        //std::cout << "Line " << y << std::endl;
-        if (drawMode == DrawMode::DRAW_LINE) {  // desenhar o conteudo da janela linha a linha
-            drawPoints();
-            index_pos = 0;
-            index_col = 0;
-        }
-
-    }
-
-    if (drawMode == DrawMode::DRAW_FRAME) //preenchar o conteudo da janela com uma imagem completa
-        drawPoints();
-
-    std::cout << "Finished!" << std::endl;
-}*/
 
 void renderScene() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -598,15 +441,7 @@ void init(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-    /*INSERT HERE YOUR CODE FOR PARSING NFF FILES
-        scene = new Scene();
-    if (!(scene->load_nff("jap.nff"))) return 0;
-    
-
-    RES_X = scene->GetCamera()->GetResX();
-    RES_Y = scene->GetCamera()->GetResY();
-    */
-
+    // Command line arguments
     if (argc < 1) {
         std::cerr << "Usage: " << argv[0] << " <NFF_file>" << std::endl;
         std::cin.get();
@@ -615,7 +450,7 @@ int main(int argc, char* argv[]) {
 
     // Parse scene
     //std::string filePath(argv[1]);
-    std::string filePath("mount_low.nff");
+    std::string filePath("balls_high.nff");
     scene = Utils::NFFParser::fromFile(filePath);
     if (!scene)
         Utils::throwError("Failed to load scene.");

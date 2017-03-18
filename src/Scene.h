@@ -10,7 +10,7 @@
 
 namespace Photon {
 
-    class Scene {
+    class Scene : public Geometry {
     public:
         Scene() : _background(0.0f), _camera(), _lights() { }
 
@@ -26,6 +26,8 @@ namespace Photon {
         void addGeometry(const std::shared_ptr<Geometry> object);
         const std::vector<std::shared_ptr<Geometry>>& getGeometry() const;
 
+        bool intersectRay(const Ray& ray, SurfaceEvent* info) const;
+        bool isOccluded(const Ray& ray) const;
     private:
         Color3 _background;
         Camera _camera;

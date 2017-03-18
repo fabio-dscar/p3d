@@ -97,7 +97,11 @@ namespace Photon {
 
             dir = glm::normalize(dir);
 
-            return Ray(_pos, dir, _near);
+            // Create primary ray
+            Ray r(_pos, dir, _near);
+            r.setPrimary(true);
+
+            return r;
         }
 
     private:

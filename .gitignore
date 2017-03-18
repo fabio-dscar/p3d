@@ -245,6 +245,7 @@ ModelManifest.xml
 
 lib/freeglut/*
 lib/glew/*
+lib/freeimage/*
 
 !lib/freeglut/include/
 !lib/freeglut/bin/
@@ -252,5 +253,8 @@ lib/glew/*
 !lib/glew/include/
 !lib/glew/bin/
 !lib/glew/lib/
+!lib/freeimage/include/
+!lib/freeimage/bin/
+!lib/freeimage/lib/
 
 !avt.vcxproj.user
