@@ -56,13 +56,13 @@ namespace Photon {
     class RayEvent {
     public:
         RayEvent() 
-            : _point(0), _normal(0) { }
+            : _point(0), _normal(0), _wo(0) { }
 
         RayEvent(const Ray& ray) 
             : _point(ray.hitPoint()), _wo(-ray.dir()), _normal(0) { }
 
-        RayEvent(const Vec3& point, const Vec3& normal) 
-            : _point(point), _normal(normal) { }
+        RayEvent(const Vec3& point, const Vec3& normal, const Vec3& wo) 
+            : _point(point), _normal(normal), _wo(wo) { }
 
         Vec3 wo() const {
             return _wo;

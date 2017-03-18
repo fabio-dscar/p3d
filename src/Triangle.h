@@ -14,9 +14,9 @@ namespace Photon {
             : _vertices{ v1, v2, v3 }, _normal(normal) { }
 
         void setVertices(const Vec3& v1, const Vec3& v2, const Vec3& v3);
-        const std::array<Vec3, 3>& getVertices() const;
+        const std::array<Vec3, 3>& vertices() const;
 
-        const Vec3& getNormal() const;
+        const Vec3& normal() const;
 
         bool intersectRay(const Ray& ray, SurfaceEvent* info) const;
         bool isOccluded(const Ray& ray) const;

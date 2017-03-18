@@ -8,6 +8,8 @@
 #include <Vector.h>
 #include <Material.h>
 
+#include <MathDefs.h>
+
 namespace Photon {
 
     // Forward declaration
@@ -30,7 +32,7 @@ namespace Photon {
             static void parseCamera(Scene& scene);
 
             static float      parseFloat();
-            static int        parseInt();
+            static uint32     parseInt();
             static const Vec2 parseVector2();
             static const Vec3 parseVector3();
 

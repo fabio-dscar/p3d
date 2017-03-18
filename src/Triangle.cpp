@@ -22,11 +22,11 @@ void Triangle::setVertices(const Vec3& v1, const Vec3& v2, const Vec3& v3) {
     _normal = glm::normalize(glm::cross(p1p2, p1p3));
 }
 
-const std::array<Vec3, 3>& Triangle::getVertices() const {
+const std::array<Vec3, 3>& Triangle::vertices() const {
     return _vertices;
 }
 
-const Vec3& Triangle::getNormal() const {
+const Vec3& Triangle::normal() const {
     return _normal;
 }
 

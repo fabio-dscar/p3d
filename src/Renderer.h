@@ -19,9 +19,9 @@ namespace Photon {
         }
 
     private:
-        unsigned int _width;
-        unsigned int _height;
-        int _window;
+        uint32 _width;
+        uint32 _height;
+        int32  _window;
         Color4 _clearColor;
 
         void setupGLEW() {

@@ -450,7 +450,7 @@ int main(int argc, char* argv[]) {
 
     // Parse scene
     //std::string filePath(argv[1]);
-    std::string filePath("balls_high.nff");
+    std::string filePath("balls_medium.nff");
     scene = Utils::NFFParser::fromFile(filePath);
     if (!scene)
         Utils::throwError("Failed to load scene.");

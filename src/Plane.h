@@ -11,8 +11,8 @@ namespace Photon {
         Plane(const Vec3& normal, float distance) : 
             _normal(normal), _distance(distance) { }
 
-        const Vec3& getNormal() const;
-        float getDistance() const;
+        const Vec3& normal() const;
+        float distance() const;
 
         bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
         bool isOccluded(const Ray& ray) const;

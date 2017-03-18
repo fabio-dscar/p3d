@@ -12,8 +12,8 @@ namespace Photon {
         Sphere(const Vec3& position, float radius) 
             : _pos(position), _radius(radius) { }
         
-        const Vec3& getPosition() const;
-        float getRadius() const;
+        const Vec3& pos() const;
+        float radius() const;
 
         bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
         bool isOccluded(const Ray& ray) const;

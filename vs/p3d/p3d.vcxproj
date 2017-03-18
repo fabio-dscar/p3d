@@ -142,6 +142,7 @@
     <ClInclude Include="..\..\src\Polygon.h" />
     <ClInclude Include="..\..\src\PolygonPatch.h" />
     <ClInclude Include="..\..\src\Renderer.h" />
+    <ClInclude Include="..\..\src\Threading.h" />
     <ClInclude Include="..\..\src\Triangle.h" />
     <ClInclude Include="..\..\src\Vector.h" />
     <ClInclude Include="..\..\src\Material.h" />
@@ -153,6 +154,7 @@
     <ClInclude Include="..\..\src\Sphere.h" />
     <ClInclude Include="..\..\src\Utils.h" />
     <ClInclude Include="..\..\src\Vertex.h" />
+    <ClInclude Include="..\..\src\WhittedRayTracer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

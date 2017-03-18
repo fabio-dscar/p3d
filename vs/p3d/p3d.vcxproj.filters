@@ -43,6 +43,9 @@
     <Filter Include="Header Files\Lights">
       <UniqueIdentifier>{07eecd79-4d09-4687-98b6-a5b61d5db3bc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Threads">
+      <UniqueIdentifier>{28ced46d-4b68-496e-aa5e-de65d73ba606}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp">
@@ -133,6 +136,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Vertex.h">
       <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Threading.h">
+      <Filter>Header Files\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\WhittedRayTracer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

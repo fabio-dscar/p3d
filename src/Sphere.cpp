@@ -2,11 +2,11 @@
 
 using namespace Photon;
 
-const Vec3& Sphere::getPosition() const {
+const Vec3& Sphere::pos() const {
     return _pos;
 }
 
-float Sphere::getRadius() const {
+float Sphere::radius() const {
     return _radius;
 }
 

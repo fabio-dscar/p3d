@@ -304,8 +304,8 @@ float NFFParser::parseFloat() {
     return x;
 }
 
-int NFFParser::parseInt() {
-    int x;
+uint32 NFFParser::parseInt() {
+    uint32 x;
     _lineBuffer >> x;
 
     if (_lineBuffer.fail())
