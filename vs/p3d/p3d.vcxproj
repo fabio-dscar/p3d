@@ -131,6 +131,7 @@
     <ClCompile Include="..\..\src\Sphere.cpp" />
     <ClCompile Include="..\..\src\Triangle.cpp" />
     <ClCompile Include="..\..\src\Utils.cpp" />
+    <ClCompile Include="..\..\src\WorkerPool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Camera.h" />
@@ -142,6 +143,7 @@
     <ClInclude Include="..\..\src\Polygon.h" />
     <ClInclude Include="..\..\src\PolygonPatch.h" />
     <ClInclude Include="..\..\src\Renderer.h" />
+    <ClInclude Include="..\..\src\Task.h" />
     <ClInclude Include="..\..\src\Threading.h" />
     <ClInclude Include="..\..\src\Triangle.h" />
     <ClInclude Include="..\..\src\Vector.h" />
@@ -155,6 +157,7 @@
     <ClInclude Include="..\..\src\Utils.h" />
     <ClInclude Include="..\..\src\Vertex.h" />
     <ClInclude Include="..\..\src\WhittedRayTracer.h" />
+    <ClInclude Include="..\..\src\WorkerPool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -46,6 +46,9 @@
     <Filter Include="Header Files\Threads">
       <UniqueIdentifier>{28ced46d-4b68-496e-aa5e-de65d73ba606}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Threads">
+      <UniqueIdentifier>{0a8cad44-f3d5-488b-9322-3d34a3afe355}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp">
@@ -74,6 +77,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Sphere.cpp">
       <Filter>Source Files\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\WorkerPool.cpp">
+      <Filter>Source Files\Threads</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,6 +148,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\WhittedRayTracer.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Task.h">
+      <Filter>Header Files\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\WorkerPool.h">
+      <Filter>Header Files\Threads</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

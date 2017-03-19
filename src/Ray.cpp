@@ -62,7 +62,7 @@ Ray Ray::refract(const SurfaceEvent& evt, float ior) const {
     float sinTr = eta * sinIn;
 
     // If total internal reflection
-    if ((sinTr * sinTr) > 1.0f)
+    if ((sinTr * sinTr) > 1.0f) 
         return reflect(evt);  // Return reflection instead
 
     float cosTr = std::sqrt(1.0f - (sinTr * sinTr));

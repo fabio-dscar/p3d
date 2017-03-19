@@ -1,51 +1,85 @@
 #pragma once
 
 #include <functional>
+#include <vector>
 
 #include <MathDefs.h>
 #include <Ray.h>
 #include <Scene.h>
 #include <Camera.h>
 
+#include <Threading.h>
+
+using namespace std::placeholders;
+using namespace Photon::Threading;
+
 namespace Photon {
+
+    static const uint32 TILE_SIZE = 32;
+
+    struct ImageTile {
+        uint32 x, y, w, h;
+
+        ImageTile() { }
+        ImageTile(uint32 tileX, uint32 tileY, uint32 tileWidth, uint32 tileHeight) 
+            : x(tileX), y(tileY), w(tileWidth), h(tileHeight) { }
+    };
 
     class WhittedRayTracer {
     public:
-        WhittedRayTracer() { }
+        WhittedRayTracer(uint32 maxDepth, Scene& scene) 
+            : _maxDepth(maxDepth), _scene(&scene), _renderTask(nullptr), _tiles() { }
 
         void initialize() {
+            const Camera& camera = _scene->getCamera();
+            uint32 width = camera.getWidth();
+            uint32 height = camera.getHeight();
 
+            // Divide in tiles
+            for (uint32 y = 0; y < height; y += TILE_SIZE) {
+                for (uint32 x = 0; x < width; x += TILE_SIZE) {
+                    _tiles.emplace_back(x, 
+                                        y, 
+                                        std::min(TILE_SIZE, width - x), 
+                                        std::min(TILE_SIZE, height - y)
+                    );
+                }
+            }
         }
 
         void startRender() {
-            using namespace std::placeholders;
-            _group = ThreadUtils::pool->addTask(
-                std::bind(&WhittedRayTracer::renderTile, this, *_scene, _3, _1),
-                _tiles.size(),
-                [&]() { }
+            // Initialize threading
+            initThreads(getNumberOfProcessors());
+
+            // Add task for drawing tiles in parallel
+            _renderTask = Threading::Workers->pushTask(
+                std::bind(&WhittedRayTracer::renderTile, this, std::ref(*_scene), _2, _1),
+                _tiles.size()
             );
         }
 
-        void renderTile(const Scene& scene, uint32 id, uint32 tileId) {
+        void renderTile(const Scene& scene, uint32 tId, uint32 tileId) {
             const ImageTile& tile = _tiles[tileId];
 
             const Camera& camera = scene.getCamera();
             for (uint32 y = 0; y < tile.h; ++y) {
                 for (uint32 x = 0; x < tile.w; ++x) {
+                    Vec2u pixel(x + tile.x, y + tile.y);
+
                     // Build ray from camera
-                    Ray ray = camera.getPrimaryRay(x, y);
+                    Ray ray = camera.getPrimaryRay(pixel);
 
                     // Get color from ray
                     Color3 color = traceRay(scene, ray, 1.0f, 1);
 
                     // Record sample on camera's film
-                    camera.film().addColorSample(pixel, color);
+                    camera.film().addColorSample(x, y, color);
                 }
             }
         }
 
         // Whitted algorithm
-        Color3 traceRay(const Scene& scene, Ray& ray, float ior, unsigned int depth) const {
+        Color3 traceRay(const Scene& scene, const Ray& ray, float ior, unsigned int depth) const {
             // Default color
             Color3 color = scene.getBackgroundColor();
 
@@ -96,9 +130,24 @@ namespace Photon {
             return color;
         }
 
+        void waitForCompletion() {
+            if (_renderTask) {
+                _renderTask->wait();
+                _renderTask.reset();
+            }
+        }
+
+        void cleanup() {
+            _renderTask.reset();
+            _tiles.clear();
+            _tiles.shrink_to_fit();
+        }
+
     private:
-        uint16 _maxDepth;
+        uint32 _maxDepth;
         Scene* _scene;
+        std::vector<ImageTile> _tiles;
+        std::shared_ptr<Task> _renderTask;
     };
     
 }
