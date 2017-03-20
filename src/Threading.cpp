@@ -31,3 +31,19 @@ uint32 Photon::Threading::getNumberOfProcessors() {
 void Photon::Threading::initThreads(int numThreads) {
     Workers = std::make_unique<WorkerPool>(numThreads);
 }
+
+void Photon::Threading::parallelFor(uint32 start, uint32 end, uint32 partitions, std::function<void(uint32)> func) {
+    auto taskRun = [&func, start, end](uint32 idx, uint32 /*threadId*/, uint32 num)
+    {
+        uint32 span = (end - start + num - 1) / num;
+        uint32 iStart = start + span*idx;
+        uint32 iEnd = std::min(iStart + span, end);
+        for (uint32 i = iStart; i < iEnd; ++i)
+            func(i);
+    };
+
+    if (partitions == 1)
+        taskRun(0, 1, 0);
+    else
+        Workers->yield(*Workers->pushTask(taskRun, partitions));
+}

@@ -25,14 +25,15 @@ void WhittedRayTracer::initialize() {
     }
 }
 
-void WhittedRayTracer::startRender() {
+void WhittedRayTracer::startRender(EndCallback endCallback) {
     // Initialize threading
     initThreads(getNumberOfProcessors());
 
     // Add task for drawing tiles in parallel
     _renderTask = Threading::Workers->pushTask(
         std::bind(&WhittedRayTracer::renderTile, this, std::ref(*_scene), _2, _1),
-        _tiles.size()
+        _tiles.size(),
+        endCallback
     );
 }
 
@@ -48,7 +49,7 @@ void WhittedRayTracer::renderTile(const Scene& scene, uint32 tId, uint32 tileId)
             Ray ray = camera.getPrimaryRay(pixel);
 
             // Get color from ray
-            Color3 color = traceRay(scene, ray, 1.0f, 1);
+            Color3 color = traceRay(scene, ray, 1.0f, 1, pixel);
 
             // Record sample on camera's film
             camera.film().addColorSample(pixel.x, pixel.y, color);
@@ -57,7 +58,7 @@ void WhittedRayTracer::renderTile(const Scene& scene, uint32 tId, uint32 tileId)
 }
 
 // Whitted algorithm
-Color3 WhittedRayTracer::traceRay(const Scene& scene, const Ray& ray, float ior, unsigned int depth) const {
+Color3 WhittedRayTracer::traceRay(const Scene& scene, const Ray& ray, float ior, unsigned int depth, const Vec2u& pixel) const {
     // Default color
     Color3 color = scene.getBackgroundColor();
 
@@ -67,6 +68,11 @@ Color3 WhittedRayTracer::traceRay(const Scene& scene, const Ray& ray, float ior,
         color = Vec3(0.0f);
         const Material mtl = event.obj()->getMaterial();
         const std::vector<std::shared_ptr<Light>>& lights = scene.getLights();
+
+        if (ray.isPrimary()) {
+            scene.getCamera().film().addNormalSample(pixel.x, pixel.y, event.normal());
+            scene.getCamera().film().addDepthSample(pixel.x, pixel.y, glm::length(ray.origin() - ray.hitPoint()));
+        }
 
         // -> Direct Illumination
         // Calculate each light's contribution
@@ -105,18 +111,25 @@ Color3 WhittedRayTracer::traceRay(const Scene& scene, const Ray& ray, float ior,
         }
     }
 
+    if (!event.hit() && ray.isPrimary())
+        scene.getCamera().film().addNormalSample(pixel.x, pixel.y, -ray.dir());
+
     return color;
+}
+
+bool WhittedRayTracer::hasCompleted() {
+    return _renderTask->isDone();
 }
 
 void WhittedRayTracer::waitForCompletion() {
     if (_renderTask) {
         _renderTask->wait();
-        _renderTask.reset();
+        _renderTask.reset(); // Free pointer
     }
 }
 
 void WhittedRayTracer::cleanup() {
-    _renderTask.reset();
+    _renderTask.reset(); // Free pointer
     _tiles.clear();
     _tiles.shrink_to_fit();
 }

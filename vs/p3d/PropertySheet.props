@@ -21,7 +21,9 @@
     </Link>
     <PostBuildEvent>
       <Command>copy /y "$(ProjFreeglutDir)bin\freeglut.dll" "$(ProjOutDir)x86\$(Configuration)\"
-copy /y "$(ProjGlewDir)bin\glew32.dll" "$(ProjOutDir)x86\$(Configuration)\"</Command>
+copy /y "$(ProjGlewDir)bin\glew32.dll" "$(ProjOutDir)x86\$(Configuration)\"
+copy /y "$(ProjFreeimageDir)bin\FreeImage.dll" "$(ProjOutDir)x86\$(Configuration)\"
+copy /y "$(ProjectDir)..\..\settings.json" "$(ProjOutDir)x86\$(Configuration)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

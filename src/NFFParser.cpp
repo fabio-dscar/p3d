@@ -11,6 +11,8 @@
 
 #include <memory>
 
+#include <filesystem>
+
 using namespace Photon;
 using namespace Photon::Utils;
 
@@ -39,6 +41,8 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
         perror(filePath.c_str());
         Utils::throwError("Couldn't read file " + filePath);
     }
+
+
 
     // Create scene
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();

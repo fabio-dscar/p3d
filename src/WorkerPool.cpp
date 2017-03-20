@@ -104,7 +104,7 @@ void WorkerPool::stop() {
     }
 }
 
-std::shared_ptr<Task> WorkerPool::pushTask(TaskFunc func, int numSubtasks, Finisher finisher) {
+std::shared_ptr<Task> WorkerPool::pushTask(TaskFunc func, uint32 numSubtasks, EndCallback finisher) {
     // Create new task
     std::shared_ptr<Task> task(std::make_shared<Task>(std::move(func), std::move(finisher), numSubtasks));
 

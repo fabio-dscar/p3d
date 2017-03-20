@@ -20,7 +20,7 @@ namespace Photon {
         class WorkerPool {
 
         typedef std::function<void(uint32, uint32, uint32)> TaskFunc;
-        typedef std::function<void()> Finisher;
+        typedef std::function<void()> EndCallback;
 
         public:
             WorkerPool(uint32 numThreads);
@@ -31,8 +31,8 @@ namespace Photon {
             void reset();
             void stop();
 
-            std::shared_ptr<Task> pushTask(TaskFunc func, int numSubtasks = 1,
-                                           Finisher finisher = Finisher());
+            std::shared_ptr<Task> pushTask(TaskFunc func, uint32 numSubtasks = 1,
+                                           EndCallback finisher = EndCallback());
 
             uint32 numThreads() const {
                 return _numThreads;

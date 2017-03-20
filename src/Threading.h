@@ -21,7 +21,7 @@ namespace Photon {
 
         uint32 getNumberOfProcessors();
         void initThreads(int numThreads);
-
+        void parallelFor(uint32 start, uint32 end, uint32 partitions, std::function<void(uint32)> func);
     }
 
 }

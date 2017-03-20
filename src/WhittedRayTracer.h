@@ -17,6 +17,8 @@ namespace Photon {
     static const uint32 MAX_DEPTH = 6;
     static const uint32 TILE_SIZE = 128;
 
+    typedef std::function<void()> EndCallback;
+
     struct ImageTile {
         uint32 x, y, w, h;
 
@@ -29,10 +31,11 @@ namespace Photon {
     public:
         WhittedRayTracer(uint32 maxDepth, Scene& scene) 
             : _maxDepth(maxDepth), _scene(&scene), _renderTask(nullptr), _tiles() { }
-
+        
         void initialize();
-        void startRender();
+        void startRender(EndCallback endCallback = EndCallback());
 
+        bool hasCompleted();
         void waitForCompletion();
         void cleanup();
 
@@ -40,7 +43,7 @@ namespace Photon {
         void renderTile(const Scene& scene, uint32 tId, uint32 tileId) const;
 
         // Whitted algorithm
-        Color3 traceRay(const Scene& scene, const Ray& ray, float ior, unsigned int depth) const;
+        Color3 traceRay(const Scene& scene, const Ray& ray, float ior, unsigned int depth, const Vec2u& pixel = Vec2u(0)) const;
 
         uint32 _maxDepth;
         Scene* _scene;
