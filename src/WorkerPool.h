@@ -10,6 +10,7 @@
 #include <deque>
 #include <mutex>
 
+#include <MathDefs.h>
 #include <Task.h>
 
 namespace Photon {

@@ -1,5 +1,6 @@
 #include <WorkerPool.h>
 
+using namespace Photon;
 using namespace Photon::Threading;
 
 WorkerPool::WorkerPool(uint32 threadCount)

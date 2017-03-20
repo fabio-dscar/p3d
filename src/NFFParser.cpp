@@ -33,7 +33,6 @@ bool NFFParser::loadLine() {
 }
 
 std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
-
     // Open file
     _buffer.open(filePath, std::ios_base::in);
     if (_buffer.fail()) {
@@ -78,7 +77,7 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
     _buffer.close();
     _lineBuffer.clear();
 
-    return scene;
+    return std::move(scene);
 }
 
 void NFFParser::parseLight(Scene& scene) {

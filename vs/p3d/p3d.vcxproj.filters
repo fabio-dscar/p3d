@@ -49,6 +49,18 @@
     <Filter Include="Source Files\Threads">
       <UniqueIdentifier>{0a8cad44-f3d5-488b-9322-3d34a3afe355}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Integrators">
+      <UniqueIdentifier>{eb9ad63d-7731-4cc2-830e-9144bfbc64cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Renderer">
+      <UniqueIdentifier>{8a269723-ebbc-40f1-9137-9b7fd9d4a919}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Integrators">
+      <UniqueIdentifier>{3873ead2-f3cd-40e9-914c-309fcbf971de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math">
+      <UniqueIdentifier>{5685a5e1-a6c1-4ee7-8cf6-727bf3415ec4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp">
@@ -59,15 +71,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Camera.cpp">
       <Filter>Source Files\Camera</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Scene.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\NFFParser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Ray.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Triangle.cpp">
       <Filter>Source Files\Geometry</Filter>
@@ -81,6 +84,24 @@
     <ClCompile Include="..\..\src\WorkerPool.cpp">
       <Filter>Source Files\Threads</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Threading.cpp">
+      <Filter>Source Files\Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\OpenGLRenderer.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\WhittedRayTracer.cpp">
+      <Filter>Source Files\Integrators</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Scene.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Ray.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\NFFParser.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Utils.h">
@@ -88,12 +109,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Camera.h">
       <Filter>Header Files\Camera</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Scene.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\NFFParser.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Sphere.h">
       <Filter>Header Files\Geometry</Filter>
@@ -103,9 +118,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Plane.h">
       <Filter>Header Files\Geometry</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Ray.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Vector.h">
       <Filter>Header Files\Math</Filter>
@@ -137,23 +149,35 @@
     <ClInclude Include="..\..\src\MathDefs.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Renderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Vertex.h">
       <Filter>Header Files\Geometry</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Threading.h">
       <Filter>Header Files\Threads</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\WhittedRayTracer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Task.h">
       <Filter>Header Files\Threads</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\WorkerPool.h">
       <Filter>Header Files\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Ray.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\NFFParser.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\OpenGLRenderer.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Renderer.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\WhittedRayTracer.h">
+      <Filter>Header Files\Integrators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Scene.h">
+      <Filter>Header Files\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

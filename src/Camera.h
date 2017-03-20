@@ -34,6 +34,10 @@ namespace Photon {
             return (float)_width / (float)_height;
         }
 
+        uint32 pixelArea() const {
+            return _width * _height;
+        }
+
         void addColorSample(uint32 x, uint32 y, Color3 color) {
             uint32 idx = x + _height * y;
 
