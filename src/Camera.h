@@ -14,16 +14,16 @@ namespace Photon {
             : _width(width), _height(height) { 
 
             _film.resize(_width * _height * 3);
-            _normal.resize(_width * _height * 3);
-            _depth.resize(_width * _height);
+            /*_normal.resize(_width * _height * 3);
+            _depth.resize(_width * _height);*/
         }
 
         Film(const Vec2u& res)
             : _width(res.x), _height(res.y) { 
         
             _film.resize(_width * _height * 3);
-            _normal.resize(_width * _height * 3);
-            _depth.resize(_width * _height);
+            /*_normal.resize(_width * _height * 3);
+            _depth.resize(_width * _height);*/
         }
 
         uint32 width() const {
@@ -53,13 +53,13 @@ namespace Photon {
         void addNormalSample(uint32 x, uint32 y, const Vec3& normal) {
             uint32 idx = x + _height * y;
 
-            _normal[3 * idx] = normal.x;
+            /*_normal[3 * idx] = normal.x;
             _normal[3 * idx + 1] = normal.y;
-            _normal[3 * idx + 2] = normal.z;
+            _normal[3 * idx + 2] = normal.z;*/
         }
 
         void addDepthSample(uint32 x, uint32 y, float dist) {
-            _depth[x + _height * y] = dist;
+            //_depth[x + _height * y] = dist;
         }
 
         const std::vector<float>& image() const {
@@ -81,8 +81,8 @@ namespace Photon {
     private:
         uint32 _width, _height;
         std::vector<float> _film;
-        std::vector<float> _normal;
-        std::vector<float> _depth;
+        /*std::vector<float> _normal;
+        std::vector<float> _depth;*/
     };
 
     class Camera {

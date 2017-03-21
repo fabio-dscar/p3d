@@ -69,9 +69,6 @@ int main(int argc, char* argv[]) {
     if (!_scene)
         Utils::throwError("Failed to load scene.");
 
-    printf("resx = %d  resy= %d.\n", _scene->getCamera().getWidth(), 
-                                     _scene->getCamera().getHeight());
-
     // Initialize scene renderer and start rendering process
     _renderer = std::make_shared<Renderer>("settings.json");
     _renderer->initialize();
@@ -88,42 +85,11 @@ int main(int argc, char* argv[]) {
         // Start rendering to screen
         _openglRenderer->startRender();
     } else {
+        // Just wait for rendering to finish
         _renderer->waitForCompletion();
         finish();
     }
     
-    /* else {
-        _renderer->waitForCompletion();
-        std::cout << "Completed!" << std::endl;
-        
-        FreeImage_Initialise();
-        //FIBITMAP* bitmap = FreeImage_AllocateT(FIT_RGB, _scene->getCamera().getWidth(), _scene->getCamera().getHeight());
-        FIBITMAP* bitmap = FreeImage_Allocate(_scene->getCamera().getWidth(), _scene->getCamera().getHeight(), 24);
-        if (bitmap) {
-
-            //
-            parallelFor(0, _scene->getCamera().getWidth(), 32, [&](uint32 i) {
-                for (uint32 y = 0; y < _scene->getCamera().getHeight(); y++) {
-                    RGBQUAD color;
-                    const Film& film = _scene->getCamera().film();
-
-                    Color3 pColor = film(i, y);
-                    color.rgbRed = std::min(255u, (uint32)(pColor.r * 255.0f));
-                    color.rgbGreen = std::min(255u, (uint32)(pColor.g * 255.0f));
-                    color.rgbBlue = std::min(255u, (uint32)(pColor.b * 255.0f));
-
-                    FreeImage_SetPixelColor(bitmap, i, y, &color);
-                }
-            });
-
-            //FreeImage_Save(FIF_BMP, bitmap, "test1.bmp", 0);
-            FreeImage_Save(FIF_PNG, bitmap, "test.png", 0);
-
-            FreeImage_Unload(bitmap);
-        }
-
-    }*/
-
     exit(EXIT_SUCCESS);
 }
 ///////////////////////////////////////////////////////////////////////
