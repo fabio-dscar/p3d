@@ -28,6 +28,7 @@ namespace Photon {
             static void parsePlane(Scene& scene);
             static void parsePolygon(Scene& scene);
             static void parsePolygonPatch(Scene& scene);
+            static void parseBox(Scene& scene);
             static void parseMaterial(Scene& scene);
             static void parseCamera(Scene& scene);
 

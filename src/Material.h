@@ -6,6 +6,8 @@
 #include <PointLight.h>
 #include <Ray.h>
 
+#include <iostream>
+
 namespace Photon {
 
     class Material {

@@ -1,6 +1,6 @@
 {
-  "exportFile": true,
+  "exportFile": false,
   "exportFilename": "out",
   "exportFormat": "bmp",
-  "renderToScreen": false
+  "renderToScreen": true
 }

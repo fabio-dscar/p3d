@@ -8,6 +8,7 @@
 #include <Polygon.h>
 #include <PolygonPatch.h>
 #include <Triangle.h>
+#include <Box.h>
 
 #include <memory>
 
@@ -52,7 +53,10 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
         std::string cmd;
         _lineBuffer >> cmd;
 
-        if (cmd.compare(0, 1, "b") == 0) {
+        if (cmd.compare(0, 3, "box") == 0) {
+            parseBox(*scene);
+        }
+        else if (cmd.compare(0, 1, "b") == 0) {
             scene->setBackgroundColor(parseVector3());
         } else if (cmd.compare(0, 1, "l") == 0) {
             parseLight(*scene);
@@ -236,6 +240,16 @@ void NFFParser::parsePolygonPatch(Scene& scene) {
 
     // Add polygon
     scene.addGeometry(pol);
+}
+
+void NFFParser::parseBox(Scene & scene) {
+    Vec3 min = parseVector3();
+    Vec3 max = parseVector3();
+
+    std::shared_ptr<Box> box = std::make_shared<Box>(min, max);
+    box->addMaterial(_material);
+
+    scene.addGeometry(box);
 }
 
 void NFFParser::parseMaterial(Scene& scene) {
