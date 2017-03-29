@@ -27,7 +27,7 @@ namespace Photon {
                 _finishedSubTasks(0),
                 _numSubTasks(numSubTasks),
                 _completed(false),
-                _aborted(false) {}
+                _aborted(false) { }
 
             void run(uint32 threadId, uint32 taskId) {
                 try {

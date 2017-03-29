@@ -2,6 +2,7 @@
 
 #include <Material.h>
 #include <Ray.h>
+#include <Bounds.h>
 
 namespace Photon {
 
@@ -23,6 +24,10 @@ namespace Photon {
 
         virtual bool isOccluded(const Ray& ray) const {
             return false;
+        }
+
+        virtual Bounds3 bounds() const {
+            return Bounds3(Point3(0), Point3(0));
         }
 
     private:

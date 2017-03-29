@@ -50,12 +50,12 @@ namespace Photon {
             GLuint _vaoId;
             GLuint _vboId[2];
 
-            int32 _sizePoints;
-            int32 _sizeColors;
+            uint32 _sizePoints;
+            uint32 _sizeColors;
 
             GLfloat _m[16];
 
-            std::vector<float> _points;
+            std::vector<Float> _points;
 
             void setupGLEW();
             void setupGLUT(int argc, char* argv[]);

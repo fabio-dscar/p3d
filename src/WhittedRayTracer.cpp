@@ -10,8 +10,8 @@ using namespace std::placeholders;
 
 void WhittedRayTracer::initialize() {
     const Camera& camera = _scene->getCamera();
-    uint32 width = camera.getWidth();
-    uint32 height = camera.getHeight();
+    uint32 width = camera.width();
+    uint32 height = camera.height();
 
     // Divide in tiles
     for (uint32 y = 0; y < height; y += TILE_SIZE) {
@@ -26,30 +26,44 @@ void WhittedRayTracer::initialize() {
 }
 
 void WhittedRayTracer::startRender(EndCallback endCallback) {
-    // Initialize threading
-    initThreads(getNumberOfProcessors());
-
     // Add task for drawing tiles in parallel
     _renderTask = Threading::Workers->pushTask(
-        std::bind(&WhittedRayTracer::renderTile, this, std::ref(*_scene), _2, _1),
-        _tiles.size(),
+        std::bind(&WhittedRayTracer::renderTile, this, _2, _1),
+        uint32(_tiles.size()),
         endCallback
     );
 }
 
-void WhittedRayTracer::renderTile(const Scene& scene, uint32 tId, uint32 tileId) const {
+// This is called by different threads
+void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
     const ImageTile& tile = _tiles[tileId];
 
-    const Camera& camera = scene.getCamera();
+    const Camera& camera = _scene->getCamera();
     for (uint32 y = 0; y < tile.h; ++y) {
         for (uint32 x = 0; x < tile.w; ++x) {
-            Vec2u pixel(x + tile.x, y + tile.y);
+            Vec2ui pixel(x + tile.x, y + tile.y);
 
             // Build ray from camera
-            Ray ray = camera.getPrimaryRay(pixel);
+            //Ray ray = camera.getPrimaryRay(pixel);
 
             // Get color from ray
-            Color3 color = traceRay(scene, ray, 1.0f, 1, pixel);
+            const uint32 SAMPLES = 8;
+            Color3 color(0);
+            for (uint32 p = 0; p < SAMPLES; p++) {
+                for (uint32 q = 0; q < SAMPLES; q++) {
+                    Float dx = (p + _random.uniformFloat()) / SAMPLES;
+                    Float dy = (q + _random.uniformFloat()) / SAMPLES;
+
+                    // Build ray from camera
+                    Ray ray = camera.getPrimaryRay(pixel.x + dx, pixel.y + dy);
+
+                    color += traceRay(ray, 1.0, 1, pixel);
+                }
+            }
+            color /= (SAMPLES * SAMPLES);
+
+
+            //Color3 color = traceRay(ray, 1.0, 1, pixel);
 
             // Record sample on camera's film
             camera.film().addColorSample(pixel.x, pixel.y, color);
@@ -58,39 +72,42 @@ void WhittedRayTracer::renderTile(const Scene& scene, uint32 tId, uint32 tileId)
 }
 
 // Whitted algorithm
-Color3 WhittedRayTracer::traceRay(const Scene& scene, const Ray& ray, float ior, unsigned int depth, const Vec2u& pixel) const {
+Color3 WhittedRayTracer::traceRay(const Ray& ray, Float ior, uint32 depth, const Vec2ui& pixel) const {
     // Default color
-    Color3 color = scene.getBackgroundColor();
+    Color3 color = _scene->getBackgroundColor();
 
     // Calculate intersection with scene
     SurfaceEvent event;
-    if (scene.intersectRay(ray, &event)) {
-        color = Vec3(0.0f);
+    if (_scene->intersectRay(ray, &event)) {
+        color = Vec3(0);
         const Material mtl = event.obj()->getMaterial();
-        const std::vector<std::shared_ptr<Light>>& lights = scene.getLights();
-
-        if (ray.isPrimary()) {
-            scene.getCamera().film().addNormalSample(pixel.x, pixel.y, event.normal());
-            scene.getCamera().film().addDepthSample(pixel.x, pixel.y, glm::length(ray.origin() - ray.hitPoint()));
-        }
+        const std::vector<Light const*>& lights = _scene->getLights();
 
         // -> Direct Illumination
         // Calculate each light's contribution
-        for (const std::shared_ptr<Light> light : lights) {
-            const Vec3& lightPos = light->getPosition();
-            const Vec3& lightDir = glm::normalize(lightPos - event.point());
-            if (glm::dot(event.normal(), lightDir) > 0) {
+        for (Light const* light : lights) {
+            const Point3& lightPos = light->pos();
+            const Vec3 lightDir = normalize(lightPos - event.point());
+            if (dot(event.normal(), lightDir) > 0) {
                 // Trace shadow ray from point to light position
-                Ray shadowRay = Ray(event.point(), lightDir, lightPos);
+                Ray shadowRay = event.spawnRay(lightPos);
 
                 // If it is not occluded, calculate radiance at that point
-                if (!scene.isOccluded(shadowRay))
+                if (!_scene->isOccluded(shadowRay))
                     color += mtl.calcRadiance(light, event);
             }
         }
 
         if (depth >= _maxDepth)
             return color;
+
+        if (mtl.isReflector()) {
+            // Reflected ray
+            Ray reflected = ray.reflect(event);
+
+            // Reflected ray contribution
+            color += mtl.getSpec() * traceRay(reflected, ior, depth + 1);
+        }
 
         // -> Indirect Illumination
         if (mtl.isTransmissive()) {
@@ -99,25 +116,14 @@ Color3 WhittedRayTracer::traceRay(const Scene& scene, const Ray& ray, float ior,
             Ray refracted = ray.refract(event, ior);
 
             // Transmitted ray contribution
-            color += mtl.getTransmit() * traceRay(scene, refracted, ior, depth + 1);
-        }
-
-        if (mtl.isReflector()) {
-            // Reflected ray
-            Ray reflected = ray.reflect(event);
-
-            // Reflected ray contribution
-            color += mtl.getSpec() * traceRay(scene, reflected, ior, depth + 1);
+            color += mtl.getTransmit() * traceRay(refracted, ior, depth + 1);
         }
     }
-
-    if (!event.hit() && ray.isPrimary())
-        scene.getCamera().film().addNormalSample(pixel.x, pixel.y, -ray.dir());
 
     return color;
 }
 
-bool WhittedRayTracer::hasCompleted() {
+bool WhittedRayTracer::hasCompleted() const {
     return _renderTask->isDone();
 }
 

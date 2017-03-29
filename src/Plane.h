@@ -8,17 +8,22 @@ namespace Photon {
 
     class Plane : public Geometry {
     public:
-        Plane(const Vec3& normal, float distance) : 
+        Plane(const Normal& normal, Float distance) :
             _normal(normal), _distance(distance) { }
 
-        const Vec3& normal() const;
-        float distance() const;
+        const Normal& normal() const;
+        Float distance() const;
 
         bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
         bool isOccluded(const Ray& ray) const;
+
+        Bounds3 bounds() const {
+            // The plane is unbounded
+            return Bounds3();
+        }
     private:
-        Vec3 _normal;
-        float _distance; // Distance to origin
+        Normal _normal;
+        Float _distance; // Distance to origin
     };
 
 }

@@ -7,14 +7,14 @@ namespace Photon {
 
     class Cylinder : public Geometry {
     public:
-        Cylinder(const Vec3& base, float baseRadius, const Vec3& apex, float apexRadius) :
+        Cylinder(const Point3& base, Float baseRadius, const Point3& apex, Float apexRadius) :
             _base(base), _baseRadius(baseRadius), _apex(apex), _apexRadius(apexRadius) { }
 
     private:
-        Vec3 _base;
-        float _baseRadius;
-        Vec3 _apex;
-        float _apexRadius;
+        Point3 _base;
+        Float  _baseRadius;
+        Point3 _apex;
+        Float  _apexRadius;
     };
 
 }

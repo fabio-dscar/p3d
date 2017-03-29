@@ -53,13 +53,13 @@ OpenGLRenderer::OpenGLRenderer(const std::shared_ptr<Scene> scene) {
     uint32 vertInd = 0;
     for (uint32 y = 0; y < _height; y++) {
         for (uint32 x = 0; x < _width; x++) {
-            _points[vertInd++] = (float)x;
-            _points[vertInd++] = (float)y;
+            _points[vertInd++] = Float(x);
+            _points[vertInd++] = Float(y);
         }
     }
 
-    _sizePoints = 2 * film.pixelArea() * sizeof(float);
-    _sizeColors = 3 * film.pixelArea() * sizeof(float);
+    _sizePoints = 2 * film.pixelArea() * sizeof(Float);
+    _sizeColors = 3 * film.pixelArea() * sizeof(Float);
 }
 
 void OpenGLRenderer::initialize(int argc, char* argv[]) {
@@ -147,7 +147,7 @@ void OpenGLRenderer::setupGLUT(int argc, char* argv[]) {
 
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
-    glutInitWindowPosition(0, 0);
+    glutInitWindowPosition(50, 50);
     glutInitWindowSize(_width, _height);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
     glDisable(GL_DEPTH_TEST);
@@ -219,11 +219,21 @@ void OpenGLRenderer::createBufferObjects() {
 
     glBindBuffer(GL_ARRAY_BUFFER, _vboId[0]);
     glEnableVertexAttribArray(VERTEX_COORD_ATTRIB);
+
+#if PHOTON_USE_DOUBLE
+    glVertexAttribPointer(VERTEX_COORD_ATTRIB, 2, GL_DOUBLE, 0, 0, 0);
+#else
     glVertexAttribPointer(VERTEX_COORD_ATTRIB, 2, GL_FLOAT, 0, 0, 0);
+#endif
 
     glBindBuffer(GL_ARRAY_BUFFER, _vboId[1]);
     glEnableVertexAttribArray(COLOR_ATTRIB);
+
+#if PHOTON_USE_DOUBLE
+    glVertexAttribPointer(COLOR_ATTRIB, 3, GL_DOUBLE, 0, 0, 0);
+#else
     glVertexAttribPointer(COLOR_ATTRIB, 3, GL_FLOAT, 0, 0, 0);
+#endif
 
     // Unbind the VAO
     glBindVertexArray(0);

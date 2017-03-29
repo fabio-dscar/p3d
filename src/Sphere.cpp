@@ -2,11 +2,11 @@
 
 using namespace Photon;
 
-const Vec3& Sphere::pos() const {
+const Point3& Sphere::pos() const {
     return _pos;
 }
 
-float Sphere::radius() const {
+Float Sphere::radius() const {
     return _radius;
 }
 
@@ -14,23 +14,23 @@ bool Sphere::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
     Vec3 p = ray.origin() - _pos;
 
     // Solve quadratic
-    float B = glm::dot(p, ray.dir());
-    float C = glm::length2(p) - _radius * _radius;
-    float detSq = B*B - C;
+    Float B = dot(p, ray.dir());
+    Float C = p.lengthSqr() - _radius * _radius;
+    Float detSq = B * B - C;
     if (detSq >= 0.0f) {
-        float det = std::sqrt(detSq);
-        float t = -B - det;
+        Float det = std::sqrt(detSq);
 
+        Float t = -B - det;
         if (ray.inRange(t)) {
             ray.setMaxT(t);
-            evt->setEvent(ray, this, glm::normalize(ray(t) - _pos));
+            evt->setEvent(ray, this, Normal(normalize(ray(t) - _pos)));
             return true;
         }
 
         t = -B + det;
         if (ray.inRange(t)) {
             ray.setMaxT(t);
-            evt->setEvent(ray, this, -glm::normalize(ray(t) - _pos));
+            evt->setEvent(ray, this, -Normal(normalize(ray(t) - _pos)));
             evt->setBackface(true);  // Hit from inside sphere
             return true;
         }
@@ -43,12 +43,12 @@ bool Sphere::isOccluded(const Ray& ray) const {
     Vec3 p = ray.origin() - _pos;
 
     // Solve quadratic
-    float B = glm::dot(p, ray.dir());
-    float C = glm::length2(p) - _radius * _radius;
-    float detSq = B*B - C;
+    Float B = dot(p, ray.dir());
+    Float C = p.lengthSqr() - _radius * _radius;
+    Float detSq = B*B - C;
     if (detSq >= 0.0f) {
-        float det = std::sqrt(detSq);
-        float t = -B - det;
+        Float det = std::sqrt(detSq);
+        Float t = -B - det;
 
         if (ray.inRange(t))
             return true;

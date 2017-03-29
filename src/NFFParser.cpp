@@ -89,24 +89,26 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
 }
 
 void NFFParser::parseLight(Scene& scene) {
-    std::shared_ptr<PointLight> l = std::make_shared<PointLight>();
+    Light* l = new PointLight();
 
     // Parse position
-    l->setPosition(parseVector3());
+    Vec3 v = parseVector3();
+    l->setPosition(Point3(v.x, v.y, v.z));
 
     // Parse color if available
     if (!isBufferEmpty())
         l->setColor(parseVector3());
+
 
     // Add light to scene
     scene.addLight(l);
 }
 
 void NFFParser::parseSphere(Scene& scene) {
-    Vec3 pos;
-    float radius;
+    Point3 pos;
+    Float radius;
 
-    pos = parseVector3();
+    pos = parsePoint3();
     radius = parseFloat();
 
     std::shared_ptr<Sphere> s = std::make_shared<Sphere>(pos, radius);
@@ -118,12 +120,12 @@ void NFFParser::parseSphere(Scene& scene) {
 
 void NFFParser::parseCylinder(Scene& scene) {
     loadLine();
-    Vec3 base = parseVector3();
-    float baseRadius = parseFloat();
+    Point3 base = parsePoint3();
+    Float baseRadius = parseFloat();
 
     loadLine();
-    Vec3 apex = parseVector3();
-    float apexRadius = parseFloat();
+    Point3 apex = parsePoint3();
+    Float apexRadius = parseFloat();
 
     std::shared_ptr<Cylinder> c = std::make_shared<Cylinder>(base, baseRadius, apex, apexRadius);
     c->addMaterial(_material);
@@ -147,10 +149,10 @@ void NFFParser::parsePlane(Scene& scene) {
     Vec3 p1p2 = p2 - p1;
     Vec3 p1p3 = p3 - p1;
 
-    Vec3 normal = glm::normalize(glm::cross(p1p2, p1p3));
+    Normal normal = Normal(normalize(cross(p1p2, p1p3)));
 
     // Project an arbitrary position vector on the plane into the unit normal
-    float dist = glm::dot(normal, p1); 
+    Float dist = dot(normal, p1);
 
     std::shared_ptr<Plane> pl = std::make_shared<Plane>(normal, dist);
     pl->addMaterial(_material);
@@ -166,21 +168,21 @@ void NFFParser::parsePolygon(Scene& scene) {
 
     // Calculate plane normal vector
     loadLine();
-    Vec3 p1 = parseVector3();
+    Point3 p1 = parsePoint3();
     loadLine();
-    Vec3 p2 = parseVector3();
+    Point3 p2 = parsePoint3();
     loadLine();
-    Vec3 p3 = parseVector3();
+    Point3 p3 = parsePoint3();
 
     Vec3 p1p2 = p2 - p1;
     Vec3 p1p3 = p3 - p1;
 
     // Check if edges make non-zero angle
-    float angle = glm::dot(p1p2, p1p3);
-    if (std::abs(angle) < 1e-9f)
+    Float angle = dot(p1p2, p1p3);
+    if (std::abs(angle) < 1e-10)
         throwError("Invalid polygon description.");
 
-    Vec3 normal = glm::normalize(glm::cross(p1p2, p1p3));
+    Normal normal = Normal(normalize(cross(p1p2, p1p3)));
 
     if (numPts == 3) {
         std::shared_ptr<Triangle> tri = std::make_shared<Triangle>(p1, p2, p3, normal);
@@ -191,12 +193,17 @@ void NFFParser::parsePolygon(Scene& scene) {
     } else {
         std::shared_ptr<Polygon> pol = std::make_shared<Polygon>();
 
+        pol->addVertex(p1);
+        pol->addVertex(p2);
+        pol->addVertex(p3);
+
         pol->setNormal(normal);
 
         // Parse the other vertices, if any
         for (int i = 0; i < numPts - 3; i++) {
             loadLine();
-            pol->addVertex(parseVector3());
+            Vec3 v = parseVector3();
+            pol->addVertex(Point3(v.x, v.y, v.z));
         }
 
         // Add polygon
@@ -212,28 +219,28 @@ void NFFParser::parsePolygonPatch(Scene& scene) {
 
     // Calculate plane normal vector
     loadLine();
-    PatchVertex p1 = { parseVector3(), parseVector3() };
+    Vertex p1 = { parsePoint3(), Normal(parseVector3()) };
     loadLine();
-    PatchVertex p2 = { parseVector3(), parseVector3() };
+    Vertex p2 = { parsePoint3(), Normal(parseVector3()) };
     loadLine();
-    PatchVertex p3 = { parseVector3(), parseVector3() };
+    Vertex p3 = { parsePoint3(), Normal(parseVector3()) };
 
     Vec3 p1p2 = p2._vertex - p1._vertex;
     Vec3 p1p3 = p3._vertex - p1._vertex;
 
     // Check if edges make non-zero angle
-    float angle = glm::dot(p1p2, p1p3);
+    Float angle = dot(p1p2, p1p3);
     if (std::abs(angle) < 1e-9f)
         throwError("Invalid polygon description.");
 
-    Vec3 normal = glm::normalize(glm::cross(p1p2, p1p3));
+    Normal normal = Normal(normalize(cross(p1p2, p1p3)));
 
     std::shared_ptr<PolygonPatch> pol = std::make_shared<PolygonPatch>();
     pol->setNormal(normal);
 
     for (int i = 0; i < numPts - 3; i++) {
         loadLine();
-        pol->addVertex(parseVector3(), parseVector3());
+        pol->addVertex(parsePoint3(), Normal(parseVector3()));
     }
 
     pol->addMaterial(_material);
@@ -243,8 +250,8 @@ void NFFParser::parsePolygonPatch(Scene& scene) {
 }
 
 void NFFParser::parseBox(Scene & scene) {
-    Vec3 min = parseVector3();
-    Vec3 max = parseVector3();
+    Point3 min = parsePoint3();
+    Point3 max = parsePoint3();
 
     std::shared_ptr<Box> box = std::make_shared<Box>(min, max);
     box->addMaterial(_material);
@@ -254,11 +261,11 @@ void NFFParser::parseBox(Scene & scene) {
 
 void NFFParser::parseMaterial(Scene& scene) {
     Color3 color = parseVector3();
-    float diff = parseFloat();
-    float spec = parseFloat();
-    float shininess = parseFloat();
-    float transmit = parseFloat();
-    float ior = parseFloat();
+    Float diff = parseFloat();
+    Float spec = parseFloat();
+    Float shininess = parseFloat();
+    Float transmit = parseFloat();
+    Float ior = parseFloat();
 
     Material mtl(color, diff, spec, shininess, transmit, ior);
 
@@ -267,21 +274,22 @@ void NFFParser::parseMaterial(Scene& scene) {
 
 void NFFParser::parseCamera(Scene& scene) {
     std::string cmd;
-    Vec3 from, target, up;
-    float fov, near;
-    Vec2u res;
+    Point3 from, target;
+    Vec3 up;
+    Float fov, near;
+    Vec2ui res;
 
     // 'from' line
     loadLine();
     _lineBuffer >> cmd;
     if (cmd.compare(0, 4, "from") == 0)
-        from = parseVector3();
+        from = parsePoint3();
 
     // 'at' line
     loadLine();
     _lineBuffer >> cmd;
     if (cmd.compare(0, 2, "at") == 0)
-        target = parseVector3();
+        target = parsePoint3();
 
     // 'up' line
     loadLine();
@@ -311,8 +319,8 @@ void NFFParser::parseCamera(Scene& scene) {
     scene.addCamera(cam);
 }
 
-float NFFParser::parseFloat() {
-    float x;
+Float NFFParser::parseFloat() {
+    Float x;
     _lineBuffer >> x;
 
     if (_lineBuffer.fail())
@@ -332,7 +340,7 @@ uint32 NFFParser::parseInt() {
 }
 
 const Vec2 NFFParser::parseVector2() {
-    float x, y;
+    Float x, y;
     _lineBuffer >> x;
     _lineBuffer >> y;
 
@@ -343,7 +351,7 @@ const Vec2 NFFParser::parseVector2() {
 }
 
 const Vec3 NFFParser::parseVector3() {
-    float x, y, z;
+    Float x, y, z;
     _lineBuffer >> x;
     _lineBuffer >> y;
     _lineBuffer >> z;
@@ -352,4 +360,16 @@ const Vec3 NFFParser::parseVector3() {
         throwError("Failed to parse file.");
 
     return Vec3(x, y, z);
+}
+
+const Point3 NFFParser::parsePoint3() {
+    Float x, y, z;
+    _lineBuffer >> x;
+    _lineBuffer >> y;
+    _lineBuffer >> z;
+
+    if (_lineBuffer.fail())
+        throwError("Failed to parse file.");
+
+    return Point3(x, y, z);
 }

@@ -4,18 +4,19 @@
 #include <vector>
 
 #include <MathDefs.h>
-#include <Ray.h>
-#include <Scene.h>
 #include <Threading.h>
-
-#include <glm/ext.hpp>
+#include <Renderer.h>
+#include <Random.h>
 
 using namespace Photon::Threading;
 
 namespace Photon {
 
-    static const uint32 MAX_DEPTH = 6;
-    static const uint32 TILE_SIZE = 128;
+    // Forward declaration
+    class Scene;
+
+    static const uint32 MAX_DEPTH = 8;
+    static const uint32 TILE_SIZE = 64;
 
     typedef std::function<void()> EndCallback;
 
@@ -29,26 +30,30 @@ namespace Photon {
 
     class WhittedRayTracer {
     public:
-        WhittedRayTracer(uint32 maxDepth, Scene& scene) 
-            : _maxDepth(maxDepth), _scene(&scene), _renderTask(nullptr), _tiles() { }
+        WhittedRayTracer(const Scene& scene, uint32 maxDepth, uint32 spp = 1)
+            : _maxDepth(maxDepth), _scene(&scene), _renderTask(nullptr), _tiles(), _random(), _spp(spp) { }
         
+        WhittedRayTracer(const Scene& scene, RendererSettings settings) { }
+
         void initialize();
         void startRender(EndCallback endCallback = EndCallback());
 
-        bool hasCompleted();
+        bool hasCompleted() const;
         void waitForCompletion();
         void cleanup();
 
     private:
-        void renderTile(const Scene& scene, uint32 tId, uint32 tileId) const;
+        void renderTile(uint32 tId, uint32 tileId) const;
 
         // Whitted algorithm
-        Color3 traceRay(const Scene& scene, const Ray& ray, float ior, unsigned int depth, const Vec2u& pixel = Vec2u(0)) const;
+        Color3 traceRay(const Ray& ray, Float ior, uint32 depth, const Vec2ui& pixel = Vec2ui(0)) const;
 
+        uint32 _spp;
         uint32 _maxDepth;
-        Scene* _scene;
+        Scene const* _scene;
         std::vector<ImageTile> _tiles;
         std::shared_ptr<Task> _renderTask;
+        RandGen _random;
     };
     
 }

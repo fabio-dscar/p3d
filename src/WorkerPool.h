@@ -41,7 +41,7 @@ namespace Photon {
         private:
             uint32 _numThreads;
             std::vector<std::unique_ptr<std::thread>> _workers;
-            std::atomic<bool> _terminateFlag;
+            std::atomic<bool> _shutdown;
 
             std::deque<std::shared_ptr<Task>> _tasks;
             std::mutex _taskMutex;

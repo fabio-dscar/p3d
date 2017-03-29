@@ -1,18 +1,20 @@
 #pragma once
 
+#include <MathDefs.h>
+
 namespace Photon {
 
     class Light {
     public:
         Light() : _pos(0.0f), _color(1.0f) {}
-        Light(const Vec3& pos) : _pos(pos), _color(1.0f) {}
-        Light(const Vec3& pos, const Color3& color) : _pos(pos), _color(color) {}
+        Light(const Point3& pos) : _pos(pos), _color(1.0f) {}
+        Light(const Point3& pos, const Color3& color) : _pos(pos), _color(color) {}
 
-        void setPosition(const Vec3& pos) {
+        void setPosition(const Point3& pos) {
             _pos = pos;
         }
 
-        const Vec3& getPosition() const {
+        const Point3& pos() const {
             return _pos;
         }
 
@@ -20,12 +22,12 @@ namespace Photon {
             _color = color;
         }
 
-        const Color3& getColor() const {
+        const Color3& color() const {
             return _color;
         }
 
     private:
-        Vec3 _pos;
+        Point3 _pos;
         Color3 _color;
     };
 

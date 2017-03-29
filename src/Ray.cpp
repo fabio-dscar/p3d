@@ -4,7 +4,7 @@
 
 using namespace Photon;
 
-const Vec3& Ray::origin() const {
+const Point3& Ray::origin() const {
     return _origin;
 }
 
@@ -12,11 +12,11 @@ const Vec3& Ray::dir() const {
     return _dir;
 }
 
-float Ray::arg(const Vec3& point) const {
-    return glm::length(point - _origin);
+Float Ray::arg(const Point3& point) const {
+    return (point - _origin).length();
 }
 
-void Photon::Ray::setMaxT(float t) const {
+void Photon::Ray::setMaxT(Float t) const {
     _maxT = t;
 }
 
@@ -24,19 +24,19 @@ void Ray::setPrimary(bool isPrimary) {
     _isPrimary = isPrimary;
 }
 
-float Ray::farT() const {
+Float Ray::maxT() const {
     return _maxT;
 }
 
-float Ray::nearT() const {
+Float Ray::minT() const {
     return _minT;
 }
 
-Vec3 Ray::hitPoint() const {
+Point3 Ray::hitPoint() const {
     return _origin + _maxT * _dir;
 }
 
-bool Ray::inRange(float t) const {
+bool Ray::inRange(Float t) const {
     return t > _minT && t < _maxT;
 }
 
@@ -46,33 +46,33 @@ bool Ray::isPrimary() const {
 
 Ray Ray::reflect(const SurfaceEvent& evt) const {
     // Calculate reflected vector
-    float NdotD = glm::dot(evt.normal(), -_dir);
-    Vec3 r = glm::normalize(2.0f * NdotD * evt.normal() - (-_dir));
+    Float NdotD = dot(-_dir, evt.normal());
+    Vec3 r = normalize(2.0f * NdotD * evt.normal() - (-_dir));
 
     return Ray(evt.point(), r);
 }
 
-Ray Ray::refract(const SurfaceEvent& evt, float ior) const {
-    float eta = ior / evt.obj()->getMaterial().getIor();
+Ray Ray::refract(const SurfaceEvent& evt, Float ior) const {
+    Float eta = ior / evt.obj()->getMaterial().getIor();
     if (evt.backface()) // Check if we are leaving the material
         eta = ior / eta;
 
-    Vec3 vt = glm::dot(-_dir, evt.normal()) * evt.normal() - (-_dir);
-    float sinIn = glm::length(vt);
-    float sinTr = eta * sinIn;
+    Vec3 vt = dot(-_dir, evt.normal()) * evt.normal() - (-_dir);
+    Float sinIn = vt.length();
+    Float sinTr = eta * sinIn;
 
     // If total internal reflection
-    if ((sinTr * sinTr) > 1.0f) 
-        return reflect(evt);  // Return reflection instead
+    if ((sinTr * sinTr) > 1.0f)
+        return reflect(evt);
 
-    float cosTr = std::sqrt(1.0f - (sinTr * sinTr));
+    Float cosTr = std::sqrt(1.0f - (sinTr * sinTr));
 
     // Calculate refracted direction
-    Vec3 t = sinTr * glm::normalize(vt) + cosTr * (-evt.normal());
+    Vec3 t = sinTr * normalize(vt) + cosTr * -evt.normal();
     
-    return Ray(evt.point(), glm::normalize(t));
+    return Ray(evt.point(), normalize(t));
 }
 
-Vec3 Ray::operator()(float t) const {
+Point3 Ray::operator()(Float t) const {
     return _origin + t * _dir;
 }

@@ -2,8 +2,6 @@
 
 #include <MathDefs.h>
 
-#define USE_GLM
-
 #define USE_MULTITHREADING 0
 
 namespace Photon {

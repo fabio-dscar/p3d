@@ -32,10 +32,11 @@ namespace Photon {
             static void parseMaterial(Scene& scene);
             static void parseCamera(Scene& scene);
 
-            static float      parseFloat();
-            static uint32     parseInt();
-            static const Vec2 parseVector2();
-            static const Vec3 parseVector3();
+            static Float        parseFloat();
+            static uint32       parseInt();
+            static const Vec2   parseVector2();
+            static const Vec3   parseVector3();
+            static const Point3 parsePoint3();
 
             static bool isBufferEmpty();
             static bool loadLine();

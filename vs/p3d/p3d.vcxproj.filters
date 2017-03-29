@@ -61,6 +61,15 @@
     <Filter Include="Source Files\Math">
       <UniqueIdentifier>{5685a5e1-a6c1-4ee7-8cf6-727bf3415ec4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Sampler">
+      <UniqueIdentifier>{6731e4ce-7391-4711-974b-39c99ae8de7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Grid">
+      <UniqueIdentifier>{5a60a355-689d-41d9-b079-f98352be98bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Grid">
+      <UniqueIdentifier>{816ddd8f-197e-48be-99e4-3c705fa0819b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp">
@@ -102,6 +111,15 @@
     <ClCompile Include="..\..\src\NFFParser.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\UniformGrid.cpp">
+      <Filter>Source Files\Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Bounds.cpp">
+      <Filter>Source Files\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Renderer.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Utils.h">
@@ -121,9 +139,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Vector.h">
       <Filter>Header Files\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Definitions.h">
-      <Filter>Header Files\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Geometry.h">
       <Filter>Header Files\Geometry</Filter>
@@ -181,6 +196,33 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Box.h">
       <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\IntTypes.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Matrix.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PhotonTracer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Transform.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Timer.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Random.h">
+      <Filter>Header Files\Sampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bounds.h">
+      <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UniformGrid.h">
+      <Filter>Header Files\Grid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ParamList.h">
+      <Filter>Header Files\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,7 +3,6 @@
 #include <vector>
 
 #include <MathDefs.h>
-#include <Vector.h>
 #include <Ray.h>
 
 namespace Photon {
@@ -18,7 +17,7 @@ namespace Photon {
             _depth.resize(_width * _height);*/
         }
 
-        Film(const Vec2u& res)
+        Film(const Vec2ui& res)
             : _width(res.x), _height(res.y) { 
         
             _film.resize(_width * _height * 3);
@@ -34,8 +33,8 @@ namespace Photon {
             return _height;
         }
 
-        float aspect() const {
-            return (float)_width / (float)_height;
+        Float aspect() const {
+            return Float(_width) / Float(_height);
         }
 
         uint32 pixelArea() const {
@@ -43,71 +42,71 @@ namespace Photon {
         }
 
         void addColorSample(uint32 x, uint32 y, const Color3& color) {
-            uint32 idx = x + _height * y;
+            uint32 idx = x + _width * y;
 
-            _film[3*idx] = color.r;
-            _film[3*idx+1] = color.g;
-            _film[3*idx+2] = color.b;
+            _film[3*idx] = color.x;
+            _film[3*idx+1] = color.y;
+            _film[3*idx+2] = color.z;
         }
 
         void addNormalSample(uint32 x, uint32 y, const Vec3& normal) {
-            uint32 idx = x + _height * y;
+            uint32 idx = x + _width * y;
 
             /*_normal[3 * idx] = normal.x;
             _normal[3 * idx + 1] = normal.y;
             _normal[3 * idx + 2] = normal.z;*/
         }
 
-        void addDepthSample(uint32 x, uint32 y, float dist) {
-            //_depth[x + _height * y] = dist;
+        void addDepthSample(uint32 x, uint32 y, Float dist) {
+            //_depth[x + _width * y] = dist;
         }
 
-        const std::vector<float>& image() const {
+        const std::vector<Float>& image() const {
             return _film;
         }
 
-        const float* image(uint32 row) const {
+        /*const Float* image(uint32 row) const {
             uint32 idx = _width * row;
 
             return &_film[idx * 3];
-        }
+        }*/
 
         Color3 operator()(uint32 x, uint32 y) const {
-            uint32 idx = x + _height * y;
+            uint32 idx = x + _width * y;
 
             return Color3(_film[3*idx], _film[3*idx+1], _film[3*idx+2]);
         }
 
     private:
         uint32 _width, _height;
-        std::vector<float> _film;
+        std::vector<Float> _film;
         /*std::vector<float> _normal;
         std::vector<float> _depth;*/
     };
 
     class Camera {
     public:
-        Camera() : _film(DEFAULT_WIDTH, DEFAULT_HEIGHT) { }
+        Camera() : _film(1280, 720) { }
 
-        Camera(const Vec3& pos, const Vec3& up, const Vec3& target, float fov, float hither, Vec2u res) :
+        Camera(const Point3& pos, const Vec3& up, const Point3& target, Float fov, Float hither, Vec2ui res) :
             _pos(pos), _up(up), _target(target), _fov(fov), _near(hither), _film(res) { 
 
             calculateBasis();
         }
 
-        uint32 getWidth() const {
+        uint32 width() const {
             return _film.width();
         }
 
-        uint32 getHeight() const {
+        uint32 height() const {
             return _film.height();
         }
 
-        const Vec3& getPosition() const {
+        const Point3& pos() const {
             return _pos;
         }
 
-        void setPosition(const Vec3& pos) {
+        void setPosition(const Point3& pos) {
             _pos = pos;
         }
         
@@ -115,32 +114,38 @@ namespace Photon {
             _up = up;
         }
 
-        const Vec3& getTarget() const {
+        const Point3& target() const {
             return _target;
         }
 
-        void setTarget(const Vec3& target) {
+        void setTarget(const Point3& target) {
             _target = target;
         }
 
-        void setFov(float fov) {
+        void fov(Float fov) {
             _fov = fov;
         }
 
-        float getNear() const {
-            return _near;
-        }
-
-        void setNear(float hither) {
+        void setNear(Float hither) {
             _near = hither;
         }
 
         void calculateBasis() {
-            _n = glm::normalize(_pos - _target);
-            _u = glm::normalize(glm::cross(_up, _n));
-            _v = glm::normalize(glm::cross(_n, _u));
-            
-            _h = 2.0f * glm::length(_pos - _target) * std::tan(glm::radians(_fov) / 2.0f);
+            _n = normalize(_pos - _target);
+            _u = normalize(cross(_up, _n));
+            _v = normalize(cross(_n, _u));
+
+            /*
+            Vec3 a, b;
+            Math::basisFromVector(normalize(_pos - _target), &a, &b);
+            a.normalize();
+            b.normalize();
+
+            Float r = Math::dot(a, b);
+            Float d = Math::dot(_n, a);
+            */
+
+            _h = 2.0 * (_pos - _target).length() * std::tan(Math::radians(_fov) / 2.0);
             _w = _film.width() / _film.height() * _h;
         }
 
@@ -156,24 +161,38 @@ namespace Photon {
             return _n;
         }
 
-        float getW() const {
+        Float getW() const {
             return _w;
         }
 
-        float getH() const {
+        Float getH() const {
             return _h;
         }
 
-        Ray getPrimaryRay(const Vec2u pixel) const {
+        Ray getPrimaryRay(const Vec2ui pixel) const {
             return getPrimaryRay(pixel.x, pixel.y);
         }
 
-        Ray getPrimaryRay(int x, int y) const {
-            Vec3 dir = -glm::length(_pos - _target) * _n 
-                + _h * ((float)y / (float)_film.height() - 0.5f) * _v
-                + _w * ((float)x / (float)_film.width() - 0.5f) * _u;
+        Ray getPrimaryRay(uint32 x, uint32 y) const {
+            Vec3 dir = -(_pos - _target).length() * _n 
+                + _h * ((Float)y / (Float)_film.height() - 0.5f) * _v
+                + _w * ((Float)x / (Float)_film.width() - 0.5f) * _u;
 
-            dir = glm::normalize(dir);
+            dir = normalize(dir);
+
+            // Create primary ray
+            Ray r(_pos, dir, _near);
+            r.setPrimary(true);
+
+            return r;
+        }
+
+        Ray getPrimaryRay(Float x, Float y) const {
+            Vec3 dir = -(_pos - _target).length() * _n
+                + _h * (y / (Float)_film.height() - 0.5f) * _v
+                + _w * (x / (Float)_film.width() - 0.5f) * _u;
+
+            dir = normalize(dir);
 
             // Create primary ray
             Ray r(_pos, dir, _near);
@@ -189,16 +208,16 @@ namespace Photon {
     private:
         mutable Film _film;
         
-        Vec3 _pos;
-        Vec3 _target;
+        Point3 _pos;
+        Point3 _target;
         Vec3 _up;
         
-        float _fov;
-        float _near;
+        Float _fov;
+        Float _near;
 
         Vec3 _u, _v, _n;
-        float _h;
-        float _w;
+        Float _h;
+        Float _w;
     };
 
 }

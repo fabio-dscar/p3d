@@ -33,8 +33,7 @@ void Photon::Threading::initThreads(int numThreads) {
 }
 
 void Photon::Threading::parallelFor(uint32 start, uint32 end, uint32 partitions, std::function<void(uint32)> func) {
-    auto taskRun = [&func, start, end](uint32 idx, uint32 /*threadId*/, uint32 num)
-    {
+    auto taskRun = [&func, start, end](uint32 idx, uint32 /*threadId*/, uint32 num) {
         uint32 span = (end - start + num - 1) / num;
         uint32 iStart = start + span*idx;
         uint32 iEnd = std::min(iStart + span, end);

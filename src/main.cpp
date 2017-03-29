@@ -8,16 +8,17 @@
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <json\json.hpp>
+#include <FreeImage.h>
 
+#include <PhotonTracer.h>
 #include <Utils.h>
 #include <Scene.h>
 #include <NFFParser.h>
 #include <Renderer.h>
 #include <OpenGLRenderer.h>
-
-#include <json\json.hpp>
-
-#include <FreeImage.h>
+#include <Threading.h>
+#include <Timer.h>
 
 using namespace Photon;
 using namespace Photon::OpenGL;
@@ -26,7 +27,6 @@ using json = nlohmann::json;
 
 std::shared_ptr<Renderer> _renderer = nullptr;
 std::shared_ptr<OpenGLRenderer> _openglRenderer = nullptr;
-
 std::shared_ptr<Scene> _scene = nullptr;
 
 void finish() {
@@ -52,8 +52,21 @@ void renderOpenGL() {
     }
 }
 
+void mousePress(int button, int state, int x, int y) {
+    std::cout << "Click at pixel: (" << x << ", " << _scene->getCamera().height() - y << ")" << std::endl;
+}
+
+void photonInit() {
+    // Initialize threading
+    Threading::initThreads(Threading::getNumberOfProcessors());
+}
+
+void photonShutdown() {
+
+}
+
 int main(int argc, char* argv[]) {
-    std::string filePath("balls_low.nff");
+    std::string filePath("box.nff");
 
     // Command line arguments
     if (argc < 1) {
@@ -69,11 +82,19 @@ int main(int argc, char* argv[]) {
     if (!_scene)
         Utils::throwError("Failed to load scene.");
 
+    // Init system
+    photonInit();
+
+    // Prepare scene for rendering
+    _scene->prepareRender(true);
+
+    Utils::Timer t;
+
     // Initialize scene renderer and start rendering process
     _renderer = std::make_shared<Renderer>("settings.json");
     _renderer->initialize();
     _renderer->renderScene(_scene);
-
+    
     if (_renderer->settings().renderToScreen) {
         // Initialize OpenGL renderer
         _openglRenderer = std::make_shared<OpenGLRenderer>(_scene);
@@ -81,15 +102,18 @@ int main(int argc, char* argv[]) {
         _openglRenderer->setDisplayCallback(renderOpenGL);
         _openglRenderer->setReshapeCallback(reshape);
         _openglRenderer->setCleanupCallback(clean);
+        glutMouseFunc(mousePress);
 
         // Start rendering to screen
         _openglRenderer->startRender();
     } else {
         // Just wait for rendering to finish
         _renderer->waitForCompletion();
+        t.stop();
+        std::cout << t.elapsed() / 1000.0 << " s" << std::endl;
         finish();
     }
-    
+
     exit(EXIT_SUCCESS);
 }
 ///////////////////////////////////////////////////////////////////////

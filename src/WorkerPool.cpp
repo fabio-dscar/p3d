@@ -5,7 +5,7 @@ using namespace Photon::Threading;
 
 WorkerPool::WorkerPool(uint32 threadCount)
     : _numThreads(threadCount),
-    _terminateFlag(false) {
+    _shutdown(false) {
     startThreads();
 }
 
@@ -14,7 +14,7 @@ WorkerPool::~WorkerPool() {
 }
 
 std::shared_ptr<Task> WorkerPool::getTask(uint32 &subTaskId) {
-    if (_terminateFlag)
+    if (_shutdown)
         return nullptr;
 
     std::shared_ptr<Task> task = _tasks.front();
@@ -34,13 +34,13 @@ std::shared_ptr<Task> WorkerPool::getTask(uint32 &subTaskId) {
 }
 
 void WorkerPool::runWorker(uint32 threadId) {
-    while (!_terminateFlag) {
+    while (!_shutdown) {
         uint32 subTaskId;
         std::shared_ptr<Task> task;
 
         {   // Start mutex
             std::unique_lock<std::mutex> lock(_taskMutex);
-            _taskCond.wait(lock, [this](){ return _terminateFlag || !_tasks.empty(); });
+            _taskCond.wait(lock, [this](){ return _shutdown || !_tasks.empty(); });
             task = getTask(subTaskId);
         }   // End mutex
 
@@ -50,29 +50,29 @@ void WorkerPool::runWorker(uint32 threadId) {
 }
 
 void WorkerPool::startThreads() {
-    _terminateFlag = false;
+    _shutdown = false;
 
-    for (uint32 i = 0; i < _numThreads; ++i) {
-        _workers.emplace_back(new std::thread(&WorkerPool::runWorker, this, i));
-        _idToNumericId.insert(std::make_pair(_workers.back()->get_id(), i));
+    for (uint32 n = 0; n < _numThreads; ++n) {
+        _workers.emplace_back(new std::thread(&WorkerPool::runWorker, this, n));
+        _idToNumericId.insert(std::make_pair(_workers.back()->get_id(), n));
     }
 }
 
 void WorkerPool::yield(Task &wait) {
     std::chrono::milliseconds waitSpan(10);
-    uint32 id = _numThreads; // Threads not in the pool get a previously unassigned id
+    uint32 id = _numThreads; // If thread outside pool calls this, gets a new id
 
     auto iter = _idToNumericId.find(std::this_thread::get_id());
     if (iter != _idToNumericId.end())
         id = iter->second;
 
-    while (!wait.isDone() && !_terminateFlag) {
+    while (!wait.isDone() && !_shutdown) {
         uint32 subTaskId;
         std::shared_ptr<Task> task;
 
         {
             std::unique_lock<std::mutex> lock(_taskMutex);
-            if (!_taskCond.wait_for(lock, waitSpan, [this](){return _terminateFlag || !_tasks.empty(); }))
+            if (!_taskCond.wait_for(lock, waitSpan, [this](){ return _shutdown || !_tasks.empty(); }))
                 continue;
 
             task = getTask(subTaskId);
@@ -90,7 +90,7 @@ void WorkerPool::reset() {
 }
 
 void WorkerPool::stop() {
-    _terminateFlag = true;
+    _shutdown = true;
 
     {   
         std::unique_lock<std::mutex> lock(_taskMutex);

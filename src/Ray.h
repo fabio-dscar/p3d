@@ -15,42 +15,43 @@ namespace Photon {
     // 
     class Ray {
     private:
-        Vec3 _origin;
-        Vec3 _dir;
-        float _minT;
-        mutable float _maxT;
-        bool _isPrimary;
+        Point3        _origin;
+        Vec3          _dir;       
+        bool          _isPrimary;
+        Float         _minT;
+        mutable Float _maxT;
 
     public:
-        Ray() : _origin(0.0f), _dir(0.0f), _isPrimary(false) { }
-        Ray(const Vec3& origin, const Vec3& direction) 
+        Ray() : _origin(0), _dir(0), _isPrimary(false) { }
+        Ray(const Point3& origin, const Vec3& direction) 
             : _origin(origin), _dir(direction), _minT(F_RAY_OFFSET), _maxT(F_INFINITY), _isPrimary(false) { }
 
-        Ray(const Vec3& origin, const Vec3& direction, float minT, float maxT = F_INFINITY)
+        Ray(const Point3& origin, const Vec3& direction, Float minT, Float maxT = F_INFINITY)
             : _origin(origin), _dir(direction), _minT(minT), _maxT(maxT), _isPrimary(false) { }
 
-        Ray(const Vec3& origin, const Vec3& direction, const Vec3& target)
-            : _origin(origin), _dir(direction), _minT(F_RAY_OFFSET), _isPrimary(false) {
+        Ray(const Point3& origin, const Point3& target)
+            : _origin(origin), _minT(F_RAY_OFFSET), _isPrimary(false) {
         
+            _dir = normalize(target - origin);
             _maxT = arg(target);
         }
 
-        const Vec3& origin() const;
+        const Point3& origin() const;
         const Vec3& dir() const;
-        float farT() const;
-        float nearT() const;
+        Float maxT() const;
+        Float minT() const;
         bool isPrimary() const;
         
-        Vec3 hitPoint() const;
-        Vec3 Ray::operator()(float t) const;
-        float arg(const Vec3& point) const;
-        bool inRange(float t) const;
+        Point3 hitPoint() const;
+        Point3 Ray::operator()(Float t) const;
+        Float arg(const Point3& point) const;
+        bool inRange(Float t) const;
         
-        void setMaxT(float t) const;
+        void setMaxT(Float t) const;
         void setPrimary(bool isPrimary);
 
         Ray reflect(const SurfaceEvent& evt) const;
-        Ray refract(const SurfaceEvent& evt, float inIOR) const; 
+        Ray refract(const SurfaceEvent& evt, Float inIOR) const;
     };
 
     class RayEvent {
@@ -61,25 +62,29 @@ namespace Photon {
         RayEvent(const Ray& ray) 
             : _point(ray.hitPoint()), _wo(-ray.dir()), _normal(0) { }
 
-        RayEvent(const Vec3& point, const Vec3& normal, const Vec3& wo) 
+        RayEvent(const Point3& point, const Normal& normal, const Vec3& wo)
             : _point(point), _normal(normal), _wo(wo) { }
 
         Vec3 wo() const {
             return _wo;
         }
 
-        Vec3 normal() const {
+        Normal normal() const {
             return _normal;
         }
 
-        Vec3 point() const {
+        Point3 point() const {
             return _point;
         }
 
+        Ray spawnRay(const Point3& target) const {
+            return Ray(_point, target);
+        }
+
     protected:
-        Vec3 _point;   // Point of interaction
-        Vec3 _wo;      // -ray.dir, the outgoing direction in shading calculations
-        Vec3 _normal;  // Normal at interaction point
+        Point3 _point;   // Point of interaction
+        Vec3   _wo;      // -ray.dir, the outgoing direction in shading calculations
+        Normal _normal;  // Normal at interaction point
     };
 
     class SurfaceEvent : public RayEvent {
@@ -90,7 +95,7 @@ namespace Photon {
         SurfaceEvent(const Ray& ray, const Geometry* obj) 
             : RayEvent(ray), _obj(obj), _backface(false) { }
 
-        void setEvent(const Ray& ray, const Geometry* obj, const Vec3& normal) {
+        void setEvent(const Ray& ray, const Geometry* obj, const Normal& normal) {
             _obj = obj;
             _point = ray.hitPoint();
             _normal = normal;

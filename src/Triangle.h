@@ -9,20 +9,27 @@ namespace Photon {
 
     class Triangle : public Geometry {
     public:
-        Triangle(const Vec3& v1, const Vec3& v2, const Vec3& v3);
-        Triangle(const Vec3& v1, const Vec3& v2, const Vec3& v3, const Vec3& normal) 
-            : _vertices{ v1, v2, v3 }, _normal(normal) { }
+        Triangle(const Point3& p1, const Point3& p2, const Point3& p3);
+        Triangle(const Point3& p1, const Point3& p2, const Point3& p3, const Normal& normal)
+            : _vertices{ p1, p2, p3 }, _normal(normal) { }
 
-        void setVertices(const Vec3& v1, const Vec3& v2, const Vec3& v3);
-        const std::array<Vec3, 3>& vertices() const;
+        void setVertices(const Point3& p1, const Point3& p2, const Point3& p3);
+        const std::array<Point3, 3>& vertices() const;
 
-        const Vec3& normal() const;
+        const Normal& normal() const;
 
         bool intersectRay(const Ray& ray, SurfaceEvent* info) const;
         bool isOccluded(const Ray& ray) const;
+
+        Bounds3 bounds() const {
+            Point3 max = Math::max(_vertices[0], Math::max(_vertices[1], _vertices[2]));
+            Point3 min = Math::min(_vertices[0], Math::min(_vertices[1], _vertices[2]));
+
+            return Bounds3(min + -F_EPSILON, max + F_EPSILON);
+        }
     private:
-        std::array<Vec3, 3> _vertices;
-        Vec3 _normal;
+        std::array<Point3, 3> _vertices;
+        Normal _normal;
     };
 
 }

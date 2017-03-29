@@ -2,24 +2,29 @@
 
 #include <Vector.h>
 #include <Geometry.h>
-
-#include <glm/gtx/norm.hpp>
+#include <Bounds.h>
 
 namespace Photon {
 
     class Sphere : public Geometry {
     public:
-        Sphere(const Vec3& position, float radius) 
+        Sphere(const Point3& position, Float radius)
             : _pos(position), _radius(radius) { }
         
-        const Vec3& pos() const;
-        float radius() const;
+        const Point3& pos() const;
+        Float radius() const;
 
         bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
         bool isOccluded(const Ray& ray) const;
+
+        Bounds3 bounds() const {
+            Vec3 radVec(_radius + F_EPSILON);
+
+            return Bounds3(_pos - radVec, _pos + radVec);
+        }
     private:
-        Vec3 _pos;
-        float _radius;
+        Point3 _pos;
+        Float _radius;
     };
 
 }
