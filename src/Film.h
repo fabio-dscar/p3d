@@ -78,7 +78,7 @@ namespace Photon {
 
     private:
         Color3 filmicHDR(Color3 in) {
-            const Float EXPOSURE = 0.8; // 0.6
+            const Float EXPOSURE = 0.6; // 0.6
 
             in = EXPOSURE * in;
 
@@ -95,9 +95,9 @@ namespace Photon {
             //std::cout << in.x << ", " << in.y << ", " << in.z << std::endl;
             //std::cout << res.x << ", " << res.y << ", " << res.z << std::endl;
 
-            return pow(res, 0.9);
+            //return pow(res, 0.9);
 
-            //return pow(res, 1.0 / 1.0); // 1.0 / 1.6
+            return pow(res, 1.0 / 1.6); // 1.0 / 1.6
         }
 
         uint32 _width, _height;

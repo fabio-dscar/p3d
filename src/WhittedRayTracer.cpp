@@ -50,19 +50,19 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
             std::vector<Point2> pixelSamples;
             std::vector<Point2> lensSamples;
             _random.jittered2DArray(SAMPLES, SAMPLES, pixelSamples, true);
-            //_random.jittered2DArray(SAMPLES, SAMPLES, lensSamples, true);
+            _random.jittered2DArray(SAMPLES, SAMPLES, lensSamples, true);
 
             // Compute ray tracing
             Color3 color(0);
             for (uint32 i = 0; i < pixelSamples.size(); ++i) {
                 Point2 ps = pixelSamples[i];
-                //Point2 ls = lensSamples[i];
+                Point2 ls = lensSamples[i];
 
-                //Point2 rand = Point2(ls.x, ls.y);
+                Point2 rand = Point2(ls.x, ls.y);
                 Point2 p = Point2(pixel.x + ps.x, pixel.y + ps.y);
-                //Ray ray = camera.getPrimaryRayDOF(p, rand);
+                Ray ray = camera.getPrimaryRayDOF(p, rand);
 
-                Ray ray = camera.getPrimaryRay(pixel.x + ps.x, pixel.y + ps.y);
+                //Ray ray = camera.getPrimaryRay(pixel.x + ps.x, pixel.y + ps.y);
 
                 color += traceRay(ray, 1.0, 1, pixel);
             }
@@ -159,7 +159,7 @@ Color3 WhittedRayTracer::estimateDirect(const SurfaceEvent& evt) const {
                 // If it is not occluded, calculate radiance
                 if (!_scene->isOccluded(shadowRay)) {
                     Float distSqr = 1.0 / Math::distSqr(sample.pos, evt.point());
-                    distSqr = 1;
+                    //distSqr = 1;
                     contrib += distSqr * light->L(evt, dir) * mtl.calcRadiance(dir, evt) / sample.pdf;
                 }
             }
