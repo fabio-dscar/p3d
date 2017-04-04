@@ -6,7 +6,7 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
-#include <MathDefs.h>
+#include <PhotonMath.h>
 
 #define CAPTION "Photon Tracer"
 

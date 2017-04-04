@@ -2,87 +2,12 @@
 
 #include <vector>
 
-#include <MathDefs.h>
+#include <PhotonMath.h>
 #include <Ray.h>
+#include <Sampling.h>
+#include <Film.h>
 
 namespace Photon {
-
-    class Film {
-    public:
-        Film(uint32 width, uint32 height) 
-            : _width(width), _height(height) { 
-
-            _film.resize(_width * _height * 3);
-            /*_normal.resize(_width * _height * 3);
-            _depth.resize(_width * _height);*/
-        }
-
-        Film(const Vec2ui& res)
-            : _width(res.x), _height(res.y) { 
-        
-            _film.resize(_width * _height * 3);
-            /*_normal.resize(_width * _height * 3);
-            _depth.resize(_width * _height);*/
-        }
-
-        uint32 width() const {
-            return _width;
-        }
-
-        uint32 height() const {
-            return _height;
-        }
-
-        Float aspect() const {
-            return Float(_width) / Float(_height);
-        }
-
-        uint32 pixelArea() const {
-            return _width * _height;
-        }
-
-        void addColorSample(uint32 x, uint32 y, const Color3& color) {
-            uint32 idx = x + _width * y;
-
-            _film[3*idx] = color.x;
-            _film[3*idx+1] = color.y;
-            _film[3*idx+2] = color.z;
-        }
-
-        void addNormalSample(uint32 x, uint32 y, const Vec3& normal) {
-            uint32 idx = x + _width * y;
-
-            /*_normal[3 * idx] = normal.x;
-            _normal[3 * idx + 1] = normal.y;
-            _normal[3 * idx + 2] = normal.z;*/
-        }
-
-        void addDepthSample(uint32 x, uint32 y, Float dist) {
-            //_depth[x + _width * y] = dist;
-        }
-
-        const std::vector<Float>& image() const {
-            return _film;
-        }
-
-        /*const Float* image(uint32 row) const {
-            uint32 idx = _width * row;
-
-            return &_film[idx * 3];
-        }*/
-
-        Color3 operator()(uint32 x, uint32 y) const {
-            uint32 idx = x + _width * y;
-
-            return Color3(_film[3*idx], _film[3*idx+1], _film[3*idx+2]);
-        }
-
-    private:
-        uint32 _width, _height;
-        std::vector<Float> _film;
-        /*std::vector<float> _normal;
-        std::vector<float> _depth;*/
-    };
 
     class Camera {
     public:
@@ -199,6 +124,33 @@ namespace Photon {
             r.setPrimary(true);
 
             return r;
+        }
+
+        Ray getPrimaryRayDOF(Float x, Float y, const Point2& rand) const {
+            const Float focalDist = 2.0;
+            const Float viewPlane = 2.9;
+
+            Float tx = _w * ((Float)x / (Float)_film.width() - 0.5f);
+            Float ty = _h * ((Float)y / (Float)_film.height() - 0.5f);
+
+            Float px = tx * focalDist / viewPlane;
+            Float py = ty * focalDist / viewPlane;
+
+            Point2 diskPt = sampleUniformDisk(rand);
+            diskPt *= 0.2;
+
+            Vec3 dir = (px - diskPt.x) * _u + (py - diskPt.y) * _v - focalDist * _n;
+            dir = normalize(dir);
+
+            // Create primary ray
+            Ray r(_pos + diskPt.x * _u + diskPt.y * _v, dir, _near);
+            r.setPrimary(true);
+
+            return r;
+        }
+
+        Ray getPrimaryRayDOF(const Point2& pixel, const Point2& rand) const {
+            return getPrimaryRayDOF(pixel.x, pixel.y, rand);
         }
 
         Film& film() const {

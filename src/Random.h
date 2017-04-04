@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include <MathDefs.h>
+#include <PhotonMath.h>
 
 namespace Photon {
 
@@ -31,6 +31,30 @@ namespace Photon {
 
         inline Float uniformFloat() const {
             return std::min(ONE_MINUS_EPSILON, Float(uniformUInt32() * 2.3283064365386963e-10f));
+        }
+
+        inline void jittered2DArray(uint32 nx, uint32 ny, std::vector<Point2>& arr, bool yes) const {
+            //std::vector<Point2> arr(nx * ny);
+
+            if (yes) {
+                for (uint32 x = 0; x < nx; ++x) {
+                    for (uint32 y = 0; y < ny; ++y) {
+                        Float dx = ((Float)x + uniformFloat()) / nx;
+                        Float dy = ((Float)y + uniformFloat()) / ny;
+
+                        arr.emplace_back(dx, dy);
+                    }
+                }
+            } else {
+                for (uint32 x = 0; x < nx; ++x) {
+                    for (uint32 y = 0; y < ny; ++y) {
+                        Float dx = uniformFloat();
+                        Float dy = uniformFloat();
+
+                        arr.emplace_back(dx, dy);
+                    }
+                }
+            }
         }
 
     private:

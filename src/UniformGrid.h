@@ -3,14 +3,14 @@
 #include <memory>
 
 #include <Bounds.h>
-#include <Geometry.h>
+#include <Shape.h>
 
 namespace Photon {
 
     // Forward declaration
     class Scene;
 
-    typedef std::shared_ptr<Geometry> GridObject;
+    typedef std::shared_ptr<Shape> GridObject;
 
     struct Voxel {
         Voxel() : objIDs(0) { }
@@ -28,23 +28,19 @@ namespace Photon {
         UniformGrid(const Scene& scene, const Vec3ui& dims);
         UniformGrid(const Scene& scene, Float m = 1);
 
-        void initialize();
+        void initialize();     
+        bool contains(const Point3& pos) const;
+        bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
+        bool isOccluded(const Ray& ray) const;
 
+    private:
         Voxel& voxel(uint32 x, uint32 y, uint32 z);
         const Voxel& voxel(uint32 x, uint32 y, uint32 z) const;
         const Voxel& voxel(const Point3& pos) const;
         const Voxel& voxel(const Point3ui& pt) const;
-        Point3ui gridPos(const Point3& worldPos) const;
-        bool UniformGrid::gridLocate(const Ray& ray, Point3ui* pt) const;
-        bool contains(const Point3& pos) const;
-        bool inGrid(const Point3ui& pt) const;
+        bool gridLocate(const Point3& worldPos, Point3ui* pt) const;
+        bool gridLocate(const Ray& ray, Point3ui* pt) const;
 
-        bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
-        bool isOccluded(const Ray& ray) const;
-
-        const GridObject& object(uint32 objId) const;
-
-    private:
         // Objects only get stored once in the grid and are
         // referenced by their ID (implied by the position on the array)
         std::unique_ptr<GridObject[]> _objs;

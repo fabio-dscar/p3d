@@ -40,17 +40,11 @@
     <Filter Include="Header Files\Material">
       <UniqueIdentifier>{73c761aa-9bc7-481c-9634-980c750e9a6f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Lights">
-      <UniqueIdentifier>{07eecd79-4d09-4687-98b6-a5b61d5db3bc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Threads">
       <UniqueIdentifier>{28ced46d-4b68-496e-aa5e-de65d73ba606}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Threads">
       <UniqueIdentifier>{0a8cad44-f3d5-488b-9322-3d34a3afe355}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Integrators">
-      <UniqueIdentifier>{eb9ad63d-7731-4cc2-830e-9144bfbc64cf}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Renderer">
       <UniqueIdentifier>{8a269723-ebbc-40f1-9137-9b7fd9d4a919}</UniqueIdentifier>
@@ -61,14 +55,26 @@
     <Filter Include="Source Files\Math">
       <UniqueIdentifier>{5685a5e1-a6c1-4ee7-8cf6-727bf3415ec4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Sampler">
-      <UniqueIdentifier>{6731e4ce-7391-4711-974b-39c99ae8de7c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Grid">
       <UniqueIdentifier>{5a60a355-689d-41d9-b079-f98352be98bb}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Grid">
       <UniqueIdentifier>{816ddd8f-197e-48be-99e4-3c705fa0819b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Sampling">
+      <UniqueIdentifier>{6731e4ce-7391-4711-974b-39c99ae8de7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lights">
+      <UniqueIdentifier>{d453d9c0-0704-4f36-83ba-1330df83fe93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Filter">
+      <UniqueIdentifier>{7170de81-cc98-4a3c-82ef-1bac8ac02fa1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Light">
+      <UniqueIdentifier>{07eecd79-4d09-4687-98b6-a5b61d5db3bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Integrator">
+      <UniqueIdentifier>{eb9ad63d-7731-4cc2-830e-9144bfbc64cf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -120,6 +126,18 @@
     <ClCompile Include="..\..\src\Renderer.cpp">
       <Filter>Source Files\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Light.cpp">
+      <Filter>Source Files\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\AreaLight.cpp">
+      <Filter>Source Files\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Transform.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Frame.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Utils.h">
@@ -156,13 +174,10 @@
       <Filter>Header Files\Material</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\PointLight.h">
-      <Filter>Header Files\Lights</Filter>
+      <Filter>Header Files\Light</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Light.h">
-      <Filter>Header Files\Lights</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\MathDefs.h">
-      <Filter>Header Files\Math</Filter>
+      <Filter>Header Files\Light</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Vertex.h">
       <Filter>Header Files\Geometry</Filter>
@@ -189,7 +204,7 @@
       <Filter>Header Files\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\WhittedRayTracer.h">
-      <Filter>Header Files\Integrators</Filter>
+      <Filter>Header Files\Integrator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Scene.h">
       <Filter>Header Files\Renderer</Filter>
@@ -213,7 +228,7 @@
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Random.h">
-      <Filter>Header Files\Sampler</Filter>
+      <Filter>Header Files\Sampling</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Bounds.h">
       <Filter>Header Files\Geometry</Filter>
@@ -224,10 +239,43 @@
     <ClInclude Include="..\..\src\ParamList.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Sampling.h">
+      <Filter>Header Files\Sampling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Quad.h">
+      <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Shape.h">
+      <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AreaLight.h">
+      <Filter>Header Files\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PhotonMath.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Frame.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Fresnel.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Film.h">
+      <Filter>Header Files\Camera</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\settings.json">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\Matrix.inl">
+      <Filter>Header Files\Math</Filter>
+    </None>
+    <None Include="..\..\src\Vector.inl">
+      <Filter>Header Files\Math</Filter>
+    </None>
+    <None Include="..\..\src\PhotonMath.inl">
+      <Filter>Header Files\Math</Filter>
     </None>
   </ItemGroup>
 </Project>

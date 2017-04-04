@@ -10,6 +10,8 @@
 #include <Triangle.h>
 #include <Box.h>
 
+#include <AreaLight.h>
+
 #include <memory>
 
 #include <filesystem>
@@ -55,11 +57,14 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
 
         if (cmd.compare(0, 3, "box") == 0) {
             parseBox(*scene);
-        }
-        else if (cmd.compare(0, 1, "b") == 0) {
+        } else if (cmd.compare(0, 1, "b") == 0) {
             scene->setBackgroundColor(parseVector3());
         } else if (cmd.compare(0, 1, "l") == 0) {
             parseLight(*scene);
+        } else if (cmd.compare(0, 3, "als") == 0) {
+            parseSphericalLight(*scene);
+        } else if (cmd.compare(0, 3, "alp") == 0) {
+            parsePlanarLight(*scene);
         } else if (cmd.compare(0, 1, "v") == 0) {
             parseCamera(*scene);
         } else if (cmd.compare(0, 1, "s") == 0) {
@@ -115,7 +120,7 @@ void NFFParser::parseSphere(Scene& scene) {
     s->addMaterial(_material);
 
     // Add sphere
-    scene.addGeometry(s);
+    scene.addShape(s);
 }
 
 void NFFParser::parseCylinder(Scene& scene) {
@@ -131,7 +136,7 @@ void NFFParser::parseCylinder(Scene& scene) {
     c->addMaterial(_material);
 
     // Add cylinder
-    scene.addGeometry(c);
+    scene.addShape(c);
 }
 
 void NFFParser::parsePlane(Scene& scene) {
@@ -158,7 +163,7 @@ void NFFParser::parsePlane(Scene& scene) {
     pl->addMaterial(_material);
 
     // Add plane
-    scene.addGeometry(pl);
+    scene.addShape(pl);
 }
 
 void NFFParser::parsePolygon(Scene& scene) {
@@ -189,7 +194,7 @@ void NFFParser::parsePolygon(Scene& scene) {
 
         // Add triangle
         tri->addMaterial(_material);
-        scene.addGeometry(tri);
+        scene.addShape(tri);
     } else {
         std::shared_ptr<Polygon> pol = std::make_shared<Polygon>();
 
@@ -208,7 +213,7 @@ void NFFParser::parsePolygon(Scene& scene) {
 
         // Add polygon
         pol->addMaterial(_material);
-        scene.addGeometry(pol);
+        scene.addShape(pol);
     }
 }
 
@@ -246,7 +251,7 @@ void NFFParser::parsePolygonPatch(Scene& scene) {
     pol->addMaterial(_material);
 
     // Add polygon
-    scene.addGeometry(pol);
+    scene.addShape(pol);
 }
 
 void NFFParser::parseBox(Scene & scene) {
@@ -256,7 +261,7 @@ void NFFParser::parseBox(Scene & scene) {
     std::shared_ptr<Box> box = std::make_shared<Box>(min, max);
     box->addMaterial(_material);
 
-    scene.addGeometry(box);
+    scene.addShape(box);
 }
 
 void NFFParser::parseMaterial(Scene& scene) {
@@ -270,6 +275,28 @@ void NFFParser::parseMaterial(Scene& scene) {
     Material mtl(color, diff, spec, shininess, transmit, ior);
 
     _material = mtl;
+}
+
+void NFFParser::parsePlanarLight(Scene& scene) {
+
+}
+
+void NFFParser::parseSphericalLight(Scene& scene) {
+    // Parse the sphere shape
+    Point3 pos = parsePoint3();
+    Float radius = parseFloat();
+
+    std::shared_ptr<Sphere> s = std::make_shared<Sphere>(pos, radius);
+    s->addMaterial(_material);
+
+    // Parse light emission
+    Color3 emission = parseVector3();
+
+    Light* light = new AreaLight(s, emission);
+    s->setLight((AreaLight*)light);
+
+    // Add sphere
+    scene.addShape(s);
 }
 
 void NFFParser::parseCamera(Scene& scene) {

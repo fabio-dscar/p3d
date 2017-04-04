@@ -3,11 +3,11 @@
 #include <vector>
 
 #include <Vertex.h>
-#include <Geometry.h>
+#include <Shape.h>
 
 namespace Photon {
 
-    class PolygonPatch : public Geometry {
+    class PolygonPatch : public Shape {
     public:
         PolygonPatch() {}
 

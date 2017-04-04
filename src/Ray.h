@@ -1,13 +1,14 @@
 #pragma once
 
 #include <Vector.h>
-#include <MathDefs.h>
+#include <PhotonMath.h>
 
 namespace Photon {
 
     // Forward declarations
     class Geometry;
     class SurfaceEvent;
+    class Shape;
 
     // This class represents a Ray parameterized by:
     //
@@ -23,63 +24,43 @@ namespace Photon {
 
     public:
         Ray() : _origin(0), _dir(0), _isPrimary(false) { }
-        Ray(const Point3& origin, const Vec3& direction) 
-            : _origin(origin), _dir(direction), _minT(F_RAY_OFFSET), _maxT(F_INFINITY), _isPrimary(false) { }
-
-        Ray(const Point3& origin, const Vec3& direction, Float minT, Float maxT = F_INFINITY)
-            : _origin(origin), _dir(direction), _minT(minT), _maxT(maxT), _isPrimary(false) { }
-
-        Ray(const Point3& origin, const Point3& target)
-            : _origin(origin), _minT(F_RAY_OFFSET), _isPrimary(false) {
-        
-            _dir = normalize(target - origin);
-            _maxT = arg(target);
-        }
+        Ray(const Point3& origin, const Vec3& dir);
+        Ray(const Point3& origin, const Vec3& dir, Float minT, Float maxT = F_INFINITY);
+        Ray(const Point3& origin, const Point3& target);
 
         const Point3& origin() const;
-        const Vec3& dir() const;
-        Float maxT() const;
-        Float minT() const;
-        bool isPrimary() const;
-        
+        const Vec3&   dir() const;
+
         Point3 hitPoint() const;
-        Point3 Ray::operator()(Float t) const;
-        Float arg(const Point3& point) const;
-        bool inRange(Float t) const;
-        
+
+        Float minT() const;
+        Float maxT() const;
         void setMaxT(Float t) const;
+        bool inRange(Float t) const;
+
+        bool isPrimary() const;
         void setPrimary(bool isPrimary);
+        
+        Float arg(const Point3& point) const;
+        Point3 Ray::operator()(Float t) const;
 
         Ray reflect(const SurfaceEvent& evt) const;
         Ray refract(const SurfaceEvent& evt, Float inIOR) const;
     };
 
+
     class RayEvent {
     public:
-        RayEvent() 
-            : _point(0), _normal(0), _wo(0) { }
+        RayEvent() : _point(0), _normal(0), _wo(0) { }
+        RayEvent(const Ray& ray);
+        RayEvent(const Point3& point, const Normal& normal);
+        RayEvent(const Point3& point, const Normal& normal, const Vec3& wo);
 
-        RayEvent(const Ray& ray) 
-            : _point(ray.hitPoint()), _wo(-ray.dir()), _normal(0) { }
+        Vec3 wo() const;
+        Normal normal() const;
+        Point3 point() const;
 
-        RayEvent(const Point3& point, const Normal& normal, const Vec3& wo)
-            : _point(point), _normal(normal), _wo(wo) { }
-
-        Vec3 wo() const {
-            return _wo;
-        }
-
-        Normal normal() const {
-            return _normal;
-        }
-
-        Point3 point() const {
-            return _point;
-        }
-
-        Ray spawnRay(const Point3& target) const {
-            return Ray(_point, target);
-        }
+        Ray spawnRay(const Point3& target) const;
 
     protected:
         Point3 _point;   // Point of interaction
@@ -87,43 +68,25 @@ namespace Photon {
         Normal _normal;  // Normal at interaction point
     };
 
+
     class SurfaceEvent : public RayEvent {
     public:
         SurfaceEvent() 
             : RayEvent(), _obj(nullptr), _backface(false) { }
 
-        SurfaceEvent(const Ray& ray, const Geometry* obj) 
+        SurfaceEvent(const Ray& ray, Shape const* obj) 
             : RayEvent(ray), _obj(obj), _backface(false) { }
 
-        void setEvent(const Ray& ray, const Geometry* obj, const Normal& normal) {
-            _obj = obj;
-            _point = ray.hitPoint();
-            _normal = normal;
-            _wo = -ray.dir();
-        }
-
-        void setObj(const Geometry* obj) {
-            _obj = obj;
-        }
-
-        void setBackface(bool backface) {
-            _backface = backface;
-        }
-
-        const Geometry* obj() const {
-            return _obj;
-        }
-
-        bool hit() const {
-            return _obj != nullptr;
-        }
-
-        bool backface() const {
-            return _backface;
-        }
+        void setEvent(const Ray& ray, Shape const* obj, const Normal& normal);
+        void setObj(const Shape* obj);
+        void setBackface(bool backface);
+        Shape const* obj() const;
+        bool hit() const;
+        bool backface() const;
+        Color3 Le(const Vec3& w) const;
 
     private:  
-        const Geometry* _obj;
+        const Shape* _obj;
         bool _backface;
     };
 

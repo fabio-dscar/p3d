@@ -65,8 +65,34 @@ void photonShutdown() {
 
 }
 
+#include <Frame.h>
+#include <Sampling.h>
+#include <Random.h>
+
+struct Coisas {
+    Vec3 dir;
+    Float pdf;
+};
+
 int main(int argc, char* argv[]) {
-    std::string filePath("box.nff");
+    std::string filePath("balls_high_.nff");
+
+    /*std::vector<Coisas> vecs;
+    RandGen rand;
+    Frame frame = Frame(Normal(0, 0, -1));
+    const uint32 ang = 1;
+    
+    for (uint32 i = 0; i < 48; ++i) {
+        Coisas item;
+        item.dir = sampleUniformSphericalCap(Point2(rand.uniformFloat(), rand.uniformFloat()),
+                                             std::cos(Math::radians(ang)));
+        item.dir = frame.toWorld(item.dir);
+        item.pdf = pdfUniformSphericalCap(std::cos(Math::radians(ang)));
+        vecs.push_back(item);
+
+    }
+
+    return 0;*/
 
     // Command line arguments
     if (argc < 1) {

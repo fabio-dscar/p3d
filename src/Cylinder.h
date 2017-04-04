@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Vector.h>
-#include <Geometry.h>
+#include <Shape.h>
 
 namespace Photon {
 
-    class Cylinder : public Geometry {
+    class Cylinder : public Shape {
     public:
         Cylinder(const Point3& base, Float baseRadius, const Point3& apex, Float apexRadius) :
             _base(base), _baseRadius(baseRadius), _apex(apex), _apexRadius(apexRadius) { }

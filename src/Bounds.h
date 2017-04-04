@@ -4,29 +4,40 @@
 
 namespace Photon {
 
+    // Forward declaration
     class Ray;
+    class Sphere;
 
     class Bounds3 {
     public:
+        static const Bounds3 UNBOUNDED;
+
         Bounds3() : _min(-F_INFINITY), _max(F_INFINITY) { }
+        Bounds3(const Point3& pt) : _min(pt), _max(pt) { }
         Bounds3(const Point3& min, const Point3& max)
             : _min(min), _max(max) { }
 
         const Point3& min() const;
         const Point3& max() const;
-        bool contains(const Point3& pos) const;
-        bool intersectPts(const Ray& ray, Float* t0, Float* t1) const;
-
         const Point3& operator[](uint32 i) const;
-        bool overlaps(const Bounds3& box) const;
+        
+        Vec3   sizes() const;
+        Point3 center() const;
+        Float  volume() const;
+        Sphere sphere() const;
 
-        bool bounded() const;
+        bool intersectPts(const Ray& ray, Float* t0, Float* t1) const;    
+        bool contains(const Point3& pos) const;
+        bool overlaps(const Bounds3& box) const;
+        void expand(const Point3& pt);
+        void expand(const Bounds3& box);
+        void intersect(const Bounds3& box);
+        bool isBounded() const;       
     private:
         Point3 _min;
         Point3 _max;
     };
-
-    
+   
     inline Bounds3 expand(const Bounds3& box, const Point3& pt) {
         return Bounds3(
             Point3(std::min(box[0].x, pt.x),

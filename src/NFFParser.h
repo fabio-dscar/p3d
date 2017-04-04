@@ -8,7 +8,7 @@
 #include <Vector.h>
 #include <Material.h>
 
-#include <MathDefs.h>
+#include <PhotonMath.h>
 
 namespace Photon {
 
@@ -31,6 +31,9 @@ namespace Photon {
             static void parseBox(Scene& scene);
             static void parseMaterial(Scene& scene);
             static void parseCamera(Scene& scene);
+
+            static void parsePlanarLight(Scene& scene);
+            static void parseSphericalLight(Scene& scene);
 
             static Float        parseFloat();
             static uint32       parseInt();

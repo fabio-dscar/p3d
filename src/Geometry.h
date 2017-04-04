@@ -27,7 +27,7 @@ namespace Photon {
         }
 
         virtual Bounds3 bounds() const {
-            return Bounds3(Point3(0), Point3(0));
+            return Bounds3(Point3(0));
         }
 
     private:

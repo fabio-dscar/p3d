@@ -8,7 +8,7 @@
 #include <thread>
 #include <mutex>
 
-#include <MathDefs.h>
+#include <PhotonMath.h>
 
 namespace Photon {
 

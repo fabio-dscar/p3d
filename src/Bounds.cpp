@@ -1,8 +1,11 @@
 #include <Bounds.h>
 
 #include <Ray.h>
+#include <Sphere.h>
 
 using namespace Photon;
+
+const Bounds3 Bounds3::UNBOUNDED = Bounds3();
 
 const Point3& Bounds3::min() const {
     return _min;
@@ -57,12 +60,47 @@ const Point3& Bounds3::operator[](uint32 i) const {
     return _max;
 }
 
-bool Bounds3::overlaps(const Bounds3& box) const {
-    return (_max.x >= box[0].x) && (_min.x <= box[1].x) &&
-        (_max.y >= box[0].y) && (_min.y <= box[1].y) &&
-        (_max.z >= box[0].z) && (_min.z <= box[1].z);
+Vec3 Bounds3::sizes() const {
+    return abs(_max - _min);
 }
 
-bool Bounds3::bounded() const {
+Point3 Bounds3::center() const {
+    Vec3 len = _max - _min;
+    return 0.5 * Point3(len.x, len.y, len.z);
+}
+
+Float Bounds3::volume() const {
+    Vec3 len = sizes();
+    return len.cube();
+}
+
+Sphere Bounds3::sphere() const {
+    Point3 pos = center();
+    Float radius = (_max - pos).length();
+    return Sphere(pos, radius + F_EPSILON);
+}
+
+bool Bounds3::overlaps(const Bounds3& box) const {
+    return (_max.x >= box[0].x) && (_min.x <= box[1].x) &&
+           (_max.y >= box[0].y) && (_min.y <= box[1].y) &&
+           (_max.z >= box[0].z) && (_min.z <= box[1].z);
+}
+
+bool Bounds3::isBounded() const {
     return !(_min.infinity() || _max.infinity());
+}
+
+void Bounds3::expand(const Point3& pt) {
+    _min = Math::min(_min, pt);
+    _max = Math::max(_max, pt);
+}
+
+void Bounds3::expand(const Bounds3& box) {
+    _min = Math::min(_min, box[0]);
+    _max = Math::max(_max, box[1]);
+}
+
+void Bounds3::intersect(const Bounds3& box) {
+    _min = Math::max(_min, box[0]);
+    _max = Math::min(_max, box[1]);
 }

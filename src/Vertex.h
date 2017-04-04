@@ -9,10 +9,16 @@ namespace Photon {
         Normal _normal;
         Vec2   _uv;
 
-        Vertex() : _vertex(0.0f), _normal(0.0f), _uv(0.0f) { }
-        Vertex(const Point3& vertex) : _vertex(vertex), _normal(0.0f), _uv(0.0f) { }
-        Vertex(const Point3& vertex, const Normal& normal) : _vertex(vertex), _normal(normal), _uv(0.0f) { }
-        Vertex(const Point3& vertex, const Normal& normal, const Vec2& uv) : _vertex(vertex), _normal(normal), _uv(uv) { }
+        Vertex() : _vertex(0), _normal(0), _uv(0) { }
+
+        Vertex(const Point3& vert) 
+            : _vertex(vert), _normal(0), _uv(0) { }
+
+        Vertex(const Point3& vert, const Normal& norm) 
+            : _vertex(vert), _normal(norm), _uv(0) { }
+
+        Vertex(const Point3& vert, const Normal& norm, const Vec2& uv) 
+            : _vertex(vert), _normal(norm), _uv(uv) { }
     };
 
 }

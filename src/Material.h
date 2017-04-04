@@ -47,10 +47,10 @@ namespace Photon {
             return (_transmit > 0.0f);
         }
 
-        Color3 calcRadiance(Light const* light, const SurfaceEvent& surfInfo) const {
-            Color3 color = Vec3(0.0f);
+        Color3 calcRadiance(const Vec3& wi, const SurfaceEvent& surfInfo) const {
+            Color3 color = Color3(0);
 
-            Vec3 l = normalize(light->pos() - surfInfo.point());
+            Vec3 l = normalize(wi);
             Float NdotL = dot(surfInfo.normal(), l);
 
             // Reflected direction
@@ -60,8 +60,8 @@ namespace Photon {
             if (dot(r, surfInfo.wo()) > 0)
                 RdotV = std::pow(dot(r, surfInfo.wo()), _shininess);
 
-            color += NdotL * _diff * _color * light->color();
-            color += RdotV * _spec * _color * light->color();
+            color += NdotL * _diff * _color;
+            color += RdotV * _spec * _color;
 
             return color;
         }

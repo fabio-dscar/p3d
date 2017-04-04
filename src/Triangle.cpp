@@ -1,5 +1,7 @@
 #include <Triangle.h>
 
+#include <Bounds.h>
+
 using namespace Photon;
 using namespace Photon::Math;
 
@@ -29,6 +31,13 @@ const std::array<Point3, 3>& Triangle::vertices() const {
 
 const Normal& Triangle::normal() const {
     return _normal;
+}
+
+Bounds3 Triangle::bbox() const {
+    Point3 max = Math::max(_vertices[0], Math::max(_vertices[1], _vertices[2]));
+    Point3 min = Math::min(_vertices[0], Math::min(_vertices[1], _vertices[2]));
+
+    return Bounds3(min + -F_EPSILON, max + F_EPSILON);
 }
 
 bool Triangle::intersectRay(const Ray& ray, SurfaceEvent* evt) const {

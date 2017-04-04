@@ -6,7 +6,7 @@
 #include <Vector.h>
 #include <Camera.h>
 #include <Bounds.h>
-#include <Geometry.h>
+#include <Shape.h>
 #include <UniformGrid.h>
 
 namespace Photon {
@@ -14,7 +14,7 @@ namespace Photon {
     // Forward declarations
     class Light;
 
-    class Scene : public Geometry {
+    class Scene {
     public:
         Scene();
 
@@ -29,8 +29,8 @@ namespace Photon {
         void addLight(Light const* light);
         const std::vector<Light const*>& getLights() const;
 
-        void addGeometry(const std::shared_ptr<Geometry> object);
-        const std::vector<std::shared_ptr<Geometry>>& getGeometry() const;
+        void addShape(const std::shared_ptr<Shape> object);
+        const std::vector<std::shared_ptr<Shape>>& getShapes() const;
 
         bool intersectRay(const Ray& ray, SurfaceEvent* info) const;
         bool isOccluded(const Ray& ray) const;
@@ -41,7 +41,7 @@ namespace Photon {
         Camera _camera;
         Bounds3 _bounds;
         std::vector<Light const*> _lights;
-        std::vector<std::shared_ptr<Geometry>> _objects;
+        std::vector<std::shared_ptr<Shape>> _objects;
         std::unique_ptr<UniformGrid> _uniformGrid;
     };
 

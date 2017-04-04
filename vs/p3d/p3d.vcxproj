@@ -122,8 +122,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\AreaLight.cpp" />
     <ClCompile Include="..\..\src\Bounds.cpp" />
     <ClCompile Include="..\..\src\Camera.cpp" />
+    <ClCompile Include="..\..\src\Frame.cpp" />
+    <ClCompile Include="..\..\src\Light.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\NFFParser.cpp" />
     <ClCompile Include="..\..\src\OpenGLRenderer.cpp" />
@@ -133,6 +136,7 @@
     <ClCompile Include="..\..\src\Scene.cpp" />
     <ClCompile Include="..\..\src\Sphere.cpp" />
     <ClCompile Include="..\..\src\Threading.cpp" />
+    <ClCompile Include="..\..\src\Transform.cpp" />
     <ClCompile Include="..\..\src\Triangle.cpp" />
     <ClCompile Include="..\..\src\UniformGrid.cpp" />
     <ClCompile Include="..\..\src\Utils.cpp" />
@@ -140,22 +144,29 @@
     <ClCompile Include="..\..\src\WorkerPool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\AreaLight.h" />
     <ClInclude Include="..\..\src\Bounds.h" />
     <ClInclude Include="..\..\src\Box.h" />
     <ClInclude Include="..\..\src\Camera.h" />
     <ClInclude Include="..\..\src\Cylinder.h" />
+    <ClInclude Include="..\..\src\Film.h" />
+    <ClInclude Include="..\..\src\Frame.h" />
+    <ClInclude Include="..\..\src\Fresnel.h" />
     <ClInclude Include="..\..\src\Geometry.h" />
     <ClInclude Include="..\..\src\IntTypes.h" />
     <ClInclude Include="..\..\src\Light.h" />
-    <ClInclude Include="..\..\src\MathDefs.h" />
+    <ClInclude Include="..\..\src\PhotonMath.h" />
     <ClInclude Include="..\..\src\Matrix.h" />
     <ClInclude Include="..\..\src\OpenGLRenderer.h" />
     <ClInclude Include="..\..\src\ParamList.h" />
     <ClInclude Include="..\..\src\PhotonTracer.h" />
     <ClInclude Include="..\..\src\Polygon.h" />
     <ClInclude Include="..\..\src\PolygonPatch.h" />
+    <ClInclude Include="..\..\src\Quad.h" />
     <ClInclude Include="..\..\src\Random.h" />
     <ClInclude Include="..\..\src\Renderer.h" />
+    <ClInclude Include="..\..\src\Sampling.h" />
+    <ClInclude Include="..\..\src\Shape.h" />
     <ClInclude Include="..\..\src\Task.h" />
     <ClInclude Include="..\..\src\Threading.h" />
     <ClInclude Include="..\..\src\Timer.h" />
@@ -177,6 +188,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\settings.json" />
+    <None Include="..\..\src\Matrix.inl" />
+    <None Include="..\..\src\PhotonMath.inl" />
+    <None Include="..\..\src\Vector.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

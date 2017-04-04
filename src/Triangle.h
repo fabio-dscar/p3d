@@ -3,11 +3,11 @@
 #include <array>
 
 #include <Vector.h>
-#include <Geometry.h>
+#include <Shape.h>
 
 namespace Photon {
 
-    class Triangle : public Geometry {
+    class Triangle : public Shape {
     public:
         Triangle(const Point3& p1, const Point3& p2, const Point3& p3);
         Triangle(const Point3& p1, const Point3& p2, const Point3& p3, const Normal& normal)
@@ -21,12 +21,7 @@ namespace Photon {
         bool intersectRay(const Ray& ray, SurfaceEvent* info) const;
         bool isOccluded(const Ray& ray) const;
 
-        Bounds3 bounds() const {
-            Point3 max = Math::max(_vertices[0], Math::max(_vertices[1], _vertices[2]));
-            Point3 min = Math::min(_vertices[0], Math::min(_vertices[1], _vertices[2]));
-
-            return Bounds3(min + -F_EPSILON, max + F_EPSILON);
-        }
+        Bounds3 bbox() const;
     private:
         std::array<Point3, 3> _vertices;
         Normal _normal;

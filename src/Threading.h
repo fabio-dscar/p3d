@@ -8,7 +8,7 @@
 #include <unistd.h>
 #endif
 
-#include <MathDefs.h>
+#include <PhotonMath.h>
 #include <WorkerPool.h>
 
 namespace Photon {

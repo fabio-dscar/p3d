@@ -7,6 +7,8 @@ std::unique_ptr<WorkerPool> Photon::Threading::Workers = nullptr;
 
 uint32 Photon::Threading::getNumberOfProcessors() {
 
+    //return 1;
+
     // Try querying the native APIs first
 #if _WIN32
     SYSTEM_INFO sysInfo;

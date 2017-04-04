@@ -3,11 +3,11 @@
 #include <vector>
 
 #include <Vector.h>
-#include <Geometry.h>
+#include <Shape.h>
 
 namespace Photon {
 
-    class Polygon : public Geometry {
+    class Polygon : public Shape {
     public:
         Polygon() { }
 

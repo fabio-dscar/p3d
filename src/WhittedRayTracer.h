@@ -3,7 +3,7 @@
 #include <functional>
 #include <vector>
 
-#include <MathDefs.h>
+#include <PhotonMath.h>
 #include <Threading.h>
 #include <Renderer.h>
 #include <Random.h>
@@ -15,8 +15,8 @@ namespace Photon {
     // Forward declaration
     class Scene;
 
-    static const uint32 MAX_DEPTH = 8;
-    static const uint32 TILE_SIZE = 64;
+    static const uint32 MAX_DEPTH = 6;
+    static const uint32 TILE_SIZE = 32;
 
     typedef std::function<void()> EndCallback;
 
@@ -43,6 +43,8 @@ namespace Photon {
         void cleanup();
 
     private:
+        Color3 estimateDirect(const SurfaceEvent& evt) const;
+
         void renderTile(uint32 tId, uint32 tileId) const;
 
         // Whitted algorithm

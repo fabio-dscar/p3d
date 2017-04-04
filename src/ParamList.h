@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-#include <MathDefs.h>
+#include <PhotonMath.h>
 
 namespace Photon {
 

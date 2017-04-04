@@ -23,6 +23,7 @@
 #include <vector>
 
 #if defined(_MSC_VER)
+#define PHOTON_MSVC
 #include <float.h>
 #include <intrin.h>
 #pragma warning(disable : 4305)  // double constant assigned to float

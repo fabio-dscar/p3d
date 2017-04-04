@@ -1,16 +1,16 @@
 #pragma once
 
 #include <Vector.h>
-#include <Geometry.h>
+#include <Shape.h>
 
 namespace Photon {
 
-    class Box : public Geometry {
+    class Box : public Shape {
     public:
         Box(const Point3& min, const Point3& max) 
             : _min(min), _max(max) { }
 
-        Bounds3 bounds() const {
+        Bounds3 bbox() const {
             return Bounds3(_min + (-F_EPSILON), _max + F_EPSILON);
         }
 

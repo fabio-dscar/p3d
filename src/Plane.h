@@ -1,12 +1,12 @@
 #pragma once
 
 #include <Vector.h>
-#include <Geometry.h>
+#include <Shape.h>
 #include <Ray.h>
 
 namespace Photon {
 
-    class Plane : public Geometry {
+    class Plane : public Shape {
     public:
         Plane(const Normal& normal, Float distance) :
             _normal(normal), _distance(distance) { }
@@ -17,13 +17,10 @@ namespace Photon {
         bool intersectRay(const Ray& ray, SurfaceEvent* evt) const;
         bool isOccluded(const Ray& ray) const;
 
-        Bounds3 bounds() const {
-            // The plane is unbounded
-            return Bounds3();
-        }
+        Bounds3 bbox() const;
     private:
         Normal _normal;
-        Float _distance; // Distance to origin
+        Float  _distance; // Distance to origin
     };
 
 }
