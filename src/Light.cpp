@@ -13,17 +13,26 @@ const Point3& Light::pos() const {
     return _pos;
 }
 
-void Light::setColor(const Color3& color) {
+void Light::setColor(const Color& color) {
     _Le = color;
 }
 
-const Color3& Light::color() const {
+const Color& Light::color() const {
     return _Le;
 }
 
-Color3 Light::L(const RayEvent& evt, const Vec3& w) const {
+Color Light::L(const RayEvent& evt, const Vec3& w) const {
     if (Math::dot(evt.normal(), w) > 0)
         return _Le;
 
-    return Color3(0);
+    return Color(0);
+}
+
+
+bool Light::isEnvironment() const {
+    return false;
+}
+
+bool Light::isDelta() const {
+    return false;
 }

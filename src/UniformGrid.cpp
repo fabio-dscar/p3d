@@ -70,8 +70,8 @@ void UniformGrid::initialize() {
         // Get indices of object bbox on grid 
         // (note that this is a vectorial clamp)
         Vec3   scale  = Vec3(_dims) * _invSize;
-        Vec3ui idxMin = clamp<uint32>((objBbox.min() - _bounds.min()) * scale, 0, _dims - 1);
-        Vec3ui idxMax = clamp<uint32>((objBbox.max() - _bounds.min()) * scale, 0, _dims - 1);
+        Vec3ui idxMin = Math::clamp<uint32>((objBbox.min() - _bounds.min()) * scale, 0, _dims - 1);
+        Vec3ui idxMax = Math::clamp<uint32>((objBbox.max() - _bounds.min()) * scale, 0, _dims - 1);
 
         // Set each object in respective voxels
         for (uint32 ix = idxMin.x; ix <= idxMax.x; ix++)
@@ -91,7 +91,7 @@ const Voxel& UniformGrid::voxel(uint32 x, uint32 y, uint32 z) const {
 
 const Voxel& UniformGrid::voxel(const Point3& pos) const {
     Vec3 loc = (pos - _bounds.min()) * _dims * _invSize;
-    Vec3ui cell = clamp<uint32>(loc, 0, _dims - 1);
+    Vec3ui cell = Math::clamp<uint32>(loc, 0, _dims - 1);
 
     return voxel(cell.x, cell.y, cell.z);
 }
@@ -105,7 +105,7 @@ bool UniformGrid::gridLocate(const Point3& worldPos, Point3ui* pt) const {
         return false;
 
     Vec3   pos  = (worldPos - _bounds.min()) * _dims * _invSize;
-    Vec3ui cell = clamp<uint32>(pos, 0, _dims - 1);
+    Vec3ui cell = Math::clamp<uint32>(pos, 0, _dims - 1);
 
     *pt = Point3ui(cell.x, cell.y, cell.z);
 
@@ -119,7 +119,7 @@ bool UniformGrid::gridLocate(const Ray& ray, Point3ui* pt) const {
             return false;
 
     Vec3   pos  = (ray(t0) - _bounds.min()) * _dims * _invSize;
-    Vec3ui cell = clamp<uint32>(pos, 0, _dims - 1);
+    Vec3ui cell = Math::clamp<uint32>(pos, 0, _dims - 1);
 
     *pt = Point3ui(cell.x, cell.y, cell.z);
 

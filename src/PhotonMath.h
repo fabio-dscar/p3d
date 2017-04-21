@@ -1,13 +1,13 @@
 #pragma once
 
-#define PHOTON_USE_DOUBLE 1
+#define PHOTON_DOUBLE 1
 
 #include <PhotonTracer.h>
 #include <IntTypes.h>
 
 namespace Photon {
     
-#if PHOTON_USE_DOUBLE
+#if PHOTON_DOUBLE
     typedef double Float;
 
     static const Float F_EPSILON = 1e-10;
@@ -41,15 +41,17 @@ namespace Photon {
         template<typename T>
         inline T clamp(T val, T low, T high);
 
-        inline Float radians(Float degrees);
-        inline Float degrees(Float radians);
-        inline Float log2(Float x);
+        inline Float acosSafe(Float x);
+        inline Float sqrtSafe(Float x);
+        inline Float radians (Float degrees);
+        inline Float degrees (Float radians);
+        inline Float log2    (Float x);
 
         inline int32 sign(Float scalar);
         inline Float lerp(Float t, Float v1, Float v2);
 
-        bool solveQuadratic(Float a, Float b, Float c, Float* x0, Float* x1);
-        bool solveLinearSystem2x2(const Float A[2][2], const Float b[2], Float* x0, Float* x1);
+        bool solQuadratic(Float a, Float b, Float c, Float* x0, Float* x1);
+        bool solSystem2x2(const Float A[2][2], const Float b[2], Float* x0, Float* x1);
     }
 
 }

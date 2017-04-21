@@ -20,8 +20,8 @@ namespace Photon {
 
         void prepareRender(bool useGrid);
 
-        void setBackgroundColor(const Color3& color);
-        const Color3& getBackgroundColor() const;
+        void setBackgroundColor(const Color& color);
+        const Color& getBackgroundColor() const;
 
         void addCamera(const Camera& camera);
         const Camera& getCamera() const;
@@ -37,12 +37,13 @@ namespace Photon {
 
         Bounds3 bounds() const;
     private:
-        Color3 _background;
+        Color _background;
         Camera _camera;
         Bounds3 _bounds;
         std::vector<Light const*> _lights;
         std::vector<std::shared_ptr<Shape>> _objects;
         std::unique_ptr<UniformGrid> _uniformGrid;
+        bool _hideLights;
     };
 
 }

@@ -75,7 +75,7 @@ struct Coisas {
 };
 
 int main(int argc, char* argv[]) {
-    std::string filePath("balls_high_.nff");
+    std::string filePath("bsdf.nff");
 
     /*std::vector<Coisas> vecs;
     RandGen rand;

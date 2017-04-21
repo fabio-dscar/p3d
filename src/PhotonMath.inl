@@ -35,11 +35,19 @@ namespace Photon {
             return std::log(x) * INVLOG2;
         }
 
+        inline Float sqrtSafe(Float x) {
+            return std::sqrt(std::max((Float)0.0, x));
+        }
+
+        inline Float acosSafe(Float x) {
+            return std::acos(std::min((Float)1.0, std::max((Float)-1.0, x)));
+        }
+
         inline Float lerp(Float t, Float v1, Float v2) {
             return (1 - t) * v1 + t * v2;
         }
 
-        inline bool solveQuadratic(Float a, Float b, Float c, Float* x0, Float* x1) {
+        inline bool solQuadratic(Float a, Float b, Float c, Float* x0, Float* x1) {
             double disc = b * b - 4 * a * c;
             if (disc < 0)
                 return false;
@@ -60,7 +68,7 @@ namespace Photon {
             return true;
         }
 
-        inline bool solveLinearSystem2x2(const Float A[2][2], const Float b[2], Float* x0, Float* x1) {
+        inline bool solSystem2x2(const Float A[2][2], const Float b[2], Float* x0, Float* x1) {
             Float det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
             if (std::abs(det) < 1e-10f)
                 return false;

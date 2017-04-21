@@ -26,9 +26,9 @@
 #define PHOTON_MSVC
 #include <float.h>
 #include <intrin.h>
-#pragma warning(disable : 4305)  // double constant assigned to float
-#pragma warning(disable : 4244)  // int -> float conversion
-#pragma warning(disable : 4843)  // double -> float conversion
+#pragma warning(disable : 4244)  // int to float warning
+#pragma warning(disable : 4843)  // double to float warning
+#pragma warning(disable : 4305)  // double const to float
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER == 1900

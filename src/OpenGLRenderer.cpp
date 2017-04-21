@@ -220,7 +220,7 @@ void OpenGLRenderer::createBufferObjects() {
     glBindBuffer(GL_ARRAY_BUFFER, _vboId[0]);
     glEnableVertexAttribArray(VERTEX_COORD_ATTRIB);
 
-#if PHOTON_USE_DOUBLE
+#if PHOTON_DOUBLE
     glVertexAttribPointer(VERTEX_COORD_ATTRIB, 2, GL_DOUBLE, 0, 0, 0);
 #else
     glVertexAttribPointer(VERTEX_COORD_ATTRIB, 2, GL_FLOAT, 0, 0, 0);
@@ -229,7 +229,7 @@ void OpenGLRenderer::createBufferObjects() {
     glBindBuffer(GL_ARRAY_BUFFER, _vboId[1]);
     glEnableVertexAttribArray(COLOR_ATTRIB);
 
-#if PHOTON_USE_DOUBLE
+#if PHOTON_DOUBLE
     glVertexAttribPointer(COLOR_ATTRIB, 3, GL_DOUBLE, 0, 0, 0);
 #else
     glVertexAttribPointer(COLOR_ATTRIB, 3, GL_FLOAT, 0, 0, 0);

@@ -66,7 +66,7 @@ Vec3 Bounds3::sizes() const {
 
 Point3 Bounds3::center() const {
     Vec3 len = _max - _min;
-    return 0.5 * Point3(len.x, len.y, len.z);
+    return (Float)0.5 * Point3(len.x, len.y, len.z);
 }
 
 Float Bounds3::volume() const {

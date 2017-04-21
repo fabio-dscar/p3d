@@ -76,6 +76,15 @@
     <Filter Include="Header Files\Integrator">
       <UniqueIdentifier>{eb9ad63d-7731-4cc2-830e-9144bfbc64cf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Spectral">
+      <UniqueIdentifier>{b6356cbb-6d97-4264-b0b9-3151e07ca34f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Texture">
+      <UniqueIdentifier>{7e554ab2-9ecd-40a1-bada-9214df4b4463}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Material">
+      <UniqueIdentifier>{eff30e05-6c5f-4562-a51e-9c12bffcdbd1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp">
@@ -138,6 +147,27 @@
     <ClCompile Include="..\..\src\Frame.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Spectral.cpp">
+      <Filter>Header Files\Spectral</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\BSDF.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Lambertian.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\OrenNayar.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Integrator.cpp">
+      <Filter>Source Files\Integrators</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Quat.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\PathTracer.cpp">
+      <Filter>Source Files\Integrators</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Utils.h">
@@ -158,9 +188,6 @@
     <ClInclude Include="..\..\src\Vector.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Geometry.h">
-      <Filter>Header Files\Geometry</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Polygon.h">
       <Filter>Header Files\Geometry</Filter>
     </ClInclude>
@@ -172,9 +199,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Material.h">
       <Filter>Header Files\Material</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\PointLight.h">
-      <Filter>Header Files\Light</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Light.h">
       <Filter>Header Files\Light</Filter>
@@ -263,6 +287,84 @@
     <ClInclude Include="..\..\src\Film.h">
       <Filter>Header Files\Camera</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Sampler.h">
+      <Filter>Header Files\Sampling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\StratifiedSampler.h">
+      <Filter>Header Files\Sampling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\RandomSampler.h">
+      <Filter>Header Files\Sampling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Spectral.h">
+      <Filter>Header Files\Spectral</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Tonemap.h">
+      <Filter>Header Files\Spectral</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\BSDF.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Lambertian.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Microfacet.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Phong.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Texture.h">
+      <Filter>Header Files\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ConstTexture.h">
+      <Filter>Header Files\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Matte.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Specular.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Filter.h">
+      <Filter>Header Files\Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\BoxFilter.h">
+      <Filter>Header Files\Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\GaussianFilter.h">
+      <Filter>Header Files\Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Resources.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Framebuffer.h">
+      <Filter>Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Records.h">
+      <Filter>Header Files\Sampling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\OrenNayar.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PointLight.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PathTracer.h">
+      <Filter>Header Files\Integrator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Integrator.h">
+      <Filter>Header Files\Integrator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Quat.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Animation.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Mirror.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\settings.json">
@@ -275,6 +377,9 @@
       <Filter>Header Files\Math</Filter>
     </None>
     <None Include="..\..\src\PhotonMath.inl">
+      <Filter>Header Files\Math</Filter>
+    </None>
+    <None Include="..\..\src\Quat.inl">
       <Filter>Header Files\Math</Filter>
     </None>
   </ItemGroup>

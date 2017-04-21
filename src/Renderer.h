@@ -5,7 +5,7 @@
 namespace Photon {
 
     class Scene;
-    class WhittedRayTracer;
+    class Integrator;
 
     struct RendererSettings {
         bool renderToScreen;
@@ -35,7 +35,7 @@ namespace Photon {
         void loadSettingsFile(const std::string& settingsFilePath);
 
         std::shared_ptr<Scene> _scene;
-        std::shared_ptr<WhittedRayTracer> _raytracer;
+        std::shared_ptr<Integrator> _integrator;
         RendererSettings _settings;
     };
 

@@ -11,26 +11,28 @@ Float Sphere::radius() const {
 }
 
 bool Sphere::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
-    Vec3 p = ray.origin() - _pos;
+    Vec3 cdir = ray.origin() - _pos;
 
     // Solve quadratic
-    Float B = dot(p, ray.dir());
-    Float C = p.lengthSqr() - _radius * _radius;
+    Float B = dot(cdir, ray.dir());
+    Float C = cdir.lengthSqr() - _radius * _radius;
     Float detSq = B * B - C;
-    if (detSq >= 0.0f) {
+    if (detSq >= 0.0) {
         Float det = std::sqrt(detSq);
 
         Float t = -B - det;
         if (ray.inRange(t)) {
             ray.setMaxT(t);
-            evt->setEvent(ray, this, Normal(normalize(ray(t) - _pos)));
+            evt->setObj(this);
+            //evt->setEvent(ray, this, Normal(normalize(ray(t) - _pos)));
             return true;
         }
 
         t = -B + det;
         if (ray.inRange(t)) {
             ray.setMaxT(t);
-            evt->setEvent(ray, this, -Normal(normalize(ray(t) - _pos)));
+            evt->setObj(this);
+            //evt->setEvent(ray, this, Normal(normalize(ray(t) - _pos)));
             evt->setBackface(true);  // Hit from inside sphere
             return true;
         }
@@ -40,22 +42,17 @@ bool Sphere::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
 }
 
 bool Sphere::isOccluded(const Ray& ray) const {
-    Vec3 p = ray.origin() - _pos;
+    Vec3 cdir = ray.origin() - _pos;
 
     // Solve quadratic
-    Float B = dot(p, ray.dir());
-    Float C = p.lengthSqr() - _radius * _radius;
-    Float detSq = B*B - C;
-    if (detSq >= 0.0f) {
+    Float B = dot(cdir, ray.dir());
+    Float C = cdir.lengthSqr() - _radius * _radius;
+    Float detSq = B * B - C;
+    if (detSq >= 0.0) {
         Float det = std::sqrt(detSq);
-        Float t = -B - det;
 
-        if (ray.inRange(t))
-            return true;
-
-        t = -B + det;
-        if (ray.inRange(t))
-            return true;
+        return (ray.inRange(-B - det) || 
+                ray.inRange(-B + det));
     }
 
     return false;

@@ -4,26 +4,13 @@
 #include <Ray.h>
 #include <Scene.h>
 
+#include <AreaLight.h>
+#include <BSDF.h>
+#include <Records.h>
+
 using namespace Photon;
 using namespace Photon::Threading;
 using namespace std::placeholders;
-
-void WhittedRayTracer::initialize() {
-    const Camera& camera = _scene->getCamera();
-    uint32 width = camera.width();
-    uint32 height = camera.height();
-
-    // Divide in tiles
-    for (uint32 y = 0; y < height; y += TILE_SIZE) {
-        for (uint32 x = 0; x < width; x += TILE_SIZE) {
-            _tiles.emplace_back(x,
-                                y,
-                                std::min(TILE_SIZE, width - x),
-                                std::min(TILE_SIZE, height - y)
-            );
-        }
-    }
-}
 
 void WhittedRayTracer::startRender(EndCallback endCallback) {
     // Add task for drawing tiles in parallel
@@ -44,7 +31,8 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
             Vec2ui pixel(x + tile.x, y + tile.y);
 
             // Get color from ray
-            const uint32 SAMPLES = 4; // 16
+            const uint32 SAMPLES = 8; // 16
+            const uint32 LENS_SAMPLES = 4;
 
             // Get jittered samples
             std::vector<Point2> pixelSamples;
@@ -53,16 +41,17 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
             _random.jittered2DArray(SAMPLES, SAMPLES, lensSamples, true);
 
             // Compute ray tracing
-            Color3 color(0);
+            Color color(0);        
             for (uint32 i = 0; i < pixelSamples.size(); ++i) {
+                Color lensEstimate(0);
                 Point2 ps = pixelSamples[i];
-                Point2 ls = lensSamples[i];
+                //Point2 ls = lensSamples[i];
 
-                Point2 rand = Point2(ls.x, ls.y);
+                //Point2 rand = Point2(ls.x, ls.y);
                 Point2 p = Point2(pixel.x + ps.x, pixel.y + ps.y);
-                Ray ray = camera.getPrimaryRayDOF(p, rand);
+                //Ray ray = camera.getPrimaryRayDOF(p, rand);
 
-                //Ray ray = camera.getPrimaryRay(pixel.x + ps.x, pixel.y + ps.y);
+                Ray ray = camera.getPrimaryRay(pixel.x + ps.x, pixel.y + ps.y);
 
                 color += traceRay(ray, 1.0, 1, pixel);
             }
@@ -73,7 +62,7 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
             // Record sample on camera's film
             camera.film().addColorSample(pixel.x, pixel.y, color);
 
-            /*Color3 color(0);
+            /*Color color(0);
             for (uint32 p = 0; p < SAMPLES; p++) {
                 for (uint32 q = 0; q < SAMPLES; q++) {
                     Float dx = (p + _random.uniformFloat()) / SAMPLES;
@@ -93,7 +82,7 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
             color /= (SAMPLES * SAMPLES);*/
 
 
-            //Color3 color = traceRay(ray, 1.0, 1, pixel);
+            //Color color = traceRay(ray, 1.0, 1, pixel);
 
             // Record sample on camera's film
             //camera.film().addColorSample(pixel.x, pixel.y, color);
@@ -101,87 +90,49 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
     }
 }
 
-struct DirectSample {
-    Point3 pos;
-    Float pdf;
-
-    DirectSample(const Point3& pos, Float pdf) 
-        : pos(pos), pdf(pdf) { };
-};
-
-#include <AreaLight.h>
-
-Color3 WhittedRayTracer::estimateDirect(const SurfaceEvent& evt) const {
+Color WhittedRayTracer::estimateDirect(const SurfaceEvent& evt) const {
     const std::vector<Light const*>& lights = _scene->getLights();
     const Material mtl = evt.obj()->getMaterial();
-    Color3 direct(0);
-
-    const uint32 SAMPLES_PER_LIGHT = 4; // 256
+    Color direct = Color::BLACK;
 
     // Sample all lights
     for (Light const* light : lights) {
-        Color3 contrib(0);
-        Point3 pos; Float pdf;
-        std::vector<DirectSample> samples;
+        Color  contrib = Color::BLACK;
+        uint32 nSamples = light->numSamples();
 
-        uint32 nSamples = SAMPLES_PER_LIGHT;
-        std::vector<Point2> vec;
-
-        // If light is a point, only sample once 
         if (light->isDelta()) {
-            light->sampleLi(evt, Point2(_random.uniformFloat(), _random.uniformFloat()), &pos, &pdf);
-            samples.emplace_back(pos, (Float)1.0);
+            Point2 bsdfRand  = Point2(_random.uniformFloat(), _random.uniformFloat());
+            Point2 lightRand = Point2(_random.uniformFloat(), _random.uniformFloat());
+
+            direct += sampleLight(*light, evt, lightRand, bsdfRand);
         } else {
-            vec.reserve(SAMPLES_PER_LIGHT * SAMPLES_PER_LIGHT);
-            _random.jittered2DArray(SAMPLES_PER_LIGHT, SAMPLES_PER_LIGHT, vec, true);
+            std::vector<Point2> bsdfVec;
+            std::vector<Point2> lightVec;
 
-            for (const Point2& sample : vec) {
-                light->sampleLi(evt, sample, &pos, &pdf);
-                samples.emplace_back(pos, (Float)1.0);
-            }
+            bsdfVec.reserve(nSamples * nSamples);
+            lightVec.reserve(nSamples * nSamples);
+
+            _random.jittered2DArray(nSamples, nSamples, bsdfVec, true);
+            _random.jittered2DArray(nSamples, nSamples, lightVec, true);
+
+            for (uint32 i = 0; i < (nSamples * nSamples); ++i)
+                contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
+
+            direct += (contrib / lightVec.size());
         }
 
-        // Fetch samples
-        /*for (uint32 i = 0; i < nSamples; i++) {
-            light->sampleLi(Point2(_random.uniformFloat(), _random.uniformFloat()), &pos, &pdf);
-            samples.emplace_back(pos, pdf);
-        }*/
-
-        // Estimate integral with samples
-        for (const DirectSample sample : samples) {
-            Vec3 dir = normalize(sample.pos - evt.point());
-
-            // Check orientation
-            if (dot(evt.normal(), dir) > 0) {
-                // Trace shadow ray from point to sampled position
-                Ray shadowRay = evt.spawnRay(sample.pos);
-
-                // If it is not occluded, calculate radiance
-                if (!_scene->isOccluded(shadowRay)) {
-                    Float distSqr = 1.0 / Math::distSqr(sample.pos, evt.point());
-                    //distSqr = 1;
-                    contrib += distSqr * light->L(evt, dir) * mtl.calcRadiance(dir, evt) / sample.pdf;
-                }
-            }
-        }
-
-        // Average this light's contribution
-        if (!light->isDelta())
-            contrib /= vec.size();
-
-        // Sum with the direct lighting estimation
-        direct += contrib;
-
-        samples.clear();
     }
 
     return direct;
 }
 
 // Whitted algorithm
-Color3 WhittedRayTracer::traceRay(const Ray& ray, Float ior, uint32 depth, const Vec2ui& pixel) const {
+Color WhittedRayTracer::traceRay(const Ray& ray, Float ior, uint32 depth, const Vec2ui& pixel) const {
     // Default color
-    Color3 color = _scene->getBackgroundColor();
+    Color color(0); //= _scene->getBackgroundColor();
+
+    if (depth == 1)
+        color = _scene->getBackgroundColor();
 
     //if (pixel == Vec2ui(60, 239))
     //    std::cout << "Stop!";
@@ -190,7 +141,10 @@ Color3 WhittedRayTracer::traceRay(const Ray& ray, Float ior, uint32 depth, const
     SurfaceEvent event;
     if (_scene->intersectRay(ray, &event)) {
         // Get self emission from intersected object
-        color = event.Le(event.wo());
+        color = event.Le(event.toWorld(event.wo()));
+
+        if (event.obj()->isLight())
+            return color;
 
         const Material mtl = event.obj()->getMaterial();
 
@@ -201,15 +155,29 @@ Color3 WhittedRayTracer::traceRay(const Ray& ray, Float ior, uint32 depth, const
         if (depth >= _maxDepth)
             return color;
 
+        // -> Indirect Illumination
+        /*const BSDF* bsdf = event.obj()->bsdf();
+
+        BSDFSample sample(event);
+        Point2 rand = Point2(_random.uniformFloat(), _random.uniformFloat());
+        Color f = bsdf->sample(rand, &sample);
+
+        if (sample.pdf == 0 || f.isBlack()) 
+            return color;
+
+        Ray r  = Ray(event.point(), event.toWorld(sample.wi));
+        color += f * Frame::absCosTheta(sample.wi) * traceRay(r, ior, depth + 1) / sample.pdf;*/
+
         if (mtl.isReflector()) {
             // Reflected ray
             Ray reflected = ray.reflect(event);
 
+            //color += specularReflect(event, depth);
+            
             // Reflected ray contribution
             color += mtl.getSpec() * traceRay(reflected, ior, depth + 1);
         }
 
-        // -> Indirect Illumination
         if (mtl.isTransmissive()) {
             // Transmitted direction
             // If there is total internal reflection, the returned ray is the reflection ray
@@ -221,21 +189,4 @@ Color3 WhittedRayTracer::traceRay(const Ray& ray, Float ior, uint32 depth, const
     }
 
     return color;
-}
-
-bool WhittedRayTracer::hasCompleted() const {
-    return _renderTask->isDone();
-}
-
-void WhittedRayTracer::waitForCompletion() {
-    if (_renderTask) {
-        _renderTask->wait();
-        _renderTask.reset(); // Free pointer
-    }
-}
-
-void WhittedRayTracer::cleanup() {
-    _renderTask.reset(); // Free pointer
-    _tiles.clear();
-    _tiles.shrink_to_fit();
 }

@@ -11,6 +11,13 @@
 #include <Box.h>
 
 #include <AreaLight.h>
+#include <Spectral.h>
+
+#include <BSDF.h>
+#include <Lambertian.h>
+#include <OrenNayar.h>
+#include <Specular.h>
+#include <Mirror.h>
 
 #include <memory>
 
@@ -23,6 +30,7 @@ using namespace Photon::Utils;
 Material NFFParser::_material = Material();
 std::ifstream NFFParser::_buffer = std::ifstream();
 std::istringstream NFFParser::_lineBuffer = std::istringstream();
+BSDF* NFFParser::_bsdf = nullptr;
 
 bool NFFParser::isBufferEmpty() {
     return !_lineBuffer.rdbuf()->in_avail();
@@ -45,8 +53,6 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
         Utils::throwError("Couldn't read file " + filePath);
     }
 
-
-
     // Create scene
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 
@@ -57,8 +63,10 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
 
         if (cmd.compare(0, 3, "box") == 0) {
             parseBox(*scene);
+        } else if (cmd.compare(0, 4, "bsdf") == 0) {
+            parseBsdf(*scene);
         } else if (cmd.compare(0, 1, "b") == 0) {
-            scene->setBackgroundColor(parseVector3());
+            scene->setBackgroundColor(parseColor());
         } else if (cmd.compare(0, 1, "l") == 0) {
             parseLight(*scene);
         } else if (cmd.compare(0, 3, "als") == 0) {
@@ -93,6 +101,29 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
     return std::move(scene);
 }
 
+void NFFParser::parseBsdf(Scene& scene) {
+    std::string bsdfName = parseStr();
+
+    BSDF* bsdf = nullptr;
+
+    if (bsdfName.compare(0, 10, "Lambertian") == 0) {
+        Color rho = parseColor();
+        bsdf = new Lambertian(rho);
+    } else if (bsdfName.compare(0, 9, "OrenNayar") == 0) {
+        Color rho   = parseColor();
+        Float sigma = parseFloat();
+        bsdf = new OrenNayar(rho, sigma);
+    } else if (bsdfName.compare(0, 8, "Specular") == 0) {
+        Float intEta = parseFloat();
+        Float extEta = parseFloat();
+        bsdf = new Specular(intEta, extEta);
+        //bsdf = new Mirror();
+        std::cout << "Specular BSDF acquired!" << std::endl;
+    }
+
+    _bsdf = bsdf;
+}
+
 void NFFParser::parseLight(Scene& scene) {
     Light* l = new PointLight();
 
@@ -102,7 +133,7 @@ void NFFParser::parseLight(Scene& scene) {
 
     // Parse color if available
     if (!isBufferEmpty())
-        l->setColor(parseVector3());
+        l->setColor(parseColor());
 
 
     // Add light to scene
@@ -118,6 +149,7 @@ void NFFParser::parseSphere(Scene& scene) {
 
     std::shared_ptr<Sphere> s = std::make_shared<Sphere>(pos, radius);
     s->addMaterial(_material);
+    s->setBsdf(_bsdf);
 
     // Add sphere
     scene.addShape(s);
@@ -161,6 +193,7 @@ void NFFParser::parsePlane(Scene& scene) {
 
     std::shared_ptr<Plane> pl = std::make_shared<Plane>(normal, dist);
     pl->addMaterial(_material);
+    pl->setBsdf(_bsdf);
 
     // Add plane
     scene.addShape(pl);
@@ -260,12 +293,13 @@ void NFFParser::parseBox(Scene & scene) {
 
     std::shared_ptr<Box> box = std::make_shared<Box>(min, max);
     box->addMaterial(_material);
+    box->setBsdf(_bsdf);
 
     scene.addShape(box);
 }
 
 void NFFParser::parseMaterial(Scene& scene) {
-    Color3 color = parseVector3();
+    Color color = parseColor();
     Float diff = parseFloat();
     Float spec = parseFloat();
     Float shininess = parseFloat();
@@ -290,9 +324,10 @@ void NFFParser::parseSphericalLight(Scene& scene) {
     s->addMaterial(_material);
 
     // Parse light emission
-    Color3 emission = parseVector3();
+    Color emission = parseColor();
+    uint32 nSamples = parseInt();
 
-    Light* light = new AreaLight(s, emission);
+    Light* light = new AreaLight(s, emission, nSamples);
     s->setLight((AreaLight*)light);
 
     // Add sphere
@@ -389,6 +424,18 @@ const Vec3 NFFParser::parseVector3() {
     return Vec3(x, y, z);
 }
 
+const Color NFFParser::parseColor() {
+    Float r, g, b;
+    _lineBuffer >> r;
+    _lineBuffer >> g;
+    _lineBuffer >> b;
+
+    if (_lineBuffer.fail())
+        throwError("Failed to parse file.");
+
+    return Color(r, g, b);
+}
+
 const Point3 NFFParser::parsePoint3() {
     Float x, y, z;
     _lineBuffer >> x;
@@ -399,4 +446,12 @@ const Point3 NFFParser::parsePoint3() {
         throwError("Failed to parse file.");
 
     return Point3(x, y, z);
+}
+
+const std::string NFFParser::parseStr() {
+    std::string str;
+
+    _lineBuffer >> str;
+
+    return str;
 }

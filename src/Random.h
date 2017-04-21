@@ -9,7 +9,7 @@ namespace Photon {
     static const double D_ONE_MINUS_EPSILON = 0.99999999999999989;
     static const float F_ONE_MINUS_EPSILON = 0.99999994;
 
-#if PHOTON_USE_DOUBLE
+#if PHOTON_DOUBLE
     static const Float ONE_MINUS_EPSILON = D_ONE_MINUS_EPSILON;
 #else
     static const Float ONE_MINUS_EPSILON = F_ONE_MINUS_EPSILON;

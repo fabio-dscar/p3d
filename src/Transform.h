@@ -37,10 +37,10 @@ namespace Photon {
 
     // Transform utility functions
     Transform translate(const Vec3 trans);
-    Transform scale(Float sX, Float sY, Float sZ);
-    Transform rotateX(Float degrees);
-    Transform rotateY(Float degrees);
-    Transform rotateZ(Float degrees);
-    Transform ortho(Float zNear, Float zFar);
+    Transform scale    (Float sX, Float sY, Float sZ);
+    Transform rotateX  (Float degrees);
+    Transform rotateY  (Float degrees);
+    Transform rotateZ  (Float degrees);
+    Transform ortho    (Float zNear, Float zFar);
 
 }

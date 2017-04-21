@@ -12,7 +12,7 @@
 
 using namespace Photon;
 
-Scene::Scene() : _background(0.0f), _camera(), _lights(), _bounds(), _uniformGrid(nullptr) { }
+Scene::Scene() : _background(0.0f), _camera(), _lights(), _bounds(), _uniformGrid(nullptr), _hideLights(true) { }
 
 void Scene::prepareRender(bool useGrid) {
     if (useGrid) {
@@ -21,11 +21,11 @@ void Scene::prepareRender(bool useGrid) {
     }
 }
 
-void Scene::setBackgroundColor(const Color3& color) {
+void Scene::setBackgroundColor(const Color& color) {
     _background = color;
 }
 
-const Color3& Scene::getBackgroundColor() const {
+const Color& Scene::getBackgroundColor() const {
     return _background;
 }
 
@@ -55,10 +55,14 @@ void Scene::addShape(const std::shared_ptr<Shape> object) {
     }
 
     // If the shape emits light, add to the light list
-    if (object->isLight())
+    if (object->isLight()) {
         _lights.push_back(object->areaLight());
-    else 
+
+        if (!_hideLights)
+            _objects.push_back(object);
+    } else {
         _objects.push_back(object);
+    }
 }
 
 const std::vector<std::shared_ptr<Shape>>& Scene::getShapes() const {
@@ -67,11 +71,21 @@ const std::vector<std::shared_ptr<Shape>>& Scene::getShapes() const {
 
 bool Scene::intersectRay(const Ray& ray, SurfaceEvent* info) const {
     if (_uniformGrid) {
+        // Use acceleration structure
         _uniformGrid->intersectRay(ray, info);
+
+        // If there is a hit, compute surface intersection info
+        if (info->hit())
+            info->obj()->computeSurfaceEvent(ray, *info);
+
         return info->hit();
     } else {
         for (const std::shared_ptr<Shape> obj : _objects)
             obj->intersectRay(ray, info);
+
+        // If there is a hit, compute surface intersection info
+        if (info->hit())
+            info->obj()->computeSurfaceEvent(ray, *info);
 
         return info->hit();
     }

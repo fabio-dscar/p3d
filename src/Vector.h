@@ -66,13 +66,13 @@ namespace Math {
     inline Vector3<T> abs(const Vector3<T>& vec);
 
     template<typename T>
-    inline T dot(const Vector3<T>& vec1, const Vector3<T> vec2);
+    inline T dot(const Vector3<T>& vec1, const Vector3<T>& vec2);
 
     template<typename T>
-    inline T absDot(const Vector3<T>& vec1, const Vector3<T> vec2);
+    inline T absDot(const Vector3<T>& vec1, const Vector3<T>& vec2);
 
     template<typename T>
-    inline Vector3<T> cross(const Vector3<T>& vec1, const Vector3<T> vec2);
+    inline Vector3<T> cross(const Vector3<T>& vec1, const Vector3<T>& vec2);
 
     template<typename T>
     inline Vector3<T> normalize(const Vector3<T>& vec);
@@ -162,10 +162,10 @@ namespace Math {
     inline Vector2<T> abs(const Vector2<T>& vec);
 
     template<typename T>
-    inline T dot(const Vector2<T>& vec1, const Vector2<T> vec2);
+    inline T dot(const Vector2<T>& vec1, const Vector2<T>& vec2);
 
     template<typename T>
-    inline T absDot(const Vector2<T>& vec1, const Vector2<T> vec2);
+    inline T absDot(const Vector2<T>& vec1, const Vector2<T>& vec2);
 
     template<typename T>
     inline Vector2<T> normalize(const Vector2<T>& vec);
@@ -394,16 +394,19 @@ namespace Math {
     inline Normal3<T> abs(const Normal3<T>& vec);
 
     template<typename T>
-    inline T dot(const Normal3<T>& vec1, const Normal3<T> vec2);
+    inline T dot(const Normal3<T>& vec1, const Normal3<T>& vec2);
 
     template<typename T>
-    inline T dot(const Normal3<T>& vec1, const Vector3<T> vec2);
+    inline T dot(const Normal3<T>& vec1, const Vector3<T>& vec2);
 
     template<typename T>
-    inline T dot(const Vector3<T>& vec1, const Normal3<T> vec2);
+    inline T dot(const Vector3<T>& vec1, const Normal3<T>& vec2);
 
     template<typename T>
-    inline T absDot(const Normal3<T>& vec1, const Normal3<T> vec2);
+    inline T absDot(const Normal3<T>& vec1, const Normal3<T>& vec2);
+
+    template<typename T>
+    inline T absDot(const Normal3<T>& vec1, const Vector3<T>& vec2);
 
     template<typename T>
     inline Normal3<T> normalize(const Normal3<T>& vec);

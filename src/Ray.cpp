@@ -1,3 +1,4 @@
+
 #include <Ray.h>
 #include <Material.h>
 #include <Shape.h>
@@ -19,6 +20,7 @@ Ray::Ray(const Point3& origin, const Point3& target)
 
     _dir = normalize(target - origin);
     _maxT = arg(target);
+    _maxT -= _maxT * F_RAY_OFFSET;
 }
 
 const Point3& Ray::origin() const {
@@ -124,6 +126,14 @@ Ray RayEvent::spawnRay(const Point3& target) const {
     return Ray(_point, target);
 }
 
+Ray RayEvent::spawnRay(const Vec3& dir) const {
+    return Ray(_point, dir);
+}
+
+Ray RayEvent::spawnRay(const Vec3& dir, Float dist) const {
+    return Ray(_point, dir, F_RAY_OFFSET, dist);
+}
+
 /* ----------------------------------------------------------
     SurfaceEvent member functions
 ---------------------------------------------------------*/
@@ -134,11 +144,37 @@ void SurfaceEvent::setEvent(const Ray& ray, Shape const* obj, const Normal& norm
     _obj    = obj;
     _point  = ray.hitPoint();
     _normal = normal;
-    _wo     = -ray.dir();
+    _gFrame = Frame(_normal); 
+    _sFrame = _gFrame;   // Use shading normal instead
+    _wo     = _sFrame.toLocal(-ray.dir());
+}
+
+void SurfaceEvent::setPoint(const Point3& pt) {
+    _point = pt;
+}
+
+void SurfaceEvent::setShadFrame(const Frame& shframe) {
+    _sFrame = shframe;
+}
+
+void SurfaceEvent::setGeoFrame(const Frame& gframe) {
+    _gFrame = gframe;
+}
+
+const Frame& SurfaceEvent::gFrame() const {
+    return _gFrame;
+}
+
+const Frame& SurfaceEvent::sFrame() const {
+    return _sFrame;
 }
 
 void SurfaceEvent::setObj(const Shape* obj) {
     _obj = obj;
+}
+
+void SurfaceEvent::setUV(const Point2& uv) {
+    _uv = uv;
 }
 
 void SurfaceEvent::setBackface(bool backface) {
@@ -149,6 +185,10 @@ Shape const* SurfaceEvent::obj() const {
     return _obj;
 }
 
+const Point2& SurfaceEvent::uv() const {
+    return _uv;
+}
+
 bool SurfaceEvent::hit() const {
     return _obj != nullptr;
 }
@@ -157,10 +197,18 @@ bool SurfaceEvent::backface() const {
     return _backface;
 }
 
-Color3 SurfaceEvent::Le(const Vec3& w) const {
+Color SurfaceEvent::Le(const Vec3& w) const {
     // If surface is emissive, return emission
     if (_obj->isLight())
-        return _obj->areaLight()->L(*this, w);
+        return _obj->areaLight()->evalL(*this, w);
 
-    return Color3(0);
+    return Color::BLACK;
+}
+
+Vec3 SurfaceEvent::toWorld(const Vec3& w) const {
+    return _sFrame.toWorld(w);
+}
+
+Vec3 SurfaceEvent::toLocal(const Vec3& w) const {
+    return _sFrame.toLocal(w);
 }

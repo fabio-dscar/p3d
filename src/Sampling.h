@@ -8,28 +8,67 @@ namespace Photon {
     /* --------------------------------------------------------------------
            Uniform sampling shapes
     -----------------------------------------------------------------------*/
-    inline Point3 sampleUniformHemisphere(const Point2& rand) {
-        Float r   = std::sqrt(std::max((Float)0, (Float)1.0 - rand[0] * rand[0]));
-        Float phi = 2.0 * PI * rand[1];
-        return Point3(r * std::cos(phi), r * std::sin(phi), rand[0]);
+    inline Point2 sampleUniformDisk(const Point2& rand) {
+        Float phi = rand.x * 2.0 * PI;
+        Float r = std::sqrt(rand.y);
+
+        return Point2(r * std::cos(phi), r * std::sin(phi));
+    }
+
+    inline Float pdfUniformDisk() {
+        return 1 / PI;
+    }
+
+    inline Point2 sampleConcentricDisk(const Point2& rand) {
+        Point2 newRand = 2.0 * rand;
+        Point2 offset = Point2(newRand.x - 1.0, newRand.y - 1.0);
+
+        if (offset.x == 0 && offset.y == 0)
+            return Point2(0, 0);
+
+        Float theta, r;
+        if (std::abs(offset.x) > std::abs(offset.y)) {
+            r = offset.x;
+            theta = PI / 4.0 * (offset.y / offset.x);
+        } else {
+            r = offset.y;
+            theta = PI / 2.0 - PI / 4.0 * (offset.x / offset.y);
+        }
+
+        return r * Point2(std::cos(theta), std::sin(theta));
+    }
+
+    inline Float pdfConcentricDisk() {
+        return 1 / PI;
+    }
+
+    inline Vec3 sampleUniformHemisphere(const Point2& rand) {
+        Float r   = Math::sqrtSafe(1.0 - rand.x * rand.x);
+        Float phi = 2.0 * PI * rand.y;
+
+        return Vec3(r * std::cos(phi), r * std::sin(phi), rand.x);
     }
 
     inline Float pdfUniformHemisphere() {
         return INV2PI;
     }
 
+    inline Vec3 sampleCosHemisphere(const Point2& rand) {
+        Point2 p = sampleConcentricDisk(rand);
+
+        return Vec3(p.x, p.y, Math::sqrtSafe(1 - p.x * p.x - p.y * p.y));
+    }
+
+    inline Float pdfCosHemisphere(Float cos) {
+        return INVPI * cos;
+    }
+
     inline Point3 sampleUniformSphere(const Point2& rand) {
-        /*Float z = 1 - 2 * rand[0];
-        Float r = std::sqrt(std::max((Float)0, (Float)1 - z * z));
-        Float phi = 2 * PI * rand[1];
-        return Point3(r * std::cos(phi), r * std::sin(phi), z);*/
-        Float r   = 2.0 * std::sqrt(rand.x * (1.0 - rand.x));
         Float rz  = (1.0 - 2.0 * rand.x);
+        Float r   = Math::sqrtSafe(1.0 - rz * rz);
         Float phi = 2.0 * PI * rand.y;
 
-        return Point3(r * std::cos(phi),
-                      r * std::sin(phi),
-                      rz);
+        return Point3(r * std::cos(phi), r * std::sin(phi), rz);
     }
 
     inline Float pdfUniformSphere() { 
@@ -37,33 +76,23 @@ namespace Photon {
     }
 
     inline Point2 sampleUniformTriangle(const Point2& rand) {
-        Float su0 = std::sqrt(rand[0]);
-        return Point2(1 - su0, rand[1] * su0);
+        Float sqrt = std::sqrt(rand.x);
+        return Point2(1 - sqrt, rand.y * sqrt);
     }
 
-    inline Vec3 sampleUniformSphericalCap(const Point2& rand, Float cosThetaMax) {
-        Float phi = rand.y * 2.0 * PI;
-        /*float z   = rand.y * (1.0 - cosThetaMax) + cosThetaMax;
-        float r   = std::sqrt(std::max(1.0 - z * z, 0.0));
-        
-        return Vec3(r * std::sin(phi), r * std::cos(phi), z);*/
-        Float z = 1.0 - rand.x + rand.x * cosThetaMax;
-        Float sinTheta = std::sin(std::acos(z));
-        
-        //return Vec3(r * std::sin(phi), r * std::cos(phi), z);
-        return Vec3(sinTheta * std::cos(phi), sinTheta * std::sin(phi), z);
+    inline Vec3 sampleUniformCone(const Point2& rand, Float cosMax) {
+        Float cos = 1.0 - rand.x + rand.x * cosMax;
+        Float sin = std::sqrt(1 - cos * cos);
+        Float phi = 2.0 * PI * rand.y;
 
+        return Vec3(std::cos(phi) * sin, std::sin(phi) * sin, cos);
     }
 
-    inline Float pdfUniformSphericalCap(Float cosThetaMax) {
-        return INV2PI / (1.0 - cosThetaMax);
+    inline Float pdfUniformCone(Float cosMax) {
+        return INV2PI / (1.0 - cosMax);
     }
 
-    inline Point2 sampleUniformDisk(const Point2& rand) {
-        Float phi = rand.x * 2.0 * PI;
-        Float r   = std::sqrt(rand.y);
-        return Point2(r * std::cos(phi), r * std::sin(phi));
-    }
+    
 
     /* --------------------------------------------------------------------
             MIS Heuristics

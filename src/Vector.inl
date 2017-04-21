@@ -193,17 +193,17 @@ namespace Photon {
         }
 
         template<typename T>
-        inline T dot(const Vector3<T>& vec1, const Vector3<T> vec2) {
+        inline T dot(const Vector3<T>& vec1, const Vector3<T>& vec2) {
             return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
         }
 
         template<typename T>
-        inline T absDot(const Vector3<T>& vec1, const Vector3<T> vec2) {
+        inline T absDot(const Vector3<T>& vec1, const Vector3<T>& vec2) {
             return std::abs(dot(vec1, vec2));
         }
 
         template<typename T>
-        inline Vector3<T> cross(const Vector3<T>& vec1, const Vector3<T> vec2) {
+        inline Vector3<T> cross(const Vector3<T>& vec1, const Vector3<T>& vec2) {
             double vec1x = vec1.x, vec1y = vec1.y, vec1z = vec1.z;
             double vec2x = vec2.x, vec2y = vec2.y, vec2z = vec2.z;
 
@@ -279,32 +279,12 @@ namespace Photon {
         template<typename T>
         inline void basisFromVector(const Vector3<T>& vec1, Vector3<T>* vec2, Vector3<T>* vec3) {
             // [Duff et. al, 2017] "Building an Orthonormal Basis, Revisited"
-            /*Float sign = std::copysign(1.0, vec1.z);
+            Float sign = std::copysign(1.0, vec1.z);
             const Float a = -1.0 / (sign + vec1.z);
             const Float b = vec1.x * vec1.y * a;
 
             *vec2 = Vec3(1.0 + sign * vec1.x * vec1.x * a, sign * b, -sign * vec1.x);
-            *vec3 = Vec3(b, sign + vec1.y * vec1.y * a, -vec1.y);*/
-
-            /*if (std::abs(vec1.x) > std::abs(vec1.y))
-                *vec2 = Vector3<T>(-vec1.z, 0, vec1.x) / std::sqrt(vec1.x * vec1.x + vec1.z * vec1.z);
-            else
-                *vec2 = Vector3<T>(0, vec1.z, -vec1.y) / std::sqrt(vec1.y * vec1.y + vec1.z * vec1.z);
-
-            *vec3 = cross(vec1, *vec2);*/
-
-            Vec3 b = Vec3(0.00424, 1.0, 0.00764);
-            
-            *vec2 = normalize(cross(b, vec1));
-            *vec3 = cross(vec1, *vec2);
-
-            /*if (std::abs(vec1.x) > std::abs(vec1.y))
-                *vec3 = Vec3(0.0, 1.0, 0.0);
-            else
-                *vec3 = Vec3(1.0, 0.0, 0.0);
-
-            *vec2 = Vec3(cross(vec1, normalize(*vec3)));
-            *vec3 = cross(*vec2, vec1);*/
+            *vec3 = Vec3(b, sign + vec1.y * vec1.y * a, -vec1.y);
         }
 
         template<typename T>
@@ -483,12 +463,12 @@ namespace Photon {
         }
 
         template<typename T>
-        inline T dot(const Vector2<T>& vec1, const Vector2<T> vec2) {
+        inline T dot(const Vector2<T>& vec1, const Vector2<T>& vec2) {
             return vec1.x * vec2.x + vec1.y * vec2.y;
         }
 
         template<typename T>
-        inline T absDot(const Vector2<T>& vec1, const Vector2<T> vec2) {
+        inline T absDot(const Vector2<T>& vec1, const Vector2<T>& vec2) {
             return std::abs(dot(vec1, vec2));
         }
 
@@ -1159,23 +1139,28 @@ namespace Photon {
         }
 
         template<typename T>
-        inline T dot(const Normal3<T>& vec1, const Normal3<T> vec2) {
+        inline T dot(const Normal3<T>& vec1, const Normal3<T>& vec2) {
             return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
         }
 
         template<typename T>
-        inline T dot(const Normal3<T>& vec1, const Vector3<T> vec2) {
+        inline T dot(const Normal3<T>& vec1, const Vector3<T>& vec2) {
             return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
         }
 
         template<typename T>
-        inline T dot(const Vector3<T>& vec1, const Normal3<T> vec2) {
+        inline T dot(const Vector3<T>& vec1, const Normal3<T>& vec2) {
             return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
         }
 
         template<typename T>
-        inline T absDot(const Normal3<T>& vec1, const Normal3<T> vec2) {
+        inline T absDot(const Normal3<T>& vec1, const Normal3<T>& vec2) {
             return std::abs(dot(vec1, vec2));
+        }
+
+        template<typename T>
+        inline T absDot(const Normal3<T>& vec1, const Vector3<T>& vec2) {
+            return std::abs(dot(Vector3<T>(vec1), vec2));
         }
 
         template<typename T>

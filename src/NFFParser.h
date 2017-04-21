@@ -30,6 +30,7 @@ namespace Photon {
             static void parsePolygonPatch(Scene& scene);
             static void parseBox(Scene& scene);
             static void parseMaterial(Scene& scene);
+            static void parseBsdf(Scene& scene);
             static void parseCamera(Scene& scene);
 
             static void parsePlanarLight(Scene& scene);
@@ -40,10 +41,13 @@ namespace Photon {
             static const Vec2   parseVector2();
             static const Vec3   parseVector3();
             static const Point3 parsePoint3();
+            static const Color  parseColor();
+            static const std::string parseStr();
 
             static bool isBufferEmpty();
             static bool loadLine();
 
+            static BSDF* _bsdf;
             static std::ifstream _buffer;
             static std::istringstream _lineBuffer;
             static Material _material;

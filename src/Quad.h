@@ -35,8 +35,8 @@ namespace Photon {
 
     private:
         Point3 _pos;
-        Vec3 _edgeOne;
-        Vec3 _edgeTwo;
+        Vec3   _edgeOne;
+        Vec3   _edgeTwo;
     };
 
 }

@@ -58,7 +58,7 @@ namespace Photon {
         void calculateBasis() {
             _n = normalize(_pos - _target);
             _u = normalize(cross(_up, _n));
-            _v = normalize(cross(_n, _u));
+            _v = cross(_n, _u);
 
             /*
             Vec3 a, b;

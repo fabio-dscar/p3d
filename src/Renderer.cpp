@@ -5,7 +5,10 @@
 #include <Vector.h>
 #include <Scene.h>
 #include <Camera.h>
+
+#include <Integrator.h>
 #include <WhittedRayTracer.h>
+#include <PathTracer.h>
 
 #include <json\json.hpp>
 #include <FreeImage.h>
@@ -20,7 +23,7 @@ void Renderer::initialize() {
 
 void Renderer::renderScene(const std::shared_ptr<Scene>& scene) {
     _scene = scene;
-    _raytracer = std::make_shared<WhittedRayTracer>(*scene, MAX_DEPTH);
+    _integrator = std::make_shared<PathTracer>(*scene); // WhittedRayTracer
 
     // Export file as an end callback after rendering
     std::function<void()> endCallback = EndCallback();
@@ -28,12 +31,12 @@ void Renderer::renderScene(const std::shared_ptr<Scene>& scene) {
         endCallback = [this]() { this->exportImage(); };
 
     // Init and start raytracer
-    _raytracer->initialize();
-    _raytracer->startRender(endCallback);
+    _integrator->initialize();
+    _integrator->startRender(endCallback);
 }
 
 void Renderer::waitForCompletion() {
-    _raytracer->waitForCompletion();
+    _integrator->waitForCompletion();
 }
 
 const RendererSettings& Renderer::settings() {
@@ -41,7 +44,7 @@ const RendererSettings& Renderer::settings() {
 }
 
 bool Renderer::hasCompleted() {
-    return _raytracer->hasCompleted();
+    return _integrator->hasCompleted();
 }
 
 void Renderer::exportImage() {
@@ -56,10 +59,10 @@ void Renderer::exportImage() {
                 const Film& film = _scene->getCamera().film();
 
                 // Convert to [0, 255] range
-                Color3 pColor = film(i, y);
-                color.rgbRed = Math::clamp<uint32>(pColor.x * 255.0, 0u, 255u);
-                color.rgbGreen = Math::clamp<uint32>(pColor.y * 255.0, 0u, 255u);
-                color.rgbBlue = Math::clamp<uint32>(pColor.z * 255.0, 0u, 255u);
+                Color pColor = film(i, y);
+                color.rgbRed = Math::clamp<uint32>(pColor.r * 255.0, 0u, 255u);
+                color.rgbGreen = Math::clamp<uint32>(pColor.g * 255.0, 0u, 255u);
+                color.rgbBlue = Math::clamp<uint32>(pColor.b * 255.0, 0u, 255u);
 
                 FreeImage_SetPixelColor(bitmap, i, y, &color);
             }
