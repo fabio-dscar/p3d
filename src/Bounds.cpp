@@ -90,6 +90,11 @@ bool Bounds3::isBounded() const {
     return !(_min.infinity() || _max.infinity());
 }
 
+void Bounds3::expand(Float size) {
+    _min = _min + Point3(-size);
+    _max = _max + Point3(size);
+}
+
 void Bounds3::expand(const Point3& pt) {
     _min = Math::min(_min, pt);
     _max = Math::max(_max, pt);

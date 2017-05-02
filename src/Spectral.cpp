@@ -92,6 +92,14 @@ Float& SpectralRGB::operator[](uint32 idx) {
     return b;
 }
 
+Float SpectralRGB::max() const {
+    return std::max(r, std::max(g, b));
+}
+
+Float SpectralRGB::min() const {
+    return std::min(r, std::min(g, b));
+}
+
 void SpectralRGB::clamp(Float low, Float high) {
     r = Math::clamp<Float>(r, low, high);
     g = Math::clamp<Float>(g, low, high);

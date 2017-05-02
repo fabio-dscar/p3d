@@ -1,7 +1,7 @@
 #pragma once
 
 #include <BSDF.h>
-#include <ConstTexture.h>
+#include <Texture.h>
 
 namespace Photon {
 

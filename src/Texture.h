@@ -16,7 +16,7 @@ namespace Photon {
 
         virtual T fetch(const Point2& uv) const = 0;
         virtual T fetch(const SurfaceEvent& evt) const {
-            return fetch(evt.uv());
+            return fetch(evt.uv);
         }
 
         T operator()(Float u, Float v) const {

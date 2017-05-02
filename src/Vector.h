@@ -28,6 +28,7 @@ namespace Math {
         Vector3<T>& operator-=(const Vector3<T>& vec);
 
         Vector3<T>  operator* (const Vector3<T>& vec) const;
+        Vector3<T>& operator*=(const Vector3<T>& vec);
         Vector3<T>  operator* (T scalar) const;
         Vector3<T>& operator*=(T scalar);
 
@@ -54,6 +55,8 @@ namespace Math {
         T max() const;
         uint32 maxDim() const;
         uint32 minDim() const;
+
+        bool isZero() const;
     };
 
     template<typename T>
@@ -111,6 +114,12 @@ namespace Math {
     inline Vector3<T> pow(Vector3<T> val, Float exp);
 
     template<typename T>
+    inline Vector3<T> floor(Vector3<T> vec);
+
+    template<typename T>
+    inline Vector3<T> ceil(Vector3<T> vec);
+
+    template<typename T>
     class Vector2 {
     public:
         T x, y;
@@ -118,6 +127,7 @@ namespace Math {
         Vector2() : x(0), y(0) {}
         Vector2(T scalar) : x(scalar), y(scalar) {}
         Vector2(T x, T y) : x(x), y(y) {}
+        Vector2(const Vector3<T>& vec) : x(vec.x), y(vec.y) {}
 
         template<typename U>
         Vector2(const Vector2<U>& vec);
@@ -128,6 +138,8 @@ namespace Math {
         Vector2<T>  operator- (const Vector2<T>& vec) const;
         Vector2<T>& operator-=(const Vector2<T>& vec);
 
+        Vector2<T>  operator* (const Vector2<T>& vec) const;
+        Vector2<T>& operator*=(const Vector2<T>& vec);
         Vector2<T>  operator* (T scalar) const;
         Vector2<T>& operator*=(T scalar);
 
@@ -201,7 +213,7 @@ namespace Math {
         template<typename U>
         Point3T(const Point3T<U>& pt);
 
-        //Point3T<T>  operator+ (const Point3T<T>& pt) const;
+        Point3T<T>  operator+ (const Point3T<T>& pt) const;
         Point3T<T>  operator+ (const Vector3<T>& vec) const;
         Point3T<T>& operator+=(const Vector3<T>& vec);
 
@@ -218,7 +230,7 @@ namespace Math {
 
         Point3T<T> operator-() const;
 
-        T operator[](uint32 idx) const;
+        T operator[] (uint32 idx) const;
         T& operator[](uint32 idx);
 
         bool operator==(Point3T<T> pt) const;
@@ -267,7 +279,7 @@ namespace Math {
     inline Float distSqr(const Point3T<T>& pt1, const Point3T<T>& pt2);
 
     template<typename T>
-    Point3T<T> lerp(Float t, const Point3T<T>& p1, const Point3T<T>& p2);
+    Point3T<T> lerp(Float t, const Point3T<T>& pt1, const Point3T<T>& pt2);
 
 
     template<typename T>
@@ -278,7 +290,9 @@ namespace Math {
         Point2T() : x(0), y(0) {}
         Point2T(T scalar) : x(scalar), y(scalar) {}
         Point2T(T x, T y) : x(x), y(y) {}
+        Point2T(const Point3T<T>& pt) : x(pt.x), y(pt.y) {}
 
+        Point2T<T>  operator+ (const Point2T<T>& pt) const;
         Point2T<T>  operator+ (const Vector2<T>& vec) const;
         Point2T<T>& operator+=(const Vector2<T>& vec);
 

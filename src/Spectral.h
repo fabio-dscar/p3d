@@ -10,9 +10,7 @@ namespace Photon {
         Float r, g, b;
 
         SpectralRGB() : r(0), g(0), b(0) { }
-
         SpectralRGB(Float s) : r(s), g(s), b(s) {}
-
         SpectralRGB(Float r, Float g, Float b)
             : r(r), g(g), b(b) { }
 
@@ -37,6 +35,9 @@ namespace Photon {
         Float  operator[](uint32 idx) const;
         Float& operator[](uint32 idx);
 
+        Float max() const;
+        Float min() const;
+
         void  clamp(Float low, Float high);
         bool  isBlack() const;
         Float lum() const;
@@ -48,10 +49,32 @@ namespace Photon {
         return rgb * scalar;
     }
 
+    inline SpectralRGB operator/(Float scalar, const SpectralRGB& rgb) {
+        return rgb / scalar;
+    }
+
+    /*inline SpectralRGB abs(const SpectralRGB& rgb) {
+        return SpectralRGB(std::abs(rgb.r), std::abs(rgb.g), std::abs(rgb.b));
+    }*/
+
     inline SpectralRGB clamp(const SpectralRGB& rgb, Float low, Float high) {
         Float r = Math::clamp<Float>(rgb.r, low, high);
         Float g = Math::clamp<Float>(rgb.g, low, high);
         Float b = Math::clamp<Float>(rgb.b, low, high);
+        return SpectralRGB(r, g, b);
+    }
+
+    inline SpectralRGB sqrtSafe(const SpectralRGB& rgb) {
+        Float r = Math::sqrtSafe(rgb.r);
+        Float g = Math::sqrtSafe(rgb.g);
+        Float b = Math::sqrtSafe(rgb.b);
+        return SpectralRGB(r, g, b);
+    }
+
+    inline SpectralRGB exp(const SpectralRGB& rgb) {
+        Float r = std::exp(rgb.r);
+        Float g = std::exp(rgb.g);
+        Float b = std::exp(rgb.b);
         return SpectralRGB(r, g, b);
     }
 

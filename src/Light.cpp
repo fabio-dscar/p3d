@@ -5,16 +5,8 @@
 
 using namespace Photon;
 
-void Light::setPosition(const Point3& pos) {
-    _pos = pos;
-}
-
-const Point3& Light::pos() const {
-    return _pos;
-}
-
-void Light::setColor(const Color& color) {
-    _Le = color;
+void Light::setIntensity(const Color& Le) {
+    _Le = Le;
 }
 
 const Color& Light::color() const {
@@ -22,7 +14,7 @@ const Color& Light::color() const {
 }
 
 Color Light::L(const RayEvent& evt, const Vec3& w) const {
-    if (Math::dot(evt.normal(), w) > 0)
+    if (Math::dot(evt.normal, w) > 0)
         return _Le;
 
     return Color(0);

@@ -19,6 +19,7 @@
 #include <OpenGLRenderer.h>
 #include <Threading.h>
 #include <Timer.h>
+#include <Resources.h>
 
 using namespace Photon;
 using namespace Photon::OpenGL;
@@ -59,6 +60,9 @@ void mousePress(int button, int state, int x, int y) {
 void photonInit() {
     // Initialize threading
     Threading::initThreads(Threading::getNumberOfProcessors());
+
+    // Initialize resource manager
+    Resources::initialize();
 }
 
 void photonShutdown() {
@@ -74,9 +78,15 @@ struct Coisas {
     Float pdf;
 };
 
-int main(int argc, char* argv[]) {
-    std::string filePath("bsdf.nff");
+#include <Quadric.h>
+#include <OrenNayar.h>
+#include <Lambertian.h>
+#include <Specular.h>
+#include <ThinSpecular.h>
 
+int main(int argc, char* argv[]) {
+    std::string filePath("oren-box.nff");
+    
     /*std::vector<Coisas> vecs;
     RandGen rand;
     Frame frame = Frame(Normal(0, 0, -1));
@@ -108,11 +118,21 @@ int main(int argc, char* argv[]) {
     if (!_scene)
         Utils::throwError("Failed to load scene.");
 
+    //std::shared_ptr<Shape> quadric;
+
+    //quadric = std::make_shared<Quadric>(-1, -1, 1, 0, 0, 0, 0, 0, 0, -0.05);
+    //quadric = std::make_shared<Quadric>(2, 2, -1, 0, 0, 0, 0, 0, 0, -0.10);
+    //quadric = std::make_shared<Quadric>(1, 1, 0, 0, 0, 0, 0, 0, 0, -0.15);
+    //quadric->setBsdf(new Lambertian(Color(0.6, 0.6, 0.6)));
+    //quadric->setBsdf(new Specular(1.5, 1.0, Color(0), Color(1)));
+
+    //_scene->addShape(quadric);
+
     // Init system
     photonInit();
 
     // Prepare scene for rendering
-    _scene->prepareRender(true);
+    _scene->prepareRender();
 
     Utils::Timer t;
 

@@ -35,6 +35,16 @@ namespace Photon {
         }
 
         template<typename T>
+        T& Matrix4x4<T>::operator()(uint32 i, uint32 j) {
+            return m[i][j];
+        }
+
+        template<typename T>
+        const T& Matrix4x4<T>::operator()(uint32 i, uint32 j) const {
+            return m[i][j];
+        }
+
+        template<typename T>
         Matrix4x4<T> Matrix4x4<T>::mul(const Matrix4x4& mat) const {
             Matrix4x4<T> ret;
             for (uint32 i = 0; i < 4; ++i)
@@ -141,11 +151,17 @@ namespace Photon {
         }
 
         template<typename T>
-        bool swapsHandedness(const Matrix4x4<T>& mat) {
-            Float det = mat.m[0][0] * (mat.m[1][1] * mat.m[2][2] - mat.m[1][2] * mat.m[2][1]) +
-                mat.m[0][1] * (mat.m[1][2] * mat.m[2][0] - mat.m[1][0] * mat.m[2][2]) +
-                mat.m[0][2] * (mat.m[1][0] * mat.m[2][1] - mat.m[1][1] * mat.m[2][0]);
-            return det < 0;
+        Matrix4x4<T> inverse(const Matrix4x4<T>& mat) {
+            Matrix4x4<T> ret;
+            mat.invert(ret);
+            return ret;
+        }
+
+        template<typename T>
+        T det3x3(const Matrix4x4<T>& mat) {
+            return mat.m[0][0] * (mat.m[1][1] * mat.m[2][2] - mat.m[1][2] * mat.m[2][1]) +
+                   mat.m[0][1] * (mat.m[1][2] * mat.m[2][0] - mat.m[1][0] * mat.m[2][2]) +
+                   mat.m[0][2] * (mat.m[1][0] * mat.m[2][1] - mat.m[1][1] * mat.m[2][0]);
         }
 
 

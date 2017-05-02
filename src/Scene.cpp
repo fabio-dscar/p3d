@@ -12,11 +12,13 @@
 
 using namespace Photon;
 
-Scene::Scene() : _background(0.0f), _camera(), _lights(), _bounds(), _uniformGrid(nullptr), _hideLights(true) { }
+Scene::Scene() : _background(0.0f), _camera(), _lights(), _bounds(), 
+                 _uniformGrid(nullptr), _hideLights(false), _useGrid(true) { }
 
-void Scene::prepareRender(bool useGrid) {
-    if (useGrid) {
-        _uniformGrid = std::make_unique<UniformGrid>(*this, (Float)2.0);
+void Scene::prepareRender() {
+    if (_useGrid) {
+        _uniformGrid = std::make_unique<UniformGrid>(*this, 2.0f);
+        //_uniformGrid = std::make_unique<UniformGrid>(*this, Vec3ui(1, 1, 1));
         _uniformGrid->initialize();
     }
 }
@@ -43,6 +45,10 @@ void Scene::addLight(Light const* light) {
 
 const std::vector<Light const*>& Scene::getLights() const {
     return _lights;
+}
+
+void Scene::useGrid(bool state) {
+    _useGrid = state;
 }
 
 void Scene::addShape(const std::shared_ptr<Shape> object) {
@@ -76,7 +82,7 @@ bool Scene::intersectRay(const Ray& ray, SurfaceEvent* info) const {
 
         // If there is a hit, compute surface intersection info
         if (info->hit())
-            info->obj()->computeSurfaceEvent(ray, *info);
+            info->obj->computeSurfaceEvent(ray, *info);
 
         return info->hit();
     } else {
@@ -85,7 +91,7 @@ bool Scene::intersectRay(const Ray& ray, SurfaceEvent* info) const {
 
         // If there is a hit, compute surface intersection info
         if (info->hit())
-            info->obj()->computeSurfaceEvent(ray, *info);
+            info->obj->computeSurfaceEvent(ray, *info);
 
         return info->hit();
     }

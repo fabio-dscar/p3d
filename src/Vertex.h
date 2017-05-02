@@ -5,20 +5,21 @@
 namespace Photon {
 
     struct Vertex {
-        Point3 _vertex;
-        Normal _normal;
-        Vec2   _uv;
+        Point3 vertex;
+        Normal normal;
+        Vec3   tangent;
+        Vec2   uv;
 
-        Vertex() : _vertex(0), _normal(0), _uv(0) { }
+        Vertex() : vertex(0), normal(0), uv(0), tangent(0) { }
 
         Vertex(const Point3& vert) 
-            : _vertex(vert), _normal(0), _uv(0) { }
+            : vertex(vert), normal(0), uv(0), tangent(0) { }
 
         Vertex(const Point3& vert, const Normal& norm) 
-            : _vertex(vert), _normal(norm), _uv(0) { }
+            : vertex(vert), normal(norm), uv(0), tangent(0) { }
 
         Vertex(const Point3& vert, const Normal& norm, const Vec2& uv) 
-            : _vertex(vert), _normal(norm), _uv(uv) { }
+            : vertex(vert), normal(norm), uv(uv), tangent(0) { }
     };
 
 }

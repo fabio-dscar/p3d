@@ -25,42 +25,23 @@ namespace Photon {
             return _y;
         }
 
+        Vec3 z() const {
+            return _z;
+        }
+
         bool consistent();
 
         static Vec3 reflect(const Vec3& wi);
+        static Vec3 reflect(const Vec3& wi, const Vec3& n);
 
-        static bool refract(const Vec3& wi, Vec3* wtr, const Normal& normal, Float eta) {
-            /*Float etaSqr = eta * eta;
+        static Vec3 refract(const Vec3& wi, Float eta, Float cosT);
+        static Vec3 refract(const Vec3& wi, Float intEta, Float extEta, Float cosT);
+        static Vec3 refract(const Vec3& wi, const Normal& n, Float eta, Float cosT);
+        static Vec3 refract(const Vec3& wi, const Normal& n, Float eta);
+        //static bool refract(const Vec3& wi, Vec3* wt, const Normal& n, Float eta);
 
-            // Compute $\cos \theta_\roman{t}$ using Snell's law
-            Float cosThetaI  = dot(normal, wi);
-            Float sin2ThetaI = std::max((Float)0, 1.0 - cosThetaI * cosThetaI);
-            Float sin2ThetaT = etaSqr * sin2ThetaI;
-
-            // Handle total internal reflection for transmission
-            if (sin2ThetaT >= 1) 
-                return false;
-
-            Float cosThetaT = std::sqrt(1 - sin2ThetaT);
-            *wtr = eta * -wi + (eta * cosThetaI - cosThetaT) * Vec3(normal);
-
-            return true;*/
-
-            // Compute $\cos \theta_\roman{t}$ using Snell's law
-            Float cosThetaI = dot(normal, wi);
-            Float sin2ThetaI = std::max(Float(0), Float(1 - cosThetaI * cosThetaI));
-            Float sin2ThetaT = eta * eta * sin2ThetaI;
-
-            // Handle total internal reflection for transmission
-            if (sin2ThetaT >= 1) 
-                return false;
-
-            Float cosThetaT = std::sqrt(1 - sin2ThetaT);
-
-            *wtr = Vec3(eta * -wi + (eta * cosThetaI - cosThetaT) * Vec3(normal));
-
-            return true;
-        }
+        static bool sameSide(const Vec3& w1, const Vec3& w2);
+        static bool onPositiveHemisphere(const Vec3& w);
 
         // Frame spherical functions
         static Float cosTheta(const Vec3& w);
@@ -80,6 +61,7 @@ namespace Photon {
         static Float sinPhiSqr(const Vec3& w);
 
         static Float cosAng(const Vec3& w1, const Vec3& w2);
+
     private:
         Vec3 _x, _y, _z;
     };

@@ -18,7 +18,7 @@ namespace Photon {
     public:
         Scene();
 
-        void prepareRender(bool useGrid);
+        void prepareRender();
 
         void setBackgroundColor(const Color& color);
         const Color& getBackgroundColor() const;
@@ -36,6 +36,8 @@ namespace Photon {
         bool isOccluded(const Ray& ray) const;
 
         Bounds3 bounds() const;
+
+        void useGrid(bool state);
     private:
         Color _background;
         Camera _camera;
@@ -44,6 +46,7 @@ namespace Photon {
         std::vector<std::shared_ptr<Shape>> _objects;
         std::unique_ptr<UniformGrid> _uniformGrid;
         bool _hideLights;
+        bool _useGrid;
     };
 
 }

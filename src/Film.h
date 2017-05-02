@@ -12,7 +12,7 @@ namespace Photon {
     class Film {
     public:
         Film(uint32 width, uint32 height)
-            : _width(width), _height(height) {
+            : _width(width), _height(height), _toneOp(FILMIC), _exposure(0.6) {
 
             _film.resize(_width * _height * 3);
             _normal.resize(_width * _height * 3);
@@ -20,7 +20,7 @@ namespace Photon {
         }
 
         Film(const Vec2ui& res)
-            : _width(res.x), _height(res.y) {
+            : _width(res.x), _height(res.y), _toneOp(FILMIC), _exposure(0.6) {
 
             _film.resize(_width * _height * 3);
             _normal.resize(_width * _height * 3);
@@ -43,13 +43,21 @@ namespace Photon {
             return _width * _height;
         }
 
+        void setToneOperator(ToneOperator toneOp) {
+            _toneOp = toneOp;
+        }
+
+        void setExposure(Float exposure) {
+            _exposure = exposure;
+        }
+
         void addColorSample(uint32 x, uint32 y, const Color& color) {
             uint32 idx = x + _width * y;
 
-            Color xyz = RGBToXYZ(color);
-            Color rgb = XYZToRGB(xyz);
+            //Color xyz = RGBToXYZ(color);
+            //Color rgb = XYZToRGB(xyz);
 
-            Color hdr = filmicHDR(rgb);
+            Color hdr = ToneMap(_toneOp, color, _exposure);
             
             _film[3 * idx]     = hdr.r;
             _film[3 * idx + 1] = hdr.g;
@@ -69,8 +77,8 @@ namespace Photon {
         }
 
         const std::vector<Float>& image() const {
-            return _normal;
-            //return _film;
+            //return _normal;
+            return _film;
         }
 
         /*const Float* image(uint32 row) const {
@@ -88,6 +96,9 @@ namespace Photon {
     private:
         uint32 _width;
         uint32 _height;
+
+        ToneOperator _toneOp;
+        Float _exposure;
 
         std::vector<Float> _film;
         const Filter*      _filter;

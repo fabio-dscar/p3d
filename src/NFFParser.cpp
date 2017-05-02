@@ -1,5 +1,8 @@
 #include <NFFParser.h>
 
+#include <memory>
+#include <filesystem>
+
 #include <Utils.h>
 #include <Scene.h>
 #include <Sphere.h>
@@ -9,6 +12,8 @@
 #include <PolygonPatch.h>
 #include <Triangle.h>
 #include <Box.h>
+#include <Quad.h>
+#include <TriMesh.h>
 
 #include <AreaLight.h>
 #include <Spectral.h>
@@ -17,20 +22,24 @@
 #include <Lambertian.h>
 #include <OrenNayar.h>
 #include <Specular.h>
-#include <Mirror.h>
+#include <ThinSpecular.h>
+//#include <Mirror.h>
+#include <RoughSpecular.h>
+#include <MicrofacetRefraction.h>
+#include <MicrofacetReflection.h>
+#include <Conductor.h>
+#include <AshikhminShirley.h>
 
-#include <memory>
-
-#include <filesystem>
+#include <Resources.h>
 
 using namespace Photon;
 using namespace Photon::Utils;
 
 // Static attributes
-Material NFFParser::_material = Material();
 std::ifstream NFFParser::_buffer = std::ifstream();
 std::istringstream NFFParser::_lineBuffer = std::istringstream();
 BSDF* NFFParser::_bsdf = nullptr;
+MatrixStack NFFParser::_matStack = MatrixStack();
 
 bool NFFParser::isBufferEmpty() {
     return !_lineBuffer.rdbuf()->in_avail();
@@ -61,8 +70,53 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
         std::string cmd;
         _lineBuffer >> cmd;
 
+        // Matrix stack commands
+        if (cmd.compare(0, 3, "pop") == 0) {
+            _matStack.popMatrix();
+        } else if (cmd.compare(0, 4, "push") == 0) {
+            _matStack.pushMatrix();
+        } else if (cmd.compare(0, 8, "identity") == 0) {
+            _matStack.loadIdentity();
+        } else if (cmd.compare(0, 9, "translate") == 0) {
+            Vec3 tr = parseVector3();
+            _matStack.translate(tr);
+        } else if (cmd.compare(0, 5, "scale") == 0) {
+            Vec3 s = parseVector3();
+            _matStack.scale(s);
+        } else if (cmd.compare(0, 7, "rotateX") == 0) {
+            Float angle = parseFloat();
+            _matStack.rotateX(angle);
+        } else if (cmd.compare(0, 7, "rotateY") == 0) {
+            Float angle = parseFloat();
+            _matStack.rotateY(angle);
+        } else if (cmd.compare(0, 7, "rotateZ") == 0) {
+            Float angle = parseFloat();
+            _matStack.rotateZ(angle);
+        }
+
+        if (cmd.compare(0, 3, "obj") == 0) {
+            parseTriMesh(*scene);
+        }
+
+        if (cmd.compare(0, 4, "grid") == 0) {
+            std::string str = parseStr();
+            if (str.compare(0, 3, "off") == 0)
+                scene->useGrid(false);
+        }
+
         if (cmd.compare(0, 3, "box") == 0) {
             parseBox(*scene);
+        } else if(cmd.compare(0, 4, "tone") == 0) {
+            std::string op = parseStr();
+            if (op.compare(0, 6, "linear") == 0) {
+                scene->getCamera().film().setToneOperator(LINEAR);
+            } else {
+                Float exposure = parseFloat();
+                scene->getCamera().film().setToneOperator(FILMIC);
+                scene->getCamera().film().setExposure(exposure);
+            }
+        } else if (cmd.compare(0, 2, "qd") == 0) {
+            parseQuad(*scene);
         } else if (cmd.compare(0, 4, "bsdf") == 0) {
             parseBsdf(*scene);
         } else if (cmd.compare(0, 1, "b") == 0) {
@@ -82,7 +136,7 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
         } else if (cmd.compare(0, 2, "pl") == 0) {
             parsePlane(*scene);
         } else if (cmd.compare(0, 1, "f") == 0) {
-            parseMaterial(*scene);
+            ; //parseMaterial(*scene);
         } else if (cmd.compare(0, 1, "p") == 0) {
             parsePolygon(*scene);
         } else if (cmd.compare(0, 2, "pp") == 0) {
@@ -90,7 +144,7 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
         } else if (cmd.compare(0, 1, "#") == 0) {
             // Comment, do nothing
         } else {
-            throwError("Unknown command found in scene file.");
+//            throwError("Unknown command found in scene file.");
         }
     }
 
@@ -116,25 +170,40 @@ void NFFParser::parseBsdf(Scene& scene) {
     } else if (bsdfName.compare(0, 8, "Specular") == 0) {
         Float intEta = parseFloat();
         Float extEta = parseFloat();
-        bsdf = new Specular(intEta, extEta);
+        Color refl   = parseColor();
+        Color refr   = parseColor();
+        bsdf = new Specular(intEta, extEta, refl, refr);
+        //bsdf = new RoughSpecular(BECKMANN, 0.2, 1.5, 1.0);
+        //bsdf = new MicrofacetReflection(GGX, Vec2(0.0001, 0.003), intEta, extEta);
+        //bsdf = new MicrofacetRefraction(GGX, Vec2(0.05, 0.001), intEta, extEta);
+
         //bsdf = new Mirror();
-        std::cout << "Specular BSDF acquired!" << std::endl;
+        //std::cout << "Specular BSDF acquired!" << std::endl;
+    } else if (bsdfName.compare(0, 9, "Conductor") == 0) {
+        Color refl = parseColor();
+        Color eta = parseColor();
+        Color k = parseColor();
+        bsdf = new Conductor(refl, eta, k);
+    } else if (bsdfName.compare(0, 8, "AShirley") == 0) {
+        Color diff = parseColor();
+        Color spec = parseColor();
+
+        bsdf = new AshikhminShirley(BECKMANN, Vec2(0.01, 0.01), diff, spec);
     }
 
     _bsdf = bsdf;
 }
 
 void NFFParser::parseLight(Scene& scene) {
-    Light* l = new PointLight();
 
     // Parse position
-    Vec3 v = parseVector3();
-    l->setPosition(Point3(v.x, v.y, v.z));
+    Point3 v = parsePoint3();
+  
+    Light* l = new PointLight(v);
 
     // Parse color if available
     if (!isBufferEmpty())
-        l->setColor(parseColor());
-
+        l->setIntensity(parseColor());
 
     // Add light to scene
     scene.addLight(l);
@@ -148,7 +217,6 @@ void NFFParser::parseSphere(Scene& scene) {
     radius = parseFloat();
 
     std::shared_ptr<Sphere> s = std::make_shared<Sphere>(pos, radius);
-    s->addMaterial(_material);
     s->setBsdf(_bsdf);
 
     // Add sphere
@@ -165,7 +233,6 @@ void NFFParser::parseCylinder(Scene& scene) {
     Float apexRadius = parseFloat();
 
     std::shared_ptr<Cylinder> c = std::make_shared<Cylinder>(base, baseRadius, apex, apexRadius);
-    c->addMaterial(_material);
 
     // Add cylinder
     scene.addShape(c);
@@ -192,11 +259,23 @@ void NFFParser::parsePlane(Scene& scene) {
     Float dist = dot(normal, p1);
 
     std::shared_ptr<Plane> pl = std::make_shared<Plane>(normal, dist);
-    pl->addMaterial(_material);
     pl->setBsdf(_bsdf);
 
     // Add plane
     scene.addShape(pl);
+}
+
+void NFFParser::parseQuad(Scene& scene) {
+    // Find the normal of the plane
+    Point3 origin = parsePoint3();
+    Vec3 edge1 = parseVector3();
+    Vec3 edge2 = parseVector3();
+
+    std::shared_ptr<Quad> quad = std::make_shared<Quad>(origin, edge1, edge2);
+    quad->setBsdf(_bsdf);
+
+    // Add plane
+    scene.addShape(quad);
 }
 
 void NFFParser::parsePolygon(Scene& scene) {
@@ -226,7 +305,8 @@ void NFFParser::parsePolygon(Scene& scene) {
         std::shared_ptr<Triangle> tri = std::make_shared<Triangle>(p1, p2, p3, normal);
 
         // Add triangle
-        tri->addMaterial(_material);
+        tri->setBsdf(_bsdf);
+
         scene.addShape(tri);
     } else {
         std::shared_ptr<Polygon> pol = std::make_shared<Polygon>();
@@ -245,7 +325,6 @@ void NFFParser::parsePolygon(Scene& scene) {
         }
 
         // Add polygon
-        pol->addMaterial(_material);
         scene.addShape(pol);
     }
 }
@@ -263,8 +342,8 @@ void NFFParser::parsePolygonPatch(Scene& scene) {
     loadLine();
     Vertex p3 = { parsePoint3(), Normal(parseVector3()) };
 
-    Vec3 p1p2 = p2._vertex - p1._vertex;
-    Vec3 p1p3 = p3._vertex - p1._vertex;
+    Vec3 p1p2 = p2.vertex - p1.vertex;
+    Vec3 p1p3 = p3.vertex - p1.vertex;
 
     // Check if edges make non-zero angle
     Float angle = dot(p1p2, p1p3);
@@ -281,10 +360,23 @@ void NFFParser::parsePolygonPatch(Scene& scene) {
         pol->addVertex(parsePoint3(), Normal(parseVector3()));
     }
 
-    pol->addMaterial(_material);
-
     // Add polygon
     scene.addShape(pol);
+}
+
+void NFFParser::parseTriMesh(Scene& scene) {
+    std::string path = parseStr();
+    std::string name = parseStr();
+
+    // Load mesh
+    auto mesh = Resources::get().loadObj(path, name);
+    mesh->setTransform(Transform(_matStack.loadMatrix()));
+    mesh->setBsdf(_bsdf);
+
+    // Add triangles to the scene
+    const auto tris = mesh->getTris();
+    for (auto obj : tris)
+        scene.addShape(obj);
 }
 
 void NFFParser::parseBox(Scene & scene) {
@@ -292,13 +384,12 @@ void NFFParser::parseBox(Scene & scene) {
     Point3 max = parsePoint3();
 
     std::shared_ptr<Box> box = std::make_shared<Box>(min, max);
-    box->addMaterial(_material);
     box->setBsdf(_bsdf);
 
     scene.addShape(box);
 }
 
-void NFFParser::parseMaterial(Scene& scene) {
+/*void NFFParser::parseMaterial(Scene& scene) {
     Color color = parseColor();
     Float diff = parseFloat();
     Float spec = parseFloat();
@@ -309,7 +400,7 @@ void NFFParser::parseMaterial(Scene& scene) {
     Material mtl(color, diff, spec, shininess, transmit, ior);
 
     _material = mtl;
-}
+}*/
 
 void NFFParser::parsePlanarLight(Scene& scene) {
 
@@ -321,7 +412,6 @@ void NFFParser::parseSphericalLight(Scene& scene) {
     Float radius = parseFloat();
 
     std::shared_ptr<Sphere> s = std::make_shared<Sphere>(pos, radius);
-    s->addMaterial(_material);
 
     // Parse light emission
     Color emission = parseColor();
@@ -334,12 +424,15 @@ void NFFParser::parseSphericalLight(Scene& scene) {
     scene.addShape(s);
 }
 
+#include <Perspective.h>
+
 void NFFParser::parseCamera(Scene& scene) {
     std::string cmd;
     Point3 from, target;
     Vec3 up;
     Float fov, near;
     Vec2ui res;
+    Float radius, focalDist;
 
     // 'from' line
     loadLine();
@@ -377,8 +470,19 @@ void NFFParser::parseCamera(Scene& scene) {
     if (cmd.compare(0, 10, "resolution") == 0)
         res = parseVector2();
 
-    Camera cam = Camera(from, up, target, fov, near, res);
-    scene.addCamera(cam);
+    loadLine();
+    _lineBuffer >> cmd;
+    if (cmd.compare(0, 4, "lens") == 0) {
+        radius = parseFloat();
+        focalDist = parseFloat();
+    }
+
+    Transform camToWorld = Camera::lookAt(from, target, up);
+
+    Camera* cam = new Perspective(camToWorld, res, fov, near, 1000); // Camera(from, up, target, fov, near, res);
+    cam->setLensParams(radius, focalDist);
+
+    scene.addCamera(*cam);
 }
 
 Float NFFParser::parseFloat() {

@@ -11,14 +11,25 @@ Transform::Transform(const Mat4& matrix)
         std::cout << "No inverse" << std::endl; // Error
 }
 
+const Mat4& Transform::matrix() const {
+    return _mat;
+}
+
+const Mat4& Transform::invMatrix() const {
+    return _invMat;
+}
+
 Ray Transform::operator()(const Ray& ray) const {
     Point3 orig = (*this)(ray.origin());
     Vec3 dir = (*this)(ray.dir());
 
-    return Ray(orig, dir, ray.minT(), ray.maxT());
+    Ray r = Ray(orig, dir, ray.minT(), ray.maxT());
+    r.setTime(ray.time());
+
+    return r;
 }
 
-Bounds3 Transform::operator()(const Bounds3 &box) const {
+Bounds3 Transform::operator()(const Bounds3& box) const {
     const Transform &Tr = *this;
 
     Bounds3 ret(Point3(0));
@@ -61,16 +72,20 @@ Vector3<T> Transform::operator()(const Vector3<T>& vec) const {
     return Vector3<T>(x, y, z);
 }
 
-template<typename T>
+/*template<typename T>
 Normal3<T> Transform::operator()(const Normal3<T>& norm) const {
     T x = _invMat.m[0][0] * norm.x + _invMat.m[1][0] * norm.y + _invMat.m[2][0] * norm.z;
     T y = _invMat.m[0][1] * norm.x + _invMat.m[1][1] * norm.y + _invMat.m[2][1] * norm.z;
     T z = _invMat.m[0][2] * norm.x + _invMat.m[1][2] * norm.y + _invMat.m[2][2] * norm.z;
 
     return Normal3<T>(x, y, z);
+}*/
+
+bool Transform::flipsOrientation() const {
+    return det3x3(_mat) < 0;
 }
 
-Transform Photon::translate(const Vec3 trans) {
+Transform Photon::translate(const Vec3& trans) {
     Mat4 mat(1, 0, 0, trans.x,
              0, 1, 0, trans.y,
              0, 0, 1, trans.z,
@@ -142,4 +157,8 @@ Transform Photon::rotateZ(Float degrees) {
 
 Transform Photon::ortho(Float zNear, Float zFar) {
     return scale(1, 1, 1 / (zFar - zNear)) * translate(Vec3(0, 0, -zNear));
+}
+
+Transform Photon::inverse(const Transform& trans) {
+    return Transform(trans.invMatrix(), trans.matrix());
 }

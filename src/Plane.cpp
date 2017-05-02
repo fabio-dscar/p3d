@@ -24,6 +24,7 @@ bool Plane::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
         if (ray.inRange(t)) {
             ray.setMaxT(t);
             evt->setEvent(ray, this, _normal);
+            //evt->point = ray(t);
             return true;
         } 
     }
@@ -37,8 +38,7 @@ bool Plane::isOccluded(const Ray& ray) const {
         Float NdotO = dot(_normal, ray.origin().posVec());
         Float t = (_distance - NdotO) / NdotD;
 
-        if (ray.inRange(t))
-            return true;
+        return ray.inRange(t);
     }
 
     return false;

@@ -2,7 +2,7 @@
 
 #include <Vector.h>
 
-//#include <Ray.h>
+#include <Ray.h>
 #include <BSDF.h>
 
 namespace Photon {
@@ -43,26 +43,32 @@ namespace Photon {
         
     class BSDFSample {
     public:
-        Vec3          wi;
-        Float         pdf;
-        BSDFType      type;
-        Transport     transp;
+        Vec3      wi;
+        Vec3      wo;
+        Float     pdf;
+        Float     eta;
+        BSDFType  type;
+        Transport transp;
         const SurfaceEvent* evt;
 
         BSDFSample(const SurfaceEvent& evt)
-            : pdf(0),
-            evt(&evt),
-            type(BSDFType::ALL),
-            transp(Transport::RADIANCE) {}
+            : wo(evt.wo),
+              pdf(0),
+              eta(1.0),
+              evt(&evt),
+              type(BSDFType::ALL),
+              transp(Transport::RADIANCE) {}
 
         BSDFSample(const DirectSample& sample) 
-            : pdf(0),
+            : wo(sample.ref->wo),
+              pdf(0),
+              eta(1.0),
               evt((SurfaceEvent*)sample.ref),
               type(BSDFType::ALL),
               transp(Transport::RADIANCE) {
 
             // Set wi in shading frame space
-            wi = evt->sFrame().toLocal(sample.wi);
+            wi = evt->sFrame.toLocal(sample.wi);
         }
     };
 

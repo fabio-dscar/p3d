@@ -17,6 +17,8 @@ namespace Photon {
                       T m20, T m21, T m22, T m23,
                       T m30, T m31, T m32, T m33);
 
+            T& operator()(uint32 i, uint32 j);
+            const T& operator()(uint32 i, uint32 j) const;
             Matrix4x4<T> mul(const Matrix4x4& mat) const;
             Matrix4x4<T> operator*(T scalar) const;
             bool invert(Matrix4x4<T>& ret) const;
@@ -29,11 +31,13 @@ namespace Photon {
         Matrix4x4<T> mul(const Matrix4x4<T>& mat1, const Matrix4x4<T>& mat2);
 
         template<typename T>
+        Matrix4x4<T> inverse(const Matrix4x4<T>& mat);
+
+        template<typename T>
         Matrix4x4<T> transpose(const Matrix4x4<T>& mat);
 
         template<typename T>
-        bool swapsHandedness(const Matrix4x4<T>& mat);
-
+        T det3x3(const Matrix4x4<T>& mat);
 
         // Generic RxC Matrix
         template<uint32 R, uint32 C, typename T>

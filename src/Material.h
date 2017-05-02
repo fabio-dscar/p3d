@@ -133,14 +133,14 @@ namespace Photon {
             Color color = Color(0);
 
             Vec3 l = normalize(wi);
-            Float NdotL = dot(surfInfo.normal(), l);
+            Float NdotL = dot(surfInfo.normal, l);
 
             // Reflected direction
-            Vec3 r = normalize(2.0f * NdotL * surfInfo.normal() - l);
+            Vec3 r = normalize(2.0f * NdotL * surfInfo.normal - l);
 
             Float RdotV = 0;
-            if (dot(r, surfInfo.wo()) > 0)
-                RdotV = std::pow(dot(r, surfInfo.wo()), _shininess);
+            if (dot(r, surfInfo.wo) > 0)
+                RdotV = std::pow(dot(r, surfInfo.wo), _shininess);
 
             color += NdotL * _diff * _color;
             color += RdotV * _spec * _color;

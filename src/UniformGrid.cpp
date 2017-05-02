@@ -66,12 +66,12 @@ void UniformGrid::initialize() {
             // Go to next
             continue;
         }
-
+        
         // Get indices of object bbox on grid 
         // (note that this is a vectorial clamp)
         Vec3   scale  = Vec3(_dims) * _invSize;
-        Vec3ui idxMin = Math::clamp<uint32>((objBbox.min() - _bounds.min()) * scale, 0, _dims - 1);
-        Vec3ui idxMax = Math::clamp<uint32>((objBbox.max() - _bounds.min()) * scale, 0, _dims - 1);
+        Vec3ui idxMin = Math::clamp<uint32>(floor((objBbox.min() - _bounds.min()) * scale), 0, _dims - 1);
+        Vec3ui idxMax = Math::clamp<uint32>(ceil((objBbox.max() - _bounds.min()) * scale), 0, _dims - 1);
 
         // Set each object in respective voxels
         for (uint32 ix = idxMin.x; ix <= idxMax.x; ix++)

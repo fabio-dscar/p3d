@@ -8,11 +8,12 @@
     <ProjFreeglutDir>$(ProjLibDir)freeglut\</ProjFreeglutDir>
     <ProjGlewDir>$(ProjLibDir)glew\</ProjGlewDir>
     <ProjFreeimageDir>$(ProjLibDir)freeimage\</ProjFreeimageDir>
+    <ProjTinyObjDir>$(ProjLibDir)tinyobjloader\</ProjTinyObjDir>
   </PropertyGroup>
   <PropertyGroup>
     <_PropertySheetDisplayName>PropertySheet64</_PropertySheetDisplayName>
     <OutDir>$(ProjOutDir)x64\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjFreeglutDir)include;$(ProjSrcDir);$(ProjGlewDir)include;$(ProjLibDir);$(ProjFreeimageDir)include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjFreeglutDir)include;$(ProjSrcDir);$(ProjGlewDir)include;$(ProjLibDir);$(ProjFreeimageDir)include;$(ProjTinyObjDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjFreeglutDir)lib\x64;$(ProjGlewDir)lib\x64;$(ProjFreeimageDir)lib\x64;$(LibraryPath)</LibraryPath>
     <ExtensionsToDeleteOnClean>$(ProjOutDir)x64\$(Configuration)\freeglut.dll;$(ProjOutDir)x64\$(Configuration)\glew32.dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
   </PropertyGroup>
@@ -45,6 +46,9 @@ copy /y "$(ProjectDir)..\..\settings.json" "$(ProjOutDir)x64\$(Configuration)\"<
     </BuildMacro>
     <BuildMacro Include="ProjFreeimageDir">
       <Value>$(ProjFreeimageDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="ProjTinyObjDir">
+      <Value>$(ProjTinyObjDir)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

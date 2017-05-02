@@ -20,14 +20,15 @@ namespace Photon {
 #endif
 
     // Math constants
-    static PHOTON_CONSTEXPR Float PI      = 3.14159265358979323846;
-    static PHOTON_CONSTEXPR Float INVPI   = 0.31830988618379067154;
-    static PHOTON_CONSTEXPR Float INV2PI  = 0.15915494309189533577;
-    static PHOTON_CONSTEXPR Float INV4PI  = 0.07957747154594766788;
-    static PHOTON_CONSTEXPR Float PIOVER2 = 1.57079632679489661923;
-    static PHOTON_CONSTEXPR Float PIOVER4 = 0.78539816339744830961;
-    static PHOTON_CONSTEXPR Float SQRT2   = 1.41421356237309504880;
-    static PHOTON_CONSTEXPR Float INVLOG2 = 1.442695040888963387004650940071;
+    static PHOTON_CONSTEXPR Float PI        = 3.14159265358979323846;
+    static PHOTON_CONSTEXPR Float INVPI     = 0.31830988618379067154;
+    static PHOTON_CONSTEXPR Float INV2PI    = 0.15915494309189533577;
+    static PHOTON_CONSTEXPR Float INV4PI    = 0.07957747154594766788;
+    static PHOTON_CONSTEXPR Float PIOVER2   = 1.57079632679489661923;
+    static PHOTON_CONSTEXPR Float PIOVER4   = 0.78539816339744830961;
+    static PHOTON_CONSTEXPR Float SQRTINVPI = 0.56418958354775628694807945156077;
+    static PHOTON_CONSTEXPR Float SQRT2     = 1.41421356237309504880;
+    static PHOTON_CONSTEXPR Float INVLOG2   = 1.442695040888963387004650940071;
 
     static PHOTON_CONSTEXPR Float F_LOWEST   = std::numeric_limits<Float>::lowest();
     static PHOTON_CONSTEXPR Float F_MAXIMUM  = std::numeric_limits<Float>::max();
@@ -41,11 +42,16 @@ namespace Photon {
         template<typename T>
         inline T clamp(T val, T low, T high);
 
+        inline Float max(Float x, Float y);
+        inline Float min(Float x, Float y);
         inline Float acosSafe(Float x);
         inline Float sqrtSafe(Float x);
         inline Float radians (Float degrees);
         inline Float degrees (Float radians);
         inline Float log2    (Float x);
+
+        inline Float erf(Float x);
+        inline Float erfInv(Float x);
 
         inline int32 sign(Float scalar);
         inline Float lerp(Float t, Float v1, Float v2);

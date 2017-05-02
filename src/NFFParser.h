@@ -7,6 +7,7 @@
 
 #include <Vector.h>
 #include <Material.h>
+#include <MatrixStack.h>
 
 #include <PhotonMath.h>
 
@@ -26,10 +27,12 @@ namespace Photon {
             static void parseSphere(Scene& scene);
             static void parseCylinder(Scene& scene);
             static void parsePlane(Scene& scene);
+            static void parseQuad(Scene& scene);
             static void parsePolygon(Scene& scene);
             static void parsePolygonPatch(Scene& scene);
+            static void parseTriMesh(Scene& scene);
             static void parseBox(Scene& scene);
-            static void parseMaterial(Scene& scene);
+            //static void parseMaterial(Scene& scene);
             static void parseBsdf(Scene& scene);
             static void parseCamera(Scene& scene);
 
@@ -50,7 +53,7 @@ namespace Photon {
             static BSDF* _bsdf;
             static std::ifstream _buffer;
             static std::istringstream _lineBuffer;
-            static Material _material;
+            static MatrixStack _matStack;
         };
     
     }

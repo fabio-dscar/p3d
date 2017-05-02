@@ -55,9 +55,6 @@
     <Filter Include="Source Files\Math">
       <UniqueIdentifier>{5685a5e1-a6c1-4ee7-8cf6-727bf3415ec4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Grid">
-      <UniqueIdentifier>{5a60a355-689d-41d9-b079-f98352be98bb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Grid">
       <UniqueIdentifier>{816ddd8f-197e-48be-99e4-3c705fa0819b}</UniqueIdentifier>
     </Filter>
@@ -84,6 +81,9 @@
     </Filter>
     <Filter Include="Source Files\Material">
       <UniqueIdentifier>{eff30e05-6c5f-4562-a51e-9c12bffcdbd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Spatial">
+      <UniqueIdentifier>{5a60a355-689d-41d9-b079-f98352be98bb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -168,6 +168,36 @@
     <ClCompile Include="..\..\src\PathTracer.cpp">
       <Filter>Source Files\Integrators</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Specular.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ThinSpecular.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Mirror.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Fresnel.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Microfacet.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\PointLight.cpp">
+      <Filter>Source Files\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\TriMesh.cpp">
+      <Filter>Source Files\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MatrixStack.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Resources.cpp">
+      <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\AshikhminShirley.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Utils.h">
@@ -196,9 +226,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Triangle.h">
       <Filter>Header Files\Geometry</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Material.h">
-      <Filter>Header Files\Material</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Light.h">
       <Filter>Header Files\Light</Filter>
@@ -258,7 +285,7 @@
       <Filter>Header Files\Geometry</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\UniformGrid.h">
-      <Filter>Header Files\Grid</Filter>
+      <Filter>Header Files\Spatial</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ParamList.h">
       <Filter>Header Files\Utils</Filter>
@@ -311,17 +338,11 @@
     <ClInclude Include="..\..\src\Microfacet.h">
       <Filter>Header Files\Material</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Phong.h">
-      <Filter>Header Files\Material</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\Texture.h">
       <Filter>Header Files\Texture</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ConstTexture.h">
       <Filter>Header Files\Texture</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\Matte.h">
-      <Filter>Header Files\Material</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\Specular.h">
       <Filter>Header Files\Material</Filter>
@@ -347,9 +368,6 @@
     <ClInclude Include="..\..\src\OrenNayar.h">
       <Filter>Header Files\Material</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\PointLight.h">
-      <Filter>Header Files\Material</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\PathTracer.h">
       <Filter>Header Files\Integrator</Filter>
     </ClInclude>
@@ -362,7 +380,52 @@
     <ClInclude Include="..\..\src\Animation.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\Mirror.h">
+    <ClInclude Include="..\..\src\ThinSpecular.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Bump.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\PointLight.h">
+      <Filter>Header Files\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Perspective.h">
+      <Filter>Header Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\BDPT.h">
+      <Filter>Header Files\Integrator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Quadric.h">
+      <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\RoughPlastic.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\RoughSpecular.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MicrofacetRefraction.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MicrofacetReflection.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\RoughLayered.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Conductor.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ImageTexture.h">
+      <Filter>Header Files\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\TriMesh.h">
+      <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MatrixStack.h">
+      <Filter>Header Files\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AshikhminShirley.h">
       <Filter>Header Files\Material</Filter>
     </ClInclude>
   </ItemGroup>

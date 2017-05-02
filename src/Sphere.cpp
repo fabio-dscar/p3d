@@ -23,17 +23,15 @@ bool Sphere::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
         Float t = -B - det;
         if (ray.inRange(t)) {
             ray.setMaxT(t);
-            evt->setObj(this);
-            //evt->setEvent(ray, this, Normal(normalize(ray(t) - _pos)));
+            evt->setEvent(ray, this, Normal(normalize(ray(t) - _pos)));
             return true;
         }
 
         t = -B + det;
         if (ray.inRange(t)) {
             ray.setMaxT(t);
-            evt->setObj(this);
-            //evt->setEvent(ray, this, Normal(normalize(ray(t) - _pos)));
-            evt->setBackface(true);  // Hit from inside sphere
+            evt->setEvent(ray, this, Normal(normalize(ray(t) - _pos)));
+            evt->backface = true;  // Hit from inside sphere
             return true;
         }
     }

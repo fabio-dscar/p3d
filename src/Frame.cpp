@@ -9,8 +9,8 @@ Frame::Frame(const Normal& normal) : _z(normalize(Vec3(normal))) {
     _x.normalize();
     _y.normalize();
 
-    if (!consistent())
-        std::cout << "WARNING";
+    //if (!consistent())
+    //    std::cout << "WARNING" << std::endl;
 }
 
 Frame::Frame(const Vec3& x, const Vec3& y, const Vec3& z) 
@@ -19,6 +19,15 @@ Frame::Frame(const Vec3& x, const Vec3& y, const Vec3& z)
     _x.normalize();
     _y.normalize();
     _z.normalize();
+
+    if (!consistent()) {
+        Math::basisFromVector(z, &_x, &_y);
+        _x.normalize();
+        _y.normalize();
+        _z = normalize(z);
+
+        //std::cout << "WARNING_3" << std::endl;
+    }
 }
 
 Vec3 Frame::toWorld(const Vec3& vec) const {
@@ -53,6 +62,48 @@ Vec3 Frame::reflect(const Vec3& wi) {
     return Vec3(-wi.x, -wi.y, wi.z);
 }
 
+Vec3 Frame::reflect(const Vec3& wi, const Vec3& n) {
+    return 2 * dot(wi, n) * n - wi;
+}
+
+Vec3 Frame::refract(const Vec3& wi, Float eta, Float cosT) {
+    return Vec3(-eta * wi.x, -eta * wi.y, cosT);
+}
+
+Vec3 Frame::refract(const Vec3& wi, Float intEta, Float extEta, Float cosT) {
+    Float eta = extEta / intEta;
+    if (cosT > 0) // If we are leaving the surface, swap IORs
+        eta = 1.0 / eta;
+
+    return Vec3(-eta * wi.x, -eta * wi.y, cosT);
+}
+
+Vec3 Frame::refract(const Vec3& wi, const Normal& n, Float eta, Float cosT) {
+    return Vec3(eta * -wi + n * (dot(wi, n) * eta + cosT));
+}
+
+Vec3 Frame::refract(const Vec3& wi, const Normal& n, Float eta) {
+    Float cosI  = dot(n, wi);
+    Float sin2I = std::max((Float)0.0, (Float)1.0 - cosI * cosI);
+    Float sin2T = eta * eta * sin2I;
+
+    // Handle TIR
+    if (sin2T >= 1)
+        return Vec3(0);
+
+    Float cosT = std::sqrt(1 - sin2T);
+
+    return Vec3(eta * -wi + (eta * cosI - cosT) * Vec3(n));
+}
+
+bool Frame::sameSide(const Vec3& w1, const Vec3& w2) {
+    return cosTheta(w1) * cosTheta(w2) > 0;
+}
+
+bool Frame::onPositiveHemisphere(const Vec3& w) {
+    return cosTheta(w) > 0;
+}
+
 Float Frame::cosTheta(const Vec3& w) {
     return w.z;
 }
@@ -70,7 +121,7 @@ Float Frame::sinTheta(const Vec3& w) {
 }
 
 Float Frame::sinThetaSqr(const Vec3& w) {
-    return std::max(0.0, 1.0 - cosThetaSqr(w));
+    return std::max((Float)0.0, (Float)1.0 - cosThetaSqr(w));
 }
 
 Float Frame::tanTheta(const Vec3& w) {
@@ -83,7 +134,7 @@ Float Frame::tanThetaSqr(const Vec3& w) {
 
 Float Frame::cosPhi(const Vec3& w) {
     Float sin = sinTheta(w);
-    if (sin == 0)
+    if (std::abs(sin) < F_EPSILON)
         return 1;
 
     return Math::clamp<Float>(w.x / sin, -1.0, 1.0);
@@ -91,20 +142,24 @@ Float Frame::cosPhi(const Vec3& w) {
 
 Float Frame::sinPhi(const Vec3& w) {
     Float sin = sinTheta(w);
-    if (sin == 0)
+    if (std::abs(sin) < F_EPSILON)
         return 1;
 
     return Math::clamp<Float>(w.x / sin, -1.0, 1.0);
 }
 
 Float Frame::cosPhiSqr(const Vec3& w) {
-    Float cos = cosPhi(w);
-    return cos * cos;
+    //Float cos = cosPhi(w);
+    //return cos * cos;
+
+    return Math::clamp(w.x * w.x / sinThetaSqr(w), 0.0, 1.0);
 }
 
 Float Frame::sinPhiSqr(const Vec3& w) {
-    Float sin = sinPhi(w);
-    return sin * sin;
+    //Float sin = sinPhi(w);
+    //return sin * sin;
+
+    return Math::clamp(w.y * w.y / sinThetaSqr(w), 0.0, 1.0);
 }
 
 Float Frame::cosAng(const Vec3& w1, const Vec3& w2) {

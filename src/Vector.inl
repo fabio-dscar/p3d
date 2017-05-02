@@ -48,6 +48,14 @@ namespace Photon {
         }
 
         template<typename T>
+        Vector3<T>& Vector3<T>::operator*=(const Vector3<T>& vec) {
+            x *= vec.x;
+            y *= vec.y;
+            z *= vec.z;
+            return *this;
+        }
+
+        template<typename T>
         Vector3<T> Vector3<T>::operator*(T scalar) const {
             return Vector3(x * scalar, y * scalar, z * scalar);
         }
@@ -172,6 +180,11 @@ namespace Photon {
             return x * y * z;
         }
 
+        template<typename T>
+        bool Vector3<T>::isZero() const {
+            return x == 0 && y == 0 && z == 0;
+        }
+
 
         /* ----------------------------------------------------------
             Vector3 functions
@@ -204,11 +217,11 @@ namespace Photon {
 
         template<typename T>
         inline Vector3<T> cross(const Vector3<T>& vec1, const Vector3<T>& vec2) {
-            double vec1x = vec1.x, vec1y = vec1.y, vec1z = vec1.z;
-            double vec2x = vec2.x, vec2y = vec2.y, vec2z = vec2.z;
+            Float vec1x = vec1.x, vec1y = vec1.y, vec1z = vec1.z;
+            Float vec2x = vec2.x, vec2y = vec2.y, vec2z = vec2.z;
 
             return Vector3<T>((vec1y * vec2z) - (vec1z * vec2y),
-                (vec1z * vec2x) - (vec1x * vec2z),
+                              (vec1z * vec2x) - (vec1x * vec2z),
                               (vec1x * vec2y) - (vec1y * vec2x));
         }
 
@@ -285,6 +298,12 @@ namespace Photon {
 
             *vec2 = Vec3(1.0 + sign * vec1.x * vec1.x * a, sign * b, -sign * vec1.x);
             *vec3 = Vec3(b, sign + vec1.y * vec1.y * a, -vec1.y);
+
+            /*if (std::abs(vec1.x) > std::abs(vec1.y))
+                *vec2 = Vector3<T>(-vec1.z, 0, vec1.x) / std::sqrt(vec1.x * vec1.x + vec1.z * vec1.z);
+            else
+                *vec2 = Vector3<T>(0, vec1.z, -vec1.y) / std::sqrt(vec1.y * vec1.y + vec1.z * vec1.z);
+            *vec3 = cross(vec1, *vec2);*/
         }
 
         template<typename T>
@@ -311,7 +330,15 @@ namespace Photon {
             return ret;
         }
 
+        template<typename T>
+        inline Vector3<T> floor(Vector3<T> vec) {
+            return Vector3<T>(std::floor(vec.x), std::floor(vec.y), std::floor(vec.z));
+        }
 
+        template<typename T>
+        inline Vector3<T> ceil(Vector3<T> vec) {
+            return Vector3<T>(std::ceil(vec.x), std::ceil(vec.y), std::ceil(vec.z));
+        }
 
 
         /* ----------------------------------------------------------
@@ -345,6 +372,18 @@ namespace Photon {
         Vector2<T>& Vector2<T>::operator-=(const Vector2<T>& vec) {
             x -= vec.x;
             y -= vec.y;
+            return *this;
+        }
+
+        template<typename T>
+        Vector2<T> Vector2<T>::operator*(const Vector2<T>& vec) const {
+            return Vector2<T>(x * vec.x, y * vec.y);
+        }
+
+        template<typename T>
+        Vector2<T>& Vector2<T>::operator*=(const Vector2<T>& vec) {
+            x *= vec.x;
+            y *= vec.y;
             return *this;
         }
 
@@ -528,10 +567,10 @@ namespace Photon {
             z = T(pt.z);
         }
 
-        /*template<typename T>
+        template<typename T>
         Point3T<T> Point3T<T>::operator+(const Point3T<T>& pt) const {
             return Point3T<T>(x + pt.x, y + pt.y, z + pt.z);
-        }*/
+        }
 
         template<typename T>
         Point3T<T> Point3T<T>::operator+(const Vector3<T>& vec) const {
@@ -775,6 +814,11 @@ namespace Photon {
             Point2T member functions
         ---------------------------------------------------------*/
         template<typename T>
+        Point2T<T> Point2T<T>::operator+(const Point2T<T>& pt) const {
+            return Point2T<T>(x + pt.x, y + pt.y);
+        }
+
+        template<typename T>
         Point2T<T> Point2T<T>::operator+(const Vector2<T>& vec) const {
             return Point2T<T>(x + vec.x, y + vec.y);
         }
@@ -949,8 +993,8 @@ namespace Photon {
         }
 
         template<typename T>
-        Point2T<T> lerp(Float t, const Point2T<T>& p1, const Point2T<T>& p2) {
-            return (1 - t) * p1 + t * p2;
+        Point2T<T> lerp(Float t, const Point2T<T>& pt1, const Point2T<T>& pt2) {
+            return (1 - t) * pt1 + t * pt2;
         }
 
 
@@ -958,8 +1002,8 @@ namespace Photon {
             Normal3 member functions
         ---------------------------------------------------------*/
         template<typename T>
-        Normal3<T> Normal3<T>::operator+(const Normal3<T>& vec) const {
-            return Normal3<T>(x + vec.x, y + vec.y, z + vec.z);
+        Normal3<T> Normal3<T>::operator+(const Normal3<T>& n) const {
+            return Normal3<T>(x + n.x, y + n.y, z + n.z);
         }
 
         template<typename T>
@@ -968,10 +1012,10 @@ namespace Photon {
         }
 
         template<typename T>
-        Normal3<T>& Normal3<T>::operator+=(const Normal3<T>& vec) {
-            x += vec.x;
-            y += vec.y;
-            z += vec.z;
+        Normal3<T>& Normal3<T>::operator+=(const Normal3<T>& n) {
+            x += n.x;
+            y += n.y;
+            z += n.z;
             return *this;
         }
 
@@ -984,8 +1028,8 @@ namespace Photon {
         }
 
         template<typename T>
-        Normal3<T> Normal3<T>::operator-(const Normal3<T>& vec) const {
-            return Normal3(x - vec.x, y - vec.y, z - vec.z);
+        Normal3<T> Normal3<T>::operator-(const Normal3<T>& n) const {
+            return Normal3(x - n.x, y - n.y, z - n.z);
         }
 
         template<typename T>
@@ -994,10 +1038,10 @@ namespace Photon {
         }
 
         template<typename T>
-        Normal3<T>& Normal3<T>::operator-=(const Normal3<T>& vec) {
-            x -= vec.x;
-            y -= vec.y;
-            z -= vec.z;
+        Normal3<T>& Normal3<T>::operator-=(const Normal3<T>& n) {
+            x -= n.x;
+            y -= n.y;
+            z -= n.z;
             return *this;
         }
 
@@ -1123,84 +1167,84 @@ namespace Photon {
             Normal3 functions
         ---------------------------------------------------------*/
         template<typename T>
-        inline Normal3<T> operator*(T scalar, const Normal3<T>& vec) {
-            return vec * scalar;
+        inline Normal3<T> operator*(T scalar, const Normal3<T>& n) {
+            return n * scalar;
         }
 
         template<typename T>
-        inline Normal3<T> operator/(T scalar, const Normal3<T>& vec) {
+        inline Normal3<T> operator/(T scalar, const Normal3<T>& n) {
             // Error, not allowed
             return Normal3<T>();
         }
 
         template<typename T>
-        inline Normal3<T> abs(const Normal3<T>& vec) {
-            return Normal3<T>(std::abs(vec.x), std::abs(vec.y), std::abs(vec.z));
+        inline Normal3<T> abs(const Normal3<T>& n) {
+            return Normal3<T>(std::abs(n.x), std::abs(n.y), std::abs(n.z));
         }
 
         template<typename T>
-        inline T dot(const Normal3<T>& vec1, const Normal3<T>& vec2) {
-            return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
+        inline T dot(const Normal3<T>& n1, const Normal3<T>& n2) {
+            return n1.x * n2.x + n1.y * n2.y + n1.z * n2.z;
         }
 
         template<typename T>
-        inline T dot(const Normal3<T>& vec1, const Vector3<T>& vec2) {
-            return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
+        inline T dot(const Normal3<T>& n, const Vector3<T>& vec) {
+            return n.x * vec.x + n.y * vec.y + n.z * vec.z;
         }
 
         template<typename T>
-        inline T dot(const Vector3<T>& vec1, const Normal3<T>& vec2) {
-            return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
+        inline T dot(const Vector3<T>& vec, const Normal3<T>& n) {
+            return vec.x * n.x + vec.y * n.y + vec.z * n.z;
         }
 
         template<typename T>
-        inline T absDot(const Normal3<T>& vec1, const Normal3<T>& vec2) {
-            return std::abs(dot(vec1, vec2));
+        inline T absDot(const Normal3<T>& n1, const Normal3<T>& n2) {
+            return std::abs(dot(n1, n2));
         }
 
         template<typename T>
-        inline T absDot(const Normal3<T>& vec1, const Vector3<T>& vec2) {
-            return std::abs(dot(Vector3<T>(vec1), vec2));
+        inline T absDot(const Normal3<T>& n, const Vector3<T>& vec) {
+            return std::abs(dot(vec, n));
         }
 
         template<typename T>
-        inline Normal3<T> normalize(const Normal3<T>& vec) {
-            return vec / vec.length();
+        inline Normal3<T> normalize(const Normal3<T>& n) {
+            return n / n.length();
         }
 
         template<typename T>
-        inline Normal3<T> min(const Normal3<T>& vec1, const Normal3<T>& vec2) {
-            return Normal3<T>(std::min(vec1.x, vec2.x),
-                              std::min(vec1.y, vec2.y),
-                              std::min(vec1.z, vec2.z));
+        inline Normal3<T> min(const Normal3<T>& n1, const Normal3<T>& n2) {
+            return Normal3<T>(std::min(n1.x, n2.x),
+                              std::min(n1.y, n2.y),
+                              std::min(n1.z, n2.z));
         }
 
         template<typename T>
-        inline Normal3<T> max(const Normal3<T>& vec1, const Normal3<T>& vec2) {
-            return Normal3<T>(std::max(vec1.x, vec2.x),
-                              std::max(vec1.y, vec2.y),
-                              std::max(vec1.z, vec2.z));
+        inline Normal3<T> max(const Normal3<T>& n1, const Normal3<T>& n2) {
+            return Normal3<T>(std::max(n1.x, n2.x),
+                              std::max(n1.y, n2.y),
+                              std::max(n1.z, n2.z));
         }
 
         template<typename T>
-        inline T min(const Normal3<T>& vec) {
-            return std::min(vec.x, std::min(vec.y, vec.z));
+        inline T min(const Normal3<T>& n) {
+            return std::min(n.x, std::min(n.y, n.z));
         }
 
         template<typename T>
-        inline T max(const Normal3<T>& vec) {
-            return std::max(vec.x, std::max(vec.y, vec.z));
+        inline T max(const Normal3<T>& n) {
+            return std::max(n.x, std::max(n.y, n.z));
         }
 
         template<typename T>
-        inline uint32 maxDim(const Normal3<T>& vec) {
-            if (vec.x > vec.y) {
-                if (vec.x > vec.z)
+        inline uint32 maxDim(const Normal3<T>& n) {
+            if (n.x > n.y) {
+                if (n.x > n.z)
                     return 0;
                 else
                     return 2;
             } else {
-                if (vec.y > vec.z)
+                if (n.y > n.z)
                     return 1;
                 else
                     return 2;
@@ -1208,14 +1252,14 @@ namespace Photon {
         }
 
         template<typename T>
-        inline uint32 minDim(const Normal3<T>& vec) {
-            if (vec.x < vec.y) {
-                if (vec.x < vec.z)
+        inline uint32 minDim(const Normal3<T>& n) {
+            if (n.x < n.y) {
+                if (n.x < n.z)
                     return 0;
                 else
                     return 2;
             } else {
-                if (vec.y < vec.z)
+                if (n.y < n.z)
                     return 1;
                 else
                     return 2;

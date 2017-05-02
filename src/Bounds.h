@@ -29,10 +29,12 @@ namespace Photon {
         bool intersectPts(const Ray& ray, Float* t0, Float* t1) const;    
         bool contains(const Point3& pos) const;
         bool overlaps(const Bounds3& box) const;
+        void expand(Float size);
         void expand(const Point3& pt);
         void expand(const Bounds3& box);
         void intersect(const Bounds3& box);
-        bool isBounded() const;       
+        bool isBounded() const; 
+
     private:
         Point3 _min;
         Point3 _max;

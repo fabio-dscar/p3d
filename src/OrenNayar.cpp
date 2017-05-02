@@ -19,13 +19,13 @@ OrenNayar::OrenNayar(const std::shared_ptr<Texture<Color>>& diffuseTex, Float si
 }
 
 Color OrenNayar::eval(const BSDFSample& sample) const {
-    if (!hasType(sample.type, _type)
-        || Frame::cosTheta(sample.wi) <= 0
-        || Frame::cosTheta(sample.evt->wo()) <= 0)
+    if (!hasType(sample.type, _type) || 
+        !Frame::onPositiveHemisphere(sample.wi) || 
+        !Frame::onPositiveHemisphere(sample.wo))
         return Color::BLACK;
 
     const Vec3 wi = sample.wi;
-    const Vec3 wo = sample.evt->wo();
+    const Vec3 wo = sample.wo;
 
     Float sinThetaI = Frame::sinTheta(wi);
     Float sinThetaO = Frame::sinTheta(wo);
@@ -80,7 +80,7 @@ Color OrenNayar::eval(const BSDFSample& sample) const {
     Float tanHalf = (sinAlpha + sinBeta) / (Math::sqrtSafe(1.0 - sinAlpha * sinAlpha)
                                             + Math::sqrtSafe(1.0 - sinBeta  * sinBeta));
 
-    Color rho = _kd->fetch(sample.evt->uv());
+    Color rho = _kd->fetch(sample.evt->uv);
 
     Color snglScat = rho * (C1 + maxCos * C2 * tanBeta + (1.0 - std::abs(maxCos)) * C3 * tanHalf);
     Color dblScat  = rho * rho * (C4 * (1.0 - maxCos * tmp3 * tmp3));

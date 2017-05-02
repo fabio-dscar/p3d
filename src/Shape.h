@@ -4,6 +4,7 @@
 #include <Ray.h>
 #include <Bounds.h>
 #include <Records.h>
+#include <Transform.h>
 
 namespace Photon {
 
@@ -13,30 +14,22 @@ namespace Photon {
     class AreaLight;
     class BSDF;
 
-    /*class PositionSample {
-    public:
-        Point3 pos;
-        Float  pdf;
-        const RayEvent* ref;
-
-        PositionSample() : pdf(0), ref(nullptr) { }
-        PositionSample(const RayEvent& ref) : pdf(0), ref(&ref) { }
-    };*/
-
     class Shape {
     public:
-        Shape() : _light(nullptr), _material() { }
-        Shape(const AreaLight* light) : _light(light), _material() { }
+        Shape() : _light(nullptr), _bsdf(nullptr) { }
+        Shape(const AreaLight* light) : _light(light), _bsdf(nullptr) { }
 
-        void addMaterial(const Material& material) {
-            _material = material;
+        void setTransform(const Transform& objToWorld) {
+            _objToWorld = objToWorld;
+            _worldToObj = inverse(_objToWorld);
         }
 
-        const Material& getMaterial() const {
-            return _material;
+        void setTransform(const Transform& objToWorld, const Transform& worldToObj) {
+            _objToWorld = objToWorld;
+            _worldToObj = worldToObj;
         }
 
-        const void setBsdf(const BSDF* bsdf) {
+        void setBsdf(const BSDF* bsdf) {
             _bsdf = bsdf;
         }
 
@@ -94,8 +87,10 @@ namespace Photon {
 
     private:
         BSDF const* _bsdf;
-        Material _material;
         AreaLight const* _light;
+
+        Transform _objToWorld;
+        Transform _worldToObj;      
     };
 
 }

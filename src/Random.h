@@ -33,6 +33,10 @@ namespace Photon {
             return std::min(ONE_MINUS_EPSILON, Float(uniformUInt32() * 2.3283064365386963e-10f));
         }
 
+        inline Point2 uniform2D() const {
+            return Point2(uniformFloat(), uniformFloat());
+        }
+
         inline void jittered2DArray(uint32 nx, uint32 ny, std::vector<Point2>& arr, bool yes) const {
             //std::vector<Point2> arr(nx * ny);
 
@@ -42,7 +46,7 @@ namespace Photon {
                         Float dx = ((Float)x + uniformFloat()) / nx;
                         Float dy = ((Float)y + uniformFloat()) / ny;
 
-                        arr.emplace_back(dx, dy);
+                        arr[x + nx * y] = Point2(dx, dy);
                     }
                 }
             } else {
@@ -51,7 +55,7 @@ namespace Photon {
                         Float dx = uniformFloat();
                         Float dy = uniformFloat();
 
-                        arr.emplace_back(dx, dy);
+                        arr[x + nx * y] = Point2(dx, dy);
                     }
                 }
             }

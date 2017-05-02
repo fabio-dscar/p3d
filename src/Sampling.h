@@ -20,7 +20,7 @@ namespace Photon {
     }
 
     inline Point2 sampleConcentricDisk(const Point2& rand) {
-        Point2 newRand = 2.0 * rand;
+        Point2 newRand = (Float)2.0 * rand;
         Point2 offset = Point2(newRand.x - 1.0, newRand.y - 1.0);
 
         if (offset.x == 0 && offset.y == 0)
@@ -29,10 +29,10 @@ namespace Photon {
         Float theta, r;
         if (std::abs(offset.x) > std::abs(offset.y)) {
             r = offset.x;
-            theta = PI / 4.0 * (offset.y / offset.x);
+            theta = PIOVER4 * (offset.y / offset.x);
         } else {
             r = offset.y;
-            theta = PI / 2.0 - PI / 4.0 * (offset.x / offset.y);
+            theta = PIOVER2 - PIOVER4 * (offset.x / offset.y);
         }
 
         return r * Point2(std::cos(theta), std::sin(theta));

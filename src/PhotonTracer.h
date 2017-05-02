@@ -1,6 +1,6 @@
 #pragma once
 
-#define PHOTON_DEBUG 0
+//#define PHOTON_DEBUG 0
 
 #if defined(_MSC_VER)
 #define NOMINMAX

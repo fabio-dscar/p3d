@@ -10,37 +10,43 @@ namespace Photon {
         GGX = 2
     };
 
-    /*
     class MicrofacetDist {
     public:
-        MicrofacetDist() { }
+        MicrofacetDist() : _type(GGX), _alphaUV(1e-5, 1e-5), _phongExp(0) {}
+        MicrofacetDist(DistributionType type, const Vec2& alpha);
 
-        virtual Float evalD(const Vec3& wh) const = 0;
-        virtual Float evalMask(const Vec3& wi, const Vec3& wo) const = 0;
-    };
+        DistributionType type() const;
 
-*/    
+        Float evalD(const Vec3& wh) const;
+        Float evalG1(const Vec3& w, const Vec3& wh) const;
+        Float evalG(const Vec3& wi, const Vec3& wo, const Vec3& wh) const;
+        Float evalLambda(const Vec3& w) const;
+        Float evalPdf(const Vec3& wi, const Vec3& wh) const;
 
-
-
-    class MicrofacetBSDF : public BSDF {
-    public:
-        MicrofacetBSDF(BSDFType type, DistributionType dist) : BSDF(type), _dist(dist) { }
-
-        Float evalPdf(const BSDFSample& sample) const {
-
-        }
-
-        Color eval(const BSDFSample& sample) const {
-
-        }
-
-        Color sample(const Point2& rand, BSDFSample* sample) const {
-
-        }
+        Normal sample(const Vec3& wi, const Point2& rand) const;
 
     private:
-        DistributionType _dist;
+        Float unitToAlpha(Float rough);
+        
+        Normal samplePhong(const Vec3& wi, const Point2& rand) const;
+        Normal sampleVisible(const Vec3& wi, const Point2& rand) const;
+
+        Vec2 sampleP22(Float theta, const Point2& rand) const;
+
+        DistributionType _type;
+        Vec2 _alphaUV;
+        Vec2 _phongExp;
     };
+
+    Float computeBeckmannExp(const Vec3& wh, const Vec2& alphaUV);
+    Float interpolateAlpha(const Vec3& w, const Vec2& alphaUV);
+
+    Float distPhong(const Vec3& wh, const Vec2& alphaUV, const Vec2& phongExp);
+    Float distPhong(const Vec3& wh, const Vec2& alphaUV);
+    Float distBeckmann(const Vec3& wh, const Vec2& alphaUV);
+    Float distGGX(const Vec3& wh, const Vec2& alphaUV);
+    
+    Float lambdaBeckmann(const Vec3& w, const Vec2& alphaUV);
+    Float lambdaGGX(const Vec3& w, const Vec2& alphaUV);
 
 }
