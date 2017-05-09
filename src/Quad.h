@@ -21,7 +21,7 @@ namespace Photon {
             _normal = Normal(normalize(cross(edge1, edge2)));
         }
 
-        virtual bool intersectRay(const Ray& ray, SurfaceEvent* evt) const {
+        bool intersectRay(const Ray& ray, SurfaceEvent* evt) const {
             // Check if ray is parallel
             Float NdotD = dot(_normal, ray.dir());
             if (std::abs(NdotD) <= F_EPSILON)
@@ -56,11 +56,11 @@ namespace Photon {
             return true;
         }
 
-        virtual bool isOccluded(const Ray& ray) const {
+        bool isOccluded(const Ray& ray) const {
             return false;
         }
 
-        virtual Bounds3 bbox() const {
+        Bounds3 bbox() const {
             return Bounds3(Point3(0));
         }
 

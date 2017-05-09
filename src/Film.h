@@ -15,7 +15,7 @@ namespace Photon {
             : _width(width), _height(height), _toneOp(FILMIC), _exposure(0.6) {
 
             _film.resize(_width * _height * 3);
-            _normal.resize(_width * _height * 3);
+            //_normal.resize(_width * _height * 3);
             /*_depth.resize(_width * _height);*/
         }
 
@@ -23,7 +23,7 @@ namespace Photon {
             : _width(res.x), _height(res.y), _toneOp(FILMIC), _exposure(0.6) {
 
             _film.resize(_width * _height * 3);
-            _normal.resize(_width * _height * 3);
+            //_normal.resize(_width * _height * 3);
             /*_depth.resize(_width * _height);*/
         }
 

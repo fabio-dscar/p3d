@@ -25,133 +25,126 @@ namespace Photon {
         }
 
         Float area() const {
-            return 4.0 * PI * _radius * _radius;
+            return INV4PI * _radius * _radius;
         }
 
-        void  samplePosition(const Point2& rand, PositionSample* sample) const {
-            sample->pos = Point3(0);
+        void samplePosition(const Point2& rand, PositionSample* sample) const {
+            Point3 pos = sampleUniformSphere(rand);
+
+            sample->pos   = _radius * pos + _pos;
+            sample->pdf   = 1.0 / area();
+            sample->frame = Frame(Normal(pos.x, pos.y, pos.z));
         }
 
         Float pdfPosition(const PositionSample& sample) const {
             return 1.0 / area();
         }
 
-
-        void  sampleDirect(const Point2& rand, DirectSample* sample) const {
+        void sampleDirect(const Point2& rand, DirectSample* sample) const {
             const RayEvent& ref = *sample->ref;
 
             Vec3  hatW   = _pos - ref.point;
             Float sinSqr = (_radius * _radius) / hatW.lengthSqr();
-            Float cosMax = Math::sqrtSafe(1.0 - sinSqr); // std::sqrt(std::max(0.0, 1.0 - A));
 
-            // Sample a direction on the solid angle cone
-            Vec3  wi    = sampleUniformCone(rand, cosMax);
-            Frame frame = Frame(Normal(normalize(hatW)));
+            if (sinSqr < 1) {
+                // Reference is outside sphere
 
-            sample->wi  = frame.toWorld(wi);
-            sample->pdf = pdfUniformCone(cosMax);
+                Float cosMax = Math::sqrtSafe(1.0 - sinSqr);
 
-            /*Float B = dot(-hatW, sample->wi);
-            Float C = hatW.lengthSqr() - _radius * _radius;
-            Float detSq = B * B - C;
-            if (detSq >= 0.0) {
-                Float det = std::sqrt(detSq);
+                // Sample a direction on the solid angle cone
+                Vec3  wi = sampleUniformCone(rand, cosMax);
+                Frame frame = Frame(Normal(normalize(hatW)));
 
-                Float t0 = -B - det;
-                Float t1 = -B + det;
-                if (t1 < t0)
-                    std::swap(t0, t1);
+                sample->wi  = frame.toWorld(wi);
+                sample->pdf = pdfUniformCone(cosMax);
 
-                Point3 pt = ref.point + t0 * sample->wi;
-                Vec3 refToPt = pt - ref.point;
+                // Build a ray into the sphere from the reference
+                Ray r = ref.spawnRay(sample->wi);
 
-                sample->dist = refToPt.length();
-                sample->normal = normalize(Normal(pt - _pos));
+                // Check for visibility
+                SurfaceEvent intr;
+                if (intersectRay(r, &intr)) {
+                    sample->dist = (intr.point - r.origin()).length();
+                    sample->normal = intr.normal;
+                } else {
+                    sample->pdf = 0;
+                }
+
             } else {
-                std::cout << "CASF";
-                sample->pdf = 0;
-            }*/
+                // Reference is inside sphere
 
-            // Build a ray into the sphere from the reference
-            Ray r = ref.spawnRay(sample->wi);
+                // Sample a position on the sphere
+                PositionSample pos;
+                samplePosition(rand, &pos);
 
-            // Check for visibility
-            SurfaceEvent intr;
-            if (intersectRay(r, &intr)) {
-                sample->dist   = (intr.point - r.origin()).length();
-                sample->normal = intr.normal;
-            } else {
-                std::cout << "CASF";
-                sample->pdf = 0;
+                sample->normal = pos.frame.normal();
+                sample->wi = pos.pos - sample->ref->point;
+
+                Float distSqr = sample->wi.lengthSqr();
+
+                sample->dist = std::sqrt(distSqr);
+                sample->wi.normalize();
+
+                // Convert to solid angle pdf
+                Float dot = absDot(sample->normal, -sample->wi);
+                sample->pdf = pos.pdf * distSqr / dot;
             }
         }
 
         Float pdfDirect(const DirectSample& sample) const {
-            Vec3 _refToPos = _pos - sample.ref->point;
+            Vec3 refToPos = _pos - sample.ref->point;
+            if (refToPos.lengthSqr() <= _radius * _radius) {
+                // Reference is inside sphere
 
-            if (_refToPos.lengthSqr() <= _radius * _radius)
-                return 0;
+                // Convert area pdf to solid angle density
+                Float distSqr = sample.dist * sample.dist;
+                Float dot = absDot(sample.normal, -sample.wi);
 
-            // Compute general sphere PDF
-            Float sinMaxSqr = _radius * _radius / _refToPos.lengthSqr();
-            Float cosMax    = std::sqrt(std::max((Float)0, 1 - sinMaxSqr));
+                return (1.0 / area()) * distSqr / dot;
+            } else {
 
-            return pdfUniformCone(cosMax);
+                // Compute pdf on cone of directions
+                Float sinMaxSqr = _radius * _radius / refToPos.lengthSqr();
+                Float cosMax = std::sqrt(std::max((Float)0, 1 - sinMaxSqr));
+
+                return pdfUniformCone(cosMax);
+            }
         }
        
         void computeSurfaceEvent(const Ray& ray, SurfaceEvent& evt) const {
-            Point3 hitp = ray.hitPoint();
-            Vec3 centerToPt = hitp - _pos;
+            Vec3 centerToPt = ray.hitPoint() - _pos;
 
-            hitp = _pos + _radius * normalize(centerToPt);
+            // Reproject hit point into sphere
+            evt.point = _pos + _radius * normalize(centerToPt);;
 
-            evt.point = hitp;
-
-           if (std::abs(centerToPt.x) < 0.001 && std::abs(centerToPt.y) < 0.001)
+            // Deal with sphere parameterization singularity
+            if (std::abs(centerToPt.x) < 1e-4 && std::abs(centerToPt.y) < 1e-4)
                 centerToPt.x = _radius * F_EPSILON;
 
+            // Compute parameterization angles
             Float theta = Math::acosSafe(centerToPt.z / _radius);
             Float phi   = std::atan2(centerToPt.y, centerToPt.x);
             if (phi < 0)
                 phi += 2 * PI;
          
-            // Set UV coordinates
+            // Calculate UV coordinates
             evt.uv.x = phi * INV2PI;
             evt.uv.y = theta * INVPI;
 
-            Vec3   dpdu   = 2 * PI * Vec3(-centerToPt.y, centerToPt.x, 0);
             Normal normal = Normal(normalize(centerToPt));
 
             Float zr = std::sqrt(centerToPt.x * centerToPt.x + centerToPt.y * centerToPt.y);
-
             Float invzr  = 1.0 / zr;
             Float cosPhi = centerToPt.x * invzr;
             Float sinPhi = centerToPt.y * invzr;
 
+            // Compute tangent vectors
+            Vec3 dpdu = 2 * PI * Vec3(-centerToPt.y, centerToPt.x, 0);
             Vec3 dpdv = PI * Vec3(centerToPt.z * cosPhi, centerToPt.z * sinPhi, -_radius * std::sin(theta));
             
+            // Build the shading frame using the partial derivatives
             evt.sFrame = Frame(normalize(dpdu), normalize(dpdv), normal);
             evt.wo = evt.sFrame.toLocal(-ray.dir());
-
-            /*if (zr > 0) {
-                Float invzr = 1.0 / zr;
-                Float cosPhi = centerToPt.x * invzr;
-                Float sinPhi = centerToPt.y * invzr;
-
-                dpdv = PI * Vec3(centerToPt.z * cosPhi, centerToPt.z * sinPhi, -_radius * std::sin(theta));
-
-                evt.sFrame = Frame(normalize(dpdu), normalize(dpdv), normal);
-                evt.wo = evt.sFrame.toLocal(-ray.dir());
-            } else {
-                dpdv = PI * Vec3(0, centerToPt.z, -_radius * std::sin(theta));
-
-                evt.sFrame = Frame(normal);
-                evt.wo = evt.sFrame.toLocal(-ray.dir());
-            }*/
-
-            
-
-            //evt.setGeoFrame(Frame(normal));
         }
 
 

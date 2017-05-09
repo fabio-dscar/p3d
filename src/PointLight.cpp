@@ -10,9 +10,14 @@ Color PointLight::evalL(const SurfaceEvent& it, const Vec3& wo) const {
     return Color::BLACK;
 }
 
+Color PointLight::evalL(const PositionSample& sample, const Vec3& wo) const {
+    return Color::BLACK;
+}
+
 Color PointLight::samplePosition(const Point2& rand, PositionSample* sample) const {
     sample->pos = _pos;
     sample->pdf = 1.0;
+
     return (4 * PI) * _Le;
 }
 
@@ -28,7 +33,7 @@ Color PointLight::sampleDirect(const Point2& rand, DirectSample* sample) const {
     sample->pdf  = 1.0;
     sample->normal = Normal(-sample->wi);
 
-    Float invDist = 1.0; // / sample->dist;
+    Float invDist = 1.0 / sample->dist;
 
     return (invDist * invDist) * _Le;
 }
@@ -41,7 +46,7 @@ Color PointLight::sampleEmitDirection(const Point2& rand, const PositionSample& 
     sample->wo = sampleUniformSphere(rand).posVec();
     sample->pdf = INV4PI;
 
-    return Color(1);
+    return _Le;
 }
 
 Float PointLight::pdfEmitDirection(const PositionSample& pos, const DirectionSample& sample) const {

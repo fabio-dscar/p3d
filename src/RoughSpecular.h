@@ -17,11 +17,11 @@ namespace Photon {
               _refl(1), _refr(1),
               _eta(1.5 / 1.0) { }
 
-        RoughSpecular(DistributionType type, Float alpha, Float intIor, Float extIor)
+        RoughSpecular(DistributionType type, Vec2 alpha, Float intIor, Float extIor)
             : BSDF(BSDFType(GLOSSY |
                             REFLECTION |
                             REFRACTION)),
-            _dist(type, Vec2(alpha)),
+            _dist(type, alpha),
             _refl(1), _refr(1),
             _eta(intIor / extIor) { }
 

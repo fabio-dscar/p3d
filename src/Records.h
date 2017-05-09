@@ -38,7 +38,13 @@ namespace Photon {
         const RayEvent* ref;
 
         DirectSample() : ref(nullptr), pdf(0), dist(0) {}
-        DirectSample(const RayEvent& evt) : ref(&evt), pdf(0), dist(0) {}
+        DirectSample(const RayEvent& ref) : ref(&ref), pdf(0), dist(0) {}
+        DirectSample(const RayEvent& ref, const RayEvent& local) : ref(&ref), pdf(0) {
+          
+            wi     = -local.wo;
+            normal = local.normal;
+            dist   = (ref.point - local.point).length();
+        }
     };
         
     class BSDFSample {

@@ -63,6 +63,17 @@ namespace Photon {
         return INVPI * cos;
     }
 
+    inline Vec3 sampleCosHemispherePowN(const Point2& rand, uint32 N) {
+        Float r = std::pow(Math::clamp(1.0 - rand.x * rand.x, 0, 1), (Float)1.0 / (N+1));
+        Float phi = 2.0 * PI * rand.x;
+
+        return Vec3(r * std::cos(phi), r * std::sin(phi), rand.x);
+    }
+
+    inline Float pdfCosHemispherePowN(Float cos, uint32 N) {
+        return INV2PI * (N + 1) * std::pow(cos, N);
+    }
+
     inline Point3 sampleUniformSphere(const Point2& rand) {
         Float rz  = (1.0 - 2.0 * rand.x);
         Float r   = Math::sqrtSafe(1.0 - rz * rz);

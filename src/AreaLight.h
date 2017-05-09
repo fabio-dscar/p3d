@@ -19,14 +19,8 @@ namespace Photon {
             return false;
         }
 
-        void sampleLi(const RayEvent& ref, const Point2& rand, Point3* pos, Float* pdf) const;
-
-
-
-
-
-
         Color evalL(const SurfaceEvent& it, const Vec3& wo) const;
+        Color evalL(const PositionSample& sample, const Vec3& wo) const;
 
         Color samplePosition(const Point2& rand, PositionSample* sample) const;
         Float pdfPosition(const PositionSample& sample) const;
@@ -38,7 +32,6 @@ namespace Photon {
         Float pdfEmitDirection(const PositionSample& pos, const DirectionSample& sample) const;
 
     private:
-        //Color _Le;
         std::shared_ptr<Shape> _shape;
     };
 

@@ -11,7 +11,7 @@ Float Sphere::radius() const {
 }
 
 bool Sphere::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
-    Vec3 cdir = ray.origin() - _pos;
+    const Vec3 cdir = ray.origin() - _pos;
 
     // Solve quadratic
     Float B = dot(cdir, ray.dir());
@@ -40,7 +40,7 @@ bool Sphere::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
 }
 
 bool Sphere::isOccluded(const Ray& ray) const {
-    Vec3 cdir = ray.origin() - _pos;
+    const Vec3 cdir = ray.origin() - _pos;
 
     // Solve quadratic
     Float B = dot(cdir, ray.dir());

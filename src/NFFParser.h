@@ -6,9 +6,8 @@
 #include <memory>
 
 #include <Vector.h>
-#include <Material.h>
 #include <MatrixStack.h>
-
+#include <BSDF.h>
 #include <PhotonMath.h>
 
 namespace Photon {

@@ -41,8 +41,10 @@ Ray Camera::primaryRay(const Point2& pixel, const Point2& lens) const {
     return ray;
 }
 
-Ray Camera::primaryRay(const Point2& pixel, Sampler& sampler) const {
-    Point2 uPixel = pixel + sampler.next2D();
+Ray Camera::primaryRay(const Point2ui& pixel, Sampler& sampler) const {
+    // Sample point in pixel square
+    Point2 rand   = sampler.next2D();
+    Point2 uPixel = Point2(pixel.x + rand.x, pixel.y + rand.y);
 
     Point3 origin = Point3(0, 0, 0);
     Point3 pPlane = Point3(uPixel.x, uPixel.y, 0);

@@ -63,6 +63,7 @@ Float MicrofacetDist::evalG(const Vec3& wi, const Vec3& wo, const Vec3& wh) cons
         return 0;
 
     return 1.0 / (1.0 + evalLambda(wi) + evalLambda(wo));
+    //return evalG1(wi, wh) * evalG1(wo, wh);
 }
 
 Float MicrofacetDist::evalPdf(const Vec3& wi, const Vec3& wh) const {

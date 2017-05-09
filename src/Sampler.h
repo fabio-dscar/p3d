@@ -4,48 +4,48 @@
 #include <Vector.h>
 #include <Random.h>
 
+#include <vector>
+
 namespace Photon {
 
     template<typename T>
-    struct SampleArray {
-        uint32 size;
-        std::vector<T> array;
-    };
+    struct SampleArrays;
 
     class Sampler {
     public:
         Sampler(uint32 spp) : _spp(spp), _rng() { }
-
-        virtual void start(const Point2ui& pixel) const = 0;
-
-        void allocArray1D(uint32 numSamples) {
-            SampleArray<Float> arr;
-            arr.size = numSamples;
-            arr.array.resize(numSamples);
-
-            _arrays1D.push_back(arr);
+        Sampler(uint64 seq, uint32 spp) : _spp(spp), _rng(seq) {}
+        Sampler(const Sampler& sampler, uint64 seq) 
+            : Sampler(sampler) { 
+            
+            _rng.setSeq(seq);
         }
 
-        void allocArray2D(uint32 numSamples) {
-            SampleArray<Point2> arr;
-            arr.size = numSamples;
-            arr.array.resize(numSamples);
-
-            _arrays2D.push_back(arr);
+        void setSeq(uint64 seq) {
+            _rng.setSeq(seq);
         }
+
+        virtual void start(const Point2ui& pixel) = 0;
+
+        virtual void allocArray1D(uint32 numSamples) = 0;
+        virtual void allocArray2D(uint32 numSamples) = 0;
+
+        virtual void allocArray1D(std::vector<Float>& arr, uint32 numSamples) const = 0;
+        virtual void allocArray2D(std::vector<Point2>& arr, uint32 numSamples) const = 0;
 
         virtual Float  next1D() = 0;
         virtual Point2 next2D() = 0;      
-        virtual std::unique_ptr<Float> nextND(uint32 N) const = 0;
+        virtual void nextND(uint32 N, std::vector<Float>& arr) const = 0;
 
-        virtual const SampleArray<Float>&  next1DArray() = 0;
-        virtual const SampleArray<Point2>& next2DArray() = 0;
+        virtual const Float*  next1DArray() = 0;
+        virtual const Point2* next2DArray() = 0;
 
         virtual std::unique_ptr<Sampler> copy(uint32 seed) const = 0;
 
         uint32 spp() const {
             return _spp;
         }
+
     protected:
         RandGen _rng;
 
@@ -53,18 +53,8 @@ namespace Photon {
         uint32 _numDims;
 
         uint32 _currSample;
-
-        uint32 _currDim1D;
-        uint32 _currDim2D;
-
-        uint32 _currArr1D;
-        uint32 _currArr2D;
-
-        std::vector<SampleArray<Float>>  _arrays1D;
-        std::vector<SampleArray<Point2>> _arrays2D;
-    
-        std::vector<SampleArray<Float>>  _samples1D;
-        std::vector<SampleArray<Point2>> _samples2D;
     };
 
 }
+
+#include <Sampler.inl>

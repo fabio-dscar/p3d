@@ -42,9 +42,9 @@ namespace Photon {
             if (!Frame::sameSide(wo, wi)) 
                 return 0;
 
-            Vec3 wh = normalize(wo + wi);
+            Vec3 wh = normalize(wo + wi) * sign(Frame::cosTheta(wo));
 
-            return _dist.evalPdf(wo, wh) / (4.0 * dot(wo, wh));
+            return _dist.evalPdf(wo, wh) / (4.0 * absDot(wo, wh));
         }
 
         Color eval(const BSDFSample& sample) const {
@@ -69,7 +69,7 @@ namespace Photon {
             if (wh.isZero())
                 return Color::BLACK;
 
-            wh = normalize(wh);
+            wh = normalize(wh) * sign(Frame::cosTheta(wh));
 
             Float F = fresnelDielectric(_intIor, _extIor, dot(wi, wh));
             Float D = _dist.evalD(wh);
@@ -97,7 +97,7 @@ namespace Photon {
                 return Color::BLACK;
 
             sample->type = BSDFType(REFLECTION | GLOSSY);
-            sample->pdf  = _dist.evalPdf(wo, wh) / (4.0 * dot(wo, wh));
+            sample->pdf  = _dist.evalPdf(wo, wh) / (4.0 * absDot(wo, wh));
 
             if (sample->pdf == 0)
                 return Color::BLACK;

@@ -2,6 +2,7 @@
 
 #include <Ray.h>
 #include <Shape.h>
+#include <Sampling.h>
 
 using namespace Photon;
 
@@ -9,24 +10,12 @@ Color AreaLight::L(const RayEvent& evt, const Vec3& w) const {
     if (Math::dot(evt.normal, w) > 0)
         return _Le;
 
-    return Color(0);
+    return Color::BLACK;
 }
 
 Float AreaLight::area() const {
     return _shape->area();
 }
-
-void AreaLight::sampleLi(const RayEvent& ref, const Point2& rand, Point3* pos, Float* pdf) const {
-    PositionSample sample(ref);    
-
-    _shape->samplePosition(rand, &sample);
-
-
-}
-
-
-
-
 
 Color AreaLight::evalL(const SurfaceEvent& it, const Vec3& wo) const {
     // Only emit towards orientation
@@ -36,8 +25,17 @@ Color AreaLight::evalL(const SurfaceEvent& it, const Vec3& wo) const {
     return _Le;
 }
 
+Color AreaLight::evalL(const PositionSample& sample, const Vec3& wo) const {
+    // Only emit towards orientation
+    if (dot(sample.frame.normal(), wo) <= 0)
+        return Color::BLACK;
+
+    return _Le;
+}
+
 Color AreaLight::samplePosition(const Point2& rand, PositionSample* sample) const {
     _shape->samplePosition(rand, sample);
+
     return _Le;
 }
 
@@ -54,6 +52,7 @@ Color AreaLight::sampleDirect(const Point2& rand, DirectSample* sample) const {
         return _Le / sample->pdf;
 
     sample->pdf = 0;
+
     return Color::BLACK;
 }
 
@@ -67,16 +66,17 @@ Float AreaLight::pdfDirect(const DirectSample& sample) const {
 }
 
 Color AreaLight::sampleEmitDirection(const Point2& rand, const PositionSample& pos, DirectionSample* sample) const {
-    Vec3 local = sampleCosHemisphere(rand);
+    Vec3 w = sampleCosHemisphere(rand);
 
     // Convert to world outgoing direction
-    sample->wo = pos.frame.toWorld(local);
-    sample->pdf = pdfCosHemisphere(Frame::cosTheta(local));
+    sample->wo  = pos.frame.toWorld(w);
+    sample->pdf = pdfCosHemisphere(Frame::cosTheta(w));
 
-    return Color(1);
+    return _Le;
 }
 
 Float AreaLight::pdfEmitDirection(const PositionSample& pos, const DirectionSample& sample) const {
-    Float cosAng = dot(sample.wo, pos.frame.normal());
-    return INVPI * std::max((Float)0.0, cosAng);
+    Float cosTheta = dot(sample.wo, pos.frame.normal());
+
+    return INVPI * std::max((Float)0, cosTheta);
 }

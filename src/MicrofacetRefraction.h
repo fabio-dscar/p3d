@@ -45,7 +45,7 @@ namespace Photon {
 
             // Compute half-vector
             Vec3 wh = normalize(wo + wi * eta);
-            if (wh.z < 0)
+            if (Frame::cosTheta(wh) < 0)
                 wh = -wh;
 
             // Compute Jacobian factor

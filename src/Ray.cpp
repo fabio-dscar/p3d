@@ -1,7 +1,7 @@
 
 #include <Ray.h>
-#include <Material.h>
 #include <Shape.h>
+#include <AreaLight.h>
 
 using namespace Photon;
 
@@ -134,9 +134,6 @@ Ray RayEvent::spawnRay(const Vec3& dir, Float dist) const {
 /* ----------------------------------------------------------
     SurfaceEvent member functions
 ---------------------------------------------------------*/
-
-#include <AreaLight.h>
-
 void SurfaceEvent::setEvent(const Ray& ray, Shape const* shape, const Normal& n) {
     obj    = shape;
     point  = ray.hitPoint();

@@ -36,13 +36,10 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
 
             // Get jittered samples
             std::vector<Point2> pixelSamples;
-            pixelSamples.resize(SAMPLES * SAMPLES);
-
             std::vector<Point2> lensSamples;
-            lensSamples.resize(SAMPLES * SAMPLES);
-
-            _random.jittered2DArray(SAMPLES, SAMPLES, pixelSamples, true);
-            _random.jittered2DArray(SAMPLES, SAMPLES, lensSamples, true);
+  
+            jittered2DArray(_random, SAMPLES, pixelSamples);
+            jittered2DArray(_random, SAMPLES, lensSamples);
 
             // Compute ray tracing
             Color color(0);        
@@ -60,7 +57,7 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
             }
 
             // Filter result
-            color /= (SAMPLES * SAMPLES);
+            color /= SAMPLES;
 
             // Record sample on camera's film
             camera.film().addColorSample(pixel.x, pixel.y, color);
@@ -68,11 +65,11 @@ void WhittedRayTracer::renderTile(uint32 tId, uint32 tileId) const {
             /*Color color(0);
             for (uint32 p = 0; p < SAMPLES; p++) {
                 for (uint32 q = 0; q < SAMPLES; q++) {
-                    Float dx = (p + _random.uniformFloat()) / SAMPLES;
-                    Float dy = (q + _random.uniformFloat()) / SAMPLES;
+                    Float dx = (p + _random.uniform1D()) / SAMPLES;
+                    Float dy = (q + _random.uniform1D()) / SAMPLES;
                     
-                    Float lx = (p + _random.uniformFloat()) / SAMPLES;
-                    Float ly = (q + _random.uniformFloat()) / SAMPLES;
+                    Float lx = (p + _random.uniform1D()) / SAMPLES;
+                    Float ly = (q + _random.uniform1D()) / SAMPLES;
 
                     // Build ray from camera
                     //Ray ray = camera.getPrimaryRay(pixel.x + dx, pixel.y + dy);
@@ -102,24 +99,21 @@ Color WhittedRayTracer::estimateDirect(const SurfaceEvent& evt) const {
         uint32 nSamples = light->numSamples();
 
         if (light->isDelta()) {
-            Point2 bsdfRand  = Point2(_random.uniformFloat(), _random.uniformFloat());
-            Point2 lightRand = Point2(_random.uniformFloat(), _random.uniformFloat());
+            Point2 bsdfRand  = Point2(_random.uniform1D(), _random.uniform1D());
+            Point2 lightRand = Point2(_random.uniform1D(), _random.uniform1D());
 
             direct += sampleLight(*light, evt, lightRand, bsdfRand);
         } else {
             std::vector<Point2> bsdfVec;
             std::vector<Point2> lightVec;
 
-            bsdfVec.reserve(nSamples * nSamples);
-            lightVec.reserve(nSamples * nSamples);
+            jittered2DArray(_random, nSamples, bsdfVec);
+            jittered2DArray(_random, nSamples, lightVec);
 
-            _random.jittered2DArray(nSamples, nSamples, bsdfVec, true);
-            _random.jittered2DArray(nSamples, nSamples, lightVec, true);
-
-            for (uint32 i = 0; i < (nSamples * nSamples); ++i)
+            for (uint32 i = 0; i < nSamples; ++i)
                 contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
 
-            direct += (contrib / lightVec.size());
+            direct += contrib / nSamples;
         }
 
     }

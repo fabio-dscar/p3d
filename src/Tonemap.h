@@ -54,8 +54,8 @@ namespace Photon {
                 break;
             case LINEAR:
             default:
-                //return color;
-                return applyGamma(color);
+                return color;
+                //return applyGamma(color);
                 break;
         }
 
@@ -67,11 +67,33 @@ namespace Photon {
 
         in = exposure * in;
 
-        Float a = 2.51f;
-        Float b = 0.03f;
-        Float c = 2.43f;
-        Float d = 0.59f;
-        Float e = 0.14f;
+        /*auto toneOp = [](const SpectralRGB& x) -> SpectralRGB {
+            Float A = 0.22;
+            Float B = 0.30;
+            Float C = 0.10;
+            Float D = 0.20;
+            Float E = 0.01;
+            Float F = 0.30;
+
+            SpectralRGB num = (x * (A * x + SpectralRGB(C * B)) + SpectralRGB(D * E));
+            SpectralRGB denom = (x * (A * x + SpectralRGB(B)) + SpectralRGB(D * F));
+
+            SpectralRGB res = num / denom - SpectralRGB(E / F);
+
+            return res;
+        };
+
+        SpectralRGB LWhite = SpectralRGB(11.2);
+        SpectralRGB ret = toneOp(in) / toneOp(LWhite);
+
+        return applyGamma(ret);*/
+        
+
+        Float a = 2.51;
+        Float b = 0.03;
+        Float c = 2.43;
+        Float d = 0.59;
+        Float e = 0.14;
         SpectralRGB nom = (in * (a * in + SpectralRGB(b)));
         SpectralRGB denom = (in * (c * in + SpectralRGB(d)) + SpectralRGB(e));
 

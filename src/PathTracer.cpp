@@ -1,25 +1,43 @@
 #include <PathTracer.h>
 
+#include <PointLight.h>
+#include <AreaLight.h>
+
+#include <Random.h>
+
+#ifdef PHOTON_MSVC
+//#pragma warning(disable : 4838)
+#endif
+
 using namespace Photon;
 using namespace Photon::Threading;
 using namespace std::placeholders;
 
+void PathTracer::initialize() {
+    /*std::vector<const Light*> lights = _scene->getLights();    
+
+    for (const Light* l : lights) {
+        for (uint32 depth = 0; depth < _maxDepth; ++depth) {
+            uint32 numSamples = l->numSamples();
+            _sampler->allocArray2D(numSamples); // Light
+            _sampler->allocArray2D(numSamples); // BSDF
+        }
+    }*/
+
+    Integrator::initialize();
+}
+
 void PathTracer::startRender(EndCallback endCallback) {
-    // Add task for drawing tiles in parallel
+    auto taskFunc = std::bind(&PathTracer::renderTile, this, _2, _1);
     if (_useAdaptive)
-        _renderTask = Threading::Workers->pushTask(
-            std::bind(&PathTracer::renderTileAdaptive, 
-                      this, _2, _1),
-            uint32(_tiles.size()),
-            endCallback
-        );
-    else
-        _renderTask = Threading::Workers->pushTask(
-            std::bind(&PathTracer::renderTile,
-                      this, _2, _1),
-            uint32(_tiles.size()),
-            endCallback
-        );
+        taskFunc = std::bind(&PathTracer::renderTileAdaptive, this, _2, _1);
+
+    // Add task for drawing tiles in parallel
+    _renderTask = Threading::Workers->pushTask(
+        taskFunc,
+        uint32(_tiles.size()),
+        endCallback
+    );
 }
 
 bool PathTracer::checkAdaptiveThreshold(const Color* samples, uint32 num) const {
@@ -36,7 +54,7 @@ bool PathTracer::checkAdaptiveThreshold(const Color* samples, uint32 num) const 
     return false;
 }
 
-Color PathTracer::subdivide(const Point2& min, const Point2& max, std::vector<Color>& table, const Vec2ui& pixel, Float weight) const {
+Color PathTracer::subdivide(Sampler& sampler, const Point2& min, const Point2& max, std::vector<Color>& table, const Point2ui& pixel, Float weight) const {
     const Camera& camera = _scene->getCamera();
     Color res = Color::BLACK;
 
@@ -74,13 +92,14 @@ Color PathTracer::subdivide(const Point2& min, const Point2& max, std::vector<Co
 
     // Trace paths through the new 5 sample points
     for (uint32 i = 0; i < 5; i++) {
-        Point2 p = samples[i] + pixel;
+        Point2 p = Point2(samples[i].x + pixel.x,
+                          samples[i].y + pixel.y);
         uint32 tblIdx = (samples[i].x * (w - 1)) +
                         w * ((h - 1) * samples[i].y);
 
         // Compute integrand evaluation
         Ray ray = camera.primaryRay(p, samples[i]);
-        Li[i] = tracePath(ray, 1.0, 1, pixel);
+        Li[i] = tracePath(ray, sampler, pixel);
         
         // Store in sample table
         table[tblIdx] = Li[i];
@@ -124,7 +143,7 @@ Color PathTracer::subdivide(const Point2& min, const Point2& max, std::vector<Co
                 max = Math::max(max, samples[adjIdx[i][s]]);
             }
            
-            res += subdivide(min, max, table, pixel, weight / 4.0);
+            res += subdivide(sampler, min, max, table, pixel, weight / 4.0);
         }
     }
 
@@ -133,6 +152,7 @@ Color PathTracer::subdivide(const Point2& min, const Point2& max, std::vector<Co
 
 void PathTracer::renderTileAdaptive(uint32 tId, uint32 tileId) const {
     const ImageTile& tile = _tiles[tileId];
+    Sampler& sampler = *tile.samp.get();
 
     const uint32 w = _adaptWidth;
     const uint32 h = _adaptHeight;
@@ -159,13 +179,14 @@ void PathTracer::renderTileAdaptive(uint32 tId, uint32 tileId) const {
     const Camera& camera = _scene->getCamera();
     for (uint32 y = 0; y < tile.h; ++y) {
         for (uint32 x = 0; x < tile.w; ++x) {
-            Vec2ui pixel(x + tile.x, y + tile.y);
+            Point2ui pixel(x + tile.x, y + tile.y);
 
             Color samples[4];
             Color sum = Color::BLACK;
             for (uint32 i = 0; i < 4; i++) {
-                Ray ray = camera.primaryRay(pts[i] + pixel, pts[i]);
-                samples[i] = tracePath(ray, 1.0, 1, pixel);
+                Point2 p = Point2(pixel.x + pts[i].x, pixel.y + pts[i].y);
+                Ray ray = camera.primaryRay(p, pts[i]);
+                samples[i] = tracePath(ray, sampler, pixel);
                 sum += samples[i];
                 sampleTable[tblIdx[i]] = samples[i];
             }
@@ -174,7 +195,7 @@ void PathTracer::renderTileAdaptive(uint32 tId, uint32 tileId) const {
             if (!checkAdaptiveThreshold(&samples[0], 4))
                 Li = sum / 4.0;  // Just compute the average
             else
-                Li = subdivide(pts[2], pts[1], sampleTable, pixel, 1.0 / 4.0);
+                Li = subdivide(sampler, pts[2], pts[1], sampleTable, pixel, 1.0 / 4.0);
 
             camera.film().addColorSample(pixel.x, pixel.y, Li);
         }
@@ -185,42 +206,25 @@ void PathTracer::renderTileAdaptive(uint32 tId, uint32 tileId) const {
 // This is called by different threads
 void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
     const ImageTile& tile = _tiles[tileId];
+    Sampler& sampler = *tile.samp.get();
     
     const Camera& camera = _scene->getCamera();
     for (uint32 y = 0; y < tile.h; ++y) {
         for (uint32 x = 0; x < tile.w; ++x) {
-            Vec2ui pixel(x + tile.x, y + tile.y);
+            Point2ui pixel(x + tile.x, y + tile.y);
             
-            // Get color from ray
-            const uint32 SAMPLES = 8; // 16
+            sampler.start(pixel);
 
-            // Get jittered samples
-            std::vector<Point2> pixelSamples;
-            pixelSamples.resize(SAMPLES * SAMPLES);
+            // Iterate samples per pixel
+            Color color = Color::BLACK;
+            for (uint32 s = 0; s < sampler.spp(); ++s) {
+                const Ray ray = camera.primaryRay(pixel, sampler);
 
-            std::vector<Point2> lensSamples;
-            lensSamples.resize(SAMPLES * SAMPLES);
-
-            _random.jittered2DArray(SAMPLES, SAMPLES, pixelSamples, true);
-            _random.jittered2DArray(SAMPLES, SAMPLES, lensSamples, true);
-
-            // Compute ray tracing
-            Color color(0);
-            for (uint32 i = 0; i < pixelSamples.size(); ++i) {
-                Color lensEstimate(0);
-                Point2 ps = pixelSamples[i];
-                Point2 ls = lensSamples[i];
-
-                Point2 rand = Point2(ls.x, ls.y);
-                Point2 p = Point2(pixel.x + ps.x, pixel.y + ps.y);
-
-                Ray ray = camera.primaryRay(p, ls);
-
-                color += tracePath(ray, 1.0, 1, pixel);
+                color += tracePath(ray, sampler, pixel);
             }
 
             // Filter result
-            color /= (SAMPLES * SAMPLES);
+            color /= _spp;
 
             // Record sample on camera's film
             camera.film().addColorSample(pixel.x, pixel.y, color);
@@ -228,33 +232,31 @@ void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
     }
 }
 
-Color PathTracer::estimateDirect(const SurfaceEvent& evt) const {
+Color PathTracer::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const {
     Color direct = Color::BLACK;
 
     // Sample all lights
     for (Light const* light : _scene->getLights()) {
-        Color  contrib = Color::BLACK;
-        uint32 nSamples = light->numSamples();
 
         if (light->isDelta()) {
-            Point2 bsdfRand = Point2(_random.uniformFloat(), _random.uniformFloat());
-            Point2 lightRand = Point2(_random.uniformFloat(), _random.uniformFloat());
+            const Point2 ls = sampler.next2D();
+            const Point2 bs = sampler.next2D();
 
-            direct += sampleLight(*light, evt, lightRand, bsdfRand);
+            direct += sampleLight(*light, evt, ls, bs);
         } else {
-            std::vector<Point2> bsdfVec;
-            std::vector<Point2> lightVec;
+            Color  contrib = Color::BLACK;
+            uint32 nSamples = light->numSamples();
 
-            bsdfVec.resize(nSamples * nSamples);
-            lightVec.resize(nSamples * nSamples);
+            std::vector<Point2> lightVec, bsdfVec;
+            sampler.allocArray2D(lightVec, nSamples);
+            sampler.allocArray2D(bsdfVec, nSamples);
 
-            _random.jittered2DArray(nSamples, nSamples, bsdfVec, true);
-            _random.jittered2DArray(nSamples, nSamples, lightVec, true);
-
-            for (uint32 i = 0; i < (nSamples * nSamples); ++i)
+            for (uint32 i = 0; i < nSamples; ++i) {
                 contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
+                //contrib += sampleBsdf(evt, bsdfVec[i]);
+            }
 
-            direct += (contrib / lightVec.size());
+            direct += contrib / nSamples;
         }
 
     }
@@ -264,7 +266,7 @@ Color PathTracer::estimateDirect(const SurfaceEvent& evt) const {
 
 #define DEBUG(str) std::cout << str << std::endl;
 
-Color PathTracer::tracePath(const Ray& ray, Float ior, uint32 depth, const Vec2ui& pixel) const {
+Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pixel) const {
     Color Li = Color::BLACK;
     Ray   subPath = ray;           // Current sub-path
 
@@ -273,6 +275,7 @@ Color PathTracer::tracePath(const Ray& ray, Float ior, uint32 depth, const Vec2u
 
     const BSDF* bsdf = nullptr;
 
+    uint32 depth = 1;
     while (depth <= _maxDepth) {
         SurfaceEvent event = SurfaceEvent();
         bool intersect = _scene->intersectRay(subPath, &event);
@@ -288,7 +291,7 @@ Color PathTracer::tracePath(const Ray& ray, Float ior, uint32 depth, const Vec2u
         } 
         
         // Check if intersected object is self emissive and add its contribution
-        if (subPath.isPrimary() || (bsdf && (bsdf->isType(BSDFType::SPECULAR) || bsdf->isType(BSDFType::GLOSSY)))) {
+        if (subPath.isPrimary()) { // || (bsdf && bsdf->isType(BSDFType::SPECULAR))) { // || bsdf->isType(BSDFType::GLOSSY)))) {
             if (event.obj->isLight())
                 Li += beta * event.emission(-subPath.dir());
         }
@@ -302,16 +305,15 @@ Color PathTracer::tracePath(const Ray& ray, Float ior, uint32 depth, const Vec2u
                 Direct Illumination
         --------------------------------------------------------------------------------------*/
         // Only perform direct illumination if not on a specular surface
-        if (!bsdf->isType(BSDFType::SPECULAR))
-            Li += beta * estimateDirect(event);
+        //if (!bsdf->isType(BSDFType::SPECULAR))
+        Li += beta * estimateDirect(event, sampler);
 
         /* -----------------------------------------------------------------------------------
                 Indirect Illumination
         --------------------------------------------------------------------------------------*/
         // Sample a direction from the BSDF
         BSDFSample sample(event);
-        Point2 rand = Point2(_random.uniformFloat(), _random.uniformFloat());
-        Color f = bsdf->sample(rand, &sample);
+        Color f = bsdf->sample(sampler.next2D(), &sample);
 
         // Leave if no contribution from sampled direction
         if (sample.pdf == 0 || f.isBlack())
@@ -326,9 +328,9 @@ Color PathTracer::tracePath(const Ray& ray, Float ior, uint32 depth, const Vec2u
 
         // Possibly end path with russian roulette
         Float rr = (refrScale * beta).max();
-        if (depth > 3 && rr < 0.5) {
+        if (depth > 3 && rr < 0.35) {
             Float q = Math::max(0.01, 1.0 - rr);
-            if (_random.uniformFloat() < q)
+            if (sampler.next1D() < q)
                 break;  // Stop path
 
             beta /= (1 - q);

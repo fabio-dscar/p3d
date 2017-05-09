@@ -15,6 +15,7 @@ namespace Photon {
         bool isDelta() const;
 
         Color evalL(const SurfaceEvent& it, const Vec3& wo) const;
+        Color evalL(const PositionSample& sample, const Vec3& wo) const;
 
         Color samplePosition(const Point2& rand, PositionSample* sample) const;
         Float pdfPosition(const PositionSample& sample) const;

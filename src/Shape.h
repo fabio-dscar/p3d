@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Material.h>
 #include <Ray.h>
 #include <Bounds.h>
 #include <Records.h>
@@ -10,7 +9,6 @@ namespace Photon {
 
     // Forward declaration
     class Light;
-    class Material;
     class AreaLight;
     class BSDF;
 
@@ -86,8 +84,8 @@ namespace Photon {
         }
 
     private:
-        BSDF const* _bsdf;
-        AreaLight const* _light;
+        const BSDF* _bsdf;
+        const AreaLight* _light;
 
         Transform _objToWorld;
         Transform _worldToObj;      

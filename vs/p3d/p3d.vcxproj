@@ -151,6 +151,7 @@
     <ClCompile Include="..\..\src\Spectral.cpp" />
     <ClCompile Include="..\..\src\Specular.cpp" />
     <ClCompile Include="..\..\src\Sphere.cpp" />
+    <ClCompile Include="..\..\src\StratifiedSampler.cpp" />
     <ClCompile Include="..\..\src\ThinSpecular.cpp" />
     <ClCompile Include="..\..\src\Threading.cpp" />
     <ClCompile Include="..\..\src\Transform.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="..\..\src\Lambertian.h" />
     <ClInclude Include="..\..\src\Light.h" />
     <ClInclude Include="..\..\src\MatrixStack.h" />
+    <ClInclude Include="..\..\src\MetropolisSampler.h" />
     <ClInclude Include="..\..\src\Microfacet.h" />
     <ClInclude Include="..\..\src\MicrofacetReflection.h" />
     <ClInclude Include="..\..\src\MicrofacetRefraction.h" />
@@ -198,13 +200,13 @@
     <ClInclude Include="..\..\src\OpenGLRenderer.h" />
     <ClInclude Include="..\..\src\ParamList.h" />
     <ClInclude Include="..\..\src\PhotonTracer.h" />
+    <ClInclude Include="..\..\src\PiecewiseLinear.h" />
     <ClInclude Include="..\..\src\Polygon.h" />
     <ClInclude Include="..\..\src\PolygonPatch.h" />
     <ClInclude Include="..\..\src\Quad.h" />
     <ClInclude Include="..\..\src\Quadric.h" />
     <ClInclude Include="..\..\src\Quat.h" />
     <ClInclude Include="..\..\src\Random.h" />
-    <ClInclude Include="..\..\src\RandomSampler.h" />
     <ClInclude Include="..\..\src\Records.h" />
     <ClInclude Include="..\..\src\Renderer.h" />
     <ClInclude Include="..\..\src\Resources.h" />
@@ -214,6 +216,7 @@
     <ClInclude Include="..\..\src\Sampler.h" />
     <ClInclude Include="..\..\src\Sampling.h" />
     <ClInclude Include="..\..\src\Shape.h" />
+    <ClInclude Include="..\..\src\SmoothLayered.h" />
     <ClInclude Include="..\..\src\Spectral.h" />
     <ClInclude Include="..\..\src\Specular.h" />
     <ClInclude Include="..\..\src\StratifiedSampler.h" />
@@ -227,6 +230,7 @@
     <ClInclude Include="..\..\src\Triangle.h" />
     <ClInclude Include="..\..\src\TriMesh.h" />
     <ClInclude Include="..\..\src\UniformGrid.h" />
+    <ClInclude Include="..\..\src\RandomSampler.h" />
     <ClInclude Include="..\..\src\Vector.h" />
     <ClInclude Include="..\..\src\NFFParser.h" />
     <ClInclude Include="..\..\src\Plane.h" />
@@ -244,6 +248,7 @@
     <None Include="..\..\src\Matrix.inl" />
     <None Include="..\..\src\PhotonMath.inl" />
     <None Include="..\..\src\Quat.inl" />
+    <None Include="..\..\src\Sampler.inl" />
     <None Include="..\..\src\Vector.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

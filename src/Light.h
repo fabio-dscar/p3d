@@ -11,9 +11,10 @@ namespace Photon {
     class Light {
     public:
         Light() : _Le(1), _numSamples(1) {}
-        Light(const Color& emission, uint32 nSamples) : _Le(emission), _numSamples(nSamples) { }
-        Light(const Point3& pos) : _Le(1), _numSamples(1) {}
-        Light(const Point3& pos, const Color& color) : _Le(color), _numSamples(1) {}
+        Light(const Color& emission) 
+            : _Le(emission), _numSamples(1) {}
+        Light(const Color& emission, uint32 nSamples) 
+            : _Le(emission), _numSamples(nSamples) {}
 
         void setIntensity(const Color& Le);
         const Color& color() const;
@@ -28,6 +29,7 @@ namespace Photon {
 
         // Evaluate L for outgoing wo at intersection
         virtual Color evalL(const SurfaceEvent& it, const Vec3& wo) const = 0;
+        virtual Color evalL(const PositionSample& sample, const Vec3& wo) const = 0;
 
         // Sample a position on the surface
         virtual Color samplePosition(const Point2& rand, PositionSample* sample) const = 0;

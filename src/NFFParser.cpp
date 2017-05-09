@@ -15,6 +15,7 @@
 #include <Quad.h>
 #include <TriMesh.h>
 
+#include <PointLight.h>
 #include <AreaLight.h>
 #include <Spectral.h>
 
@@ -29,8 +30,12 @@
 #include <MicrofacetReflection.h>
 #include <Conductor.h>
 #include <AshikhminShirley.h>
+#include <SmoothLayered.h>
 
 #include <Resources.h>
+
+#include <StratifiedSampler.h>
+#include <RandomSampler.h>
 
 using namespace Photon;
 using namespace Photon::Utils;
@@ -103,6 +108,22 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
             if (str.compare(0, 3, "off") == 0)
                 scene->useGrid(false);
         }
+
+        /*if (cmd.compare(0, 7, "sampler") == 0) {
+
+            std::string str = parseStr();
+            if (str.compare(0, 10, "stratified") == 0) {
+                uint32 nx = parseInt();
+                uint32 ny = parseInt();
+
+                _sampler = std::make_unique<StratifiedSampler>(nx, ny, 6);
+            } else if (str.compare(0, 6, "random") == 0) {
+                uint32 spp = parseInt();
+
+                _sampler = std::make_unique<RandomSampler>(spp, 6);
+            }
+               
+        }*/
 
         if (cmd.compare(0, 3, "box") == 0) {
             parseBox(*scene);
@@ -185,10 +206,38 @@ void NFFParser::parseBsdf(Scene& scene) {
         Color k = parseColor();
         bsdf = new Conductor(refl, eta, k);
     } else if (bsdfName.compare(0, 8, "AShirley") == 0) {
+        DistributionType type;
+        std::string name = parseStr();
+        if (name.compare(0, 3, "GGX") == 0)
+            type = GGX;
+        else
+            type = BECKMANN;
+
         Color diff = parseColor();
         Color spec = parseColor();
 
-        bsdf = new AshikhminShirley(BECKMANN, Vec2(0.01, 0.01), diff, spec);
+        Vec2 alpha = parseVector2();
+
+        bsdf = new AshikhminShirley(BECKMANN, alpha, diff, spec);
+    } else if (bsdfName.compare(0, 10, "Microfacet") == 0) {
+        DistributionType type;
+        std::string name = parseStr();
+        if (name.compare(0, 3, "GGX") == 0)
+            type = GGX;
+        else
+            type = BECKMANN;
+
+        Vec2 alpha = parseVector2();
+        Float intIor = parseFloat();
+        Float extIor = parseFloat();
+
+        bsdf = new MicrofacetReflection(type, alpha, intIor, extIor);
+    } else if (bsdfName.compare(0, 7, "Layered") == 0) {
+        Color refl = parseColor();
+        Float intIor = parseFloat();
+        Float extIor = parseFloat();
+
+        bsdf = new SmoothLayered(*_bsdf, refl, intIor, extIor);
     }
 
     _bsdf = bsdf;

@@ -33,7 +33,7 @@ namespace Photon {
             _near = hither;
         }
 
-        Ray primaryRay(const Point2& pixel, Sampler& sampler) const;
+        Ray primaryRay(const Point2ui& pixel, Sampler& sampler) const;
 
         Ray primaryRay(const Point2& pixel, const Point2& lens) const;
 
@@ -46,6 +46,8 @@ namespace Photon {
         static Transform lookAt(const Point3& pos, const Point3& at, const Vec3& up);
 
         void setLensParams(Float radius, Float focalDist);
+
+        void sampleDirection();
     protected:
         mutable Film _film;
         

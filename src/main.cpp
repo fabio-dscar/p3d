@@ -85,7 +85,7 @@ struct Coisas {
 #include <ThinSpecular.h>
 
 int main(int argc, char* argv[]) {
-    std::string filePath("oren-box.nff");
+    std::string filePath("oren-box_rel.nff");
     
     /*std::vector<Coisas> vecs;
     RandGen rand;
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
     
     for (uint32 i = 0; i < 48; ++i) {
         Coisas item;
-        item.dir = sampleUniformSphericalCap(Point2(rand.uniformFloat(), rand.uniformFloat()),
+        item.dir = sampleUniformSphericalCap(Point2(rand.uniform1D(), rand.uniform1D()),
                                              std::cos(Math::radians(ang)));
         item.dir = frame.toWorld(item.dir);
         item.pdf = pdfUniformSphericalCap(std::cos(Math::radians(ang)));
