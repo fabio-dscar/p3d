@@ -12,6 +12,15 @@ namespace Photon {
             return currDim < arrays.size();
         }
 
+        bool hasNext(uint32 numSamples) {
+            uint32 i = currDim;
+            while (i < arrays.size() && 
+                   arrays[i++].size() != numSamples)
+                ;
+
+            return i < arrays.size();
+        }
+
         void reset() {
             currDim = 0;
         }
@@ -20,7 +29,7 @@ namespace Photon {
             arrays.emplace_back(size);
         }
 
-        const std::vector<T>& nextArray() {
+        const std::vector<T>& nextArray(uint32 numSamples) {
             return arrays[currDim++];
         }
 

@@ -12,15 +12,45 @@
 
 using namespace Photon;
 
-Scene::Scene() : _background(0.0f), _camera(), _lights(), _bounds(), 
-                 _uniformGrid(nullptr), _hideLights(false), _useGrid(true) { }
+Scene::Scene() : _background(0), _camera(), _lights(), _bounds(), 
+                 _uniformGrid(nullptr), _hideLights(false), _useGrid(true), 
+                 _lightDistr(nullptr), _lightStrat(POWER) { }
 
 void Scene::prepareRender() {
+    // Initialize spatial subdivision, if needed
     if (_useGrid) {
         _uniformGrid = std::make_unique<UniformGrid>(*this, 2.0f);
-        //_uniformGrid = std::make_unique<UniformGrid>(*this, Vec3ui(1, 1, 1));
+        //_uniformGrid = std::make_unique<UniformGrid>(*this, Vec3ui(6, 6, 6));
         _uniformGrid->initialize();
     }
+
+    // Initialize light distribution, use uniform if unspecified
+    std::vector<Float> vals(_lights.size());
+
+    for (uint32 l = 0; l < _lights.size(); ++l)
+        vals[l] = (_lightStrat == POWER) ? _lights[l]->power().lum() : 1;
+
+    _lightDistr = std::make_unique<DiscretePdf1D>(vals);
+}
+
+DiscretePdf1D* Scene::lightDistribution() const {
+    return _lightDistr.get();
+}
+
+LightStrategy Scene::lightStrategy() const {
+    return _lightStrat;
+}
+
+const Light* Scene::sampleLightPdf(Float rand, Float* lightPdf) const {
+    if (!_lightDistr)
+        return nullptr;
+
+    uint32 lightIdx = _lightDistr->sample(rand);
+    
+    if (lightPdf)
+        *lightPdf = _lightDistr->pdf(lightIdx);
+
+    return _lights[lightIdx];
 }
 
 void Scene::setBackgroundColor(const Color& color) {
@@ -32,11 +62,11 @@ const Color& Scene::getBackgroundColor() const {
 }
 
 void Scene::addCamera(const Camera& camera) {
-    _camera = camera;
+    _camera = &camera;
 }
 
 const Camera& Scene::getCamera() const {
-    return _camera;
+    return *_camera;
 }
 
 void Scene::addLight(Light const* light) {

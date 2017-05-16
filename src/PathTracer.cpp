@@ -14,15 +14,18 @@ using namespace Photon::Threading;
 using namespace std::placeholders;
 
 void PathTracer::initialize() {
-    /*std::vector<const Light*> lights = _scene->getLights();    
+    
+    if (_scene->lightStrategy() == ALL_LIGHTS) {
+        std::vector<const Light*> lights = _scene->getLights();
 
-    for (const Light* l : lights) {
-        for (uint32 depth = 0; depth < _maxDepth; ++depth) {
-            uint32 numSamples = l->numSamples();
-            _sampler->allocArray2D(numSamples); // Light
-            _sampler->allocArray2D(numSamples); // BSDF
+        for (uint32 spp = 0; spp < _spp; ++spp) {
+            for (const Light* l : lights) {
+                uint32 numSamples = l->numSamples();
+                _sampler->allocArray2D(numSamples); // Light
+                _sampler->allocArray2D(numSamples); // BSDF
+            }
         }
-    }*/
+    }
 
     Integrator::initialize();
 }
@@ -207,7 +210,7 @@ void PathTracer::renderTileAdaptive(uint32 tId, uint32 tileId) const {
 void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
     const ImageTile& tile = _tiles[tileId];
     Sampler& sampler = *tile.samp.get();
-    
+
     const Camera& camera = _scene->getCamera();
     for (uint32 y = 0; y < tile.h; ++y) {
         for (uint32 x = 0; x < tile.w; ++x) {
@@ -218,8 +221,9 @@ void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
             // Iterate samples per pixel
             Color color = Color::BLACK;
             for (uint32 s = 0; s < sampler.spp(); ++s) {
-                const Ray ray = camera.primaryRay(pixel, sampler);
+                sampler.startSample(s);
 
+                const Ray ray = camera.primaryRay(pixel, sampler);
                 color += tracePath(ray, sampler, pixel);
             }
 
@@ -232,11 +236,58 @@ void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
     }
 }
 
-Color PathTracer::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const {
+Color PathTracer::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const { 
+    LightStrategy strat = _scene->lightStrategy();
+    if (strat == ALL_LIGHTS || !_scene->lightDistribution())
+        return estimateDirectAll(evt, sampler);
+
+    Float lightPdf = 1;
+    const Light* light = _scene->sampleLightPdf(sampler.next1D(), &lightPdf);
+
+    if (!light || lightPdf == 0)
+        return Color::BLACK;
+
+    const Point2 ls = sampler.next2D();
+    const Point2 bs = sampler.next2D();
+
+    Color direct = sampleLight(*light, evt, ls, bs);
+
+    /*if (light->isDelta()) {
+        const Point2 ls = sampler.next2D();
+        const Point2 bs = sampler.next2D();
+
+        direct += sampleLight(*light, evt, ls, bs);
+    } else {
+        uint32 nSamples = light->numSamples();
+        Color contrib = Color::BLACK;
+
+        const Point2* lightVec = sampler.next2DArray(nSamples);
+        const Point2* bsdfVec  = sampler.next2DArray(nSamples);
+
+        if (!lightVec || !bsdfVec) {
+            nSamples = 1;
+
+            const Point2 ls = sampler.next2D();
+            const Point2 bs = sampler.next2D();
+
+            contrib += sampleLight(*light, evt, ls, bs);
+        } else {
+            for (uint32 i = 0; i < nSamples; ++i)
+                contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
+        }
+
+        direct += contrib / nSamples;
+    }*/
+
+    return direct / lightPdf;
+}
+
+Color PathTracer::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) const {
     Color direct = Color::BLACK;
 
     // Sample all lights
-    for (Light const* light : _scene->getLights()) {
+    for (const Light* light : _scene->getLights()) {
+        uint32 nSamples = light->numSamples();
 
         if (light->isDelta()) {
             const Point2 ls = sampler.next2D();
@@ -244,21 +295,25 @@ Color PathTracer::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) cons
 
             direct += sampleLight(*light, evt, ls, bs);
         } else {
-            Color  contrib = Color::BLACK;
-            uint32 nSamples = light->numSamples();
+            Color contrib = Color::BLACK;
 
-            std::vector<Point2> lightVec, bsdfVec;
-            sampler.allocArray2D(lightVec, nSamples);
-            sampler.allocArray2D(bsdfVec, nSamples);
+            const Point2* lightVec = sampler.next2DArray(nSamples);
+            const Point2* bsdfVec  = sampler.next2DArray(nSamples);
 
-            for (uint32 i = 0; i < nSamples; ++i) {
-                contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
-                //contrib += sampleBsdf(evt, bsdfVec[i]);
+            if (!lightVec || !bsdfVec) {
+                nSamples = 1;
+
+                const Point2 ls = sampler.next2D();
+                const Point2 bs = sampler.next2D();
+
+                contrib += sampleLight(*light, evt, ls, bs);
+            } else {
+                for (uint32 i = 0; i < nSamples; ++i)
+                    contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
             }
 
             direct += contrib / nSamples;
         }
-
     }
 
     return direct;
@@ -328,10 +383,12 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
 
         // Possibly end path with russian roulette
         Float rr = (refrScale * beta).max();
-        if (depth > 3 && rr < 0.35) {
+        if (depth > 2 && rr < 0.8) {
             Float q = Math::max(0.01, 1.0 - rr);
-            if (sampler.next1D() < q)
+            if (sampler.next1D() < q) {
+                //std::cout << "Stopped: " << depth << std::endl;
                 break;  // Stop path
+            }
 
             beta /= (1 - q);
         }
@@ -349,7 +406,7 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
             //c.film().addNormalSample(pixel.x, pixel.y, abs(normalize(n)));
             //c.film().addNormalSample(pixel.x, pixel.y, normalize(abs(event.sFrame.z())));
 
-            c.film().addNormalSample(pixel.x, pixel.y, normalize(abs(event.toWorld(sample.wi))));
+            c.film().addNormalSample(pixel.x, pixel.y, normalize(Normal(abs(event.uv.x), abs(event.uv.y), 0)));
 
             return 0;
         }*/
@@ -369,6 +426,7 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
         if (Li.r < 0 || Li.g < 0 || Li.b < 0)
             DEBUG("Radiance below zero!!");
 #endif
+
     }
 
     return Li;

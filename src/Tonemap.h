@@ -54,8 +54,8 @@ namespace Photon {
                 break;
             case LINEAR:
             default:
-                return color;
-                //return applyGamma(color);
+                //return color;
+                return applyGamma(color);
                 break;
         }
 

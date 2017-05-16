@@ -925,6 +925,11 @@ namespace Photon {
             return y;
         }
 
+        template<typename T>
+        bool Point2T<T>::infinity() const {
+            return (std::isinf(x) || std::isinf(y));
+        }
+
         /* ----------------------------------------------------------
             Point2T functions
         ---------------------------------------------------------*/

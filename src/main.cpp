@@ -73,20 +73,11 @@ void photonShutdown() {
 #include <Sampling.h>
 #include <Random.h>
 
-struct Coisas {
-    Vec3 dir;
-    Float pdf;
-};
-
-#include <Quadric.h>
-#include <OrenNayar.h>
-#include <Lambertian.h>
-#include <Specular.h>
-#include <ThinSpecular.h>
+#include <Records.h>
 
 int main(int argc, char* argv[]) {
-    std::string filePath("oren-box_rel.nff");
-    
+    std::string filePath("sphere_boxed.nff");
+   
     /*std::vector<Coisas> vecs;
     RandGen rand;
     Frame frame = Frame(Normal(0, 0, -1));

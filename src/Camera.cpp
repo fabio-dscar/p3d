@@ -4,12 +4,15 @@
 using namespace Photon;
 
 Camera::Camera(const Transform& camToWorld, Vec2ui res, Float near, Float far)
-    : _film(res), _camToWorld(camToWorld), _near(near), _far(far),
-    _lensRad(0), _focalDist(2.3) {} // 2.3 and 3.7
+    : _film(res), _camToWorld(camToWorld),
+      _near(near), _far(far), _lens({ 0, 1, 1 }) {} // 2.3 and 3.7
 
 void Camera::setLensParams(Float radius, Float focalDist) {
-    _lensRad = radius;
-    _focalDist = focalDist;
+    _lens.radius = radius;
+    _lens.focalDist = focalDist;
+    _lens.area = 1;
+    if (radius > 0)
+        _lens.area = PI * radius * radius;
 }
 
 Ray Camera::primaryRay(const Point2& pixel, const Point2& lens) const {
@@ -25,10 +28,10 @@ Ray Camera::primaryRay(const Point2& pixel, const Point2& lens) const {
     // Build ray and transform to world space
     Ray ray;
 
-    if (_lensRad > 0) {
-        Point2 ptDisk = _lensRad * sampleConcentricDisk(lens);
+    if (_lens.radius > 0) {
+        Point2 ptDisk = _lens.radius * sampleConcentricDisk(lens);
         Point3 ptLens = Point3(ptDisk.x, ptDisk.y, 0);
-        Point3 pFocus = origin + _focalDist / rDir.z * rDir;
+        Point3 pFocus = origin + _lens.focalDist / rDir.z * rDir;
 
         ray = Ray(ptLens, normalize(pFocus - ptLens), _near);
     } else {
@@ -58,10 +61,10 @@ Ray Camera::primaryRay(const Point2ui& pixel, Sampler& sampler) const {
     // Build ray and transform to world space
     Ray ray;
 
-    if (_lensRad > 0) {
+    if (_lens.radius > 0) {
         Point2 ptDisk = sampleConcentricDisk(sampler.next2D());
-        Point3 ptLens = _lensRad * Point3(ptDisk.x, ptDisk.y, 0);
-        Point3 pFocus = origin + _focalDist * rDir / rDir.z;
+        Point3 ptLens = _lens.radius * Point3(ptDisk.x, ptDisk.y, 0);
+        Point3 pFocus = origin + _lens.focalDist * rDir / rDir.z;
 
         ray = Ray(ptLens, normalize(pFocus - ptLens), _near);
     } else {

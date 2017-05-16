@@ -37,7 +37,7 @@ namespace Photon {
         bool isType(BSDFType type) const;
 
     protected:
-        BSDFType _type;
+        const BSDFType _type;
     };
 
     inline bool hasType(BSDFType toTest, BSDFType type) {
@@ -48,8 +48,8 @@ namespace Photon {
     public:
         NullBSDF() : BSDF(BSDFType::NONE) { }
 
-        Color eval(const BSDFSample& sample) const {
-            return Color::BLACK;
-        }
+        Float evalPdf(const BSDFSample& sample) const;
+        Color eval(const BSDFSample& sample) const;
+        Color sample(const Point2& rand, BSDFSample* sample) const;
     };
 }

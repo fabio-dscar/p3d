@@ -22,6 +22,7 @@
 #include <BSDF.h>
 #include <Lambertian.h>
 #include <OrenNayar.h>
+#include <Phong.h>
 #include <Specular.h>
 #include <ThinSpecular.h>
 //#include <Mirror.h>
@@ -188,6 +189,12 @@ void NFFParser::parseBsdf(Scene& scene) {
         Color rho   = parseColor();
         Float sigma = parseFloat();
         bsdf = new OrenNayar(rho, sigma);
+    } else if (bsdfName.compare(0, 5, "Phong") == 0) {
+        Color kd = parseColor();
+        Color ks = parseColor();
+        Float alpha = parseFloat();
+
+        bsdf = new Phong(kd, ks, alpha);
     } else if (bsdfName.compare(0, 8, "Specular") == 0) {
         Float intEta = parseFloat();
         Float extEta = parseFloat();

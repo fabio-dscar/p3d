@@ -85,6 +85,37 @@ namespace Photon {
         }
     }
 
+    inline void multijittered2DArray(const RandGen& rng, uint32 nx, uint32 ny, std::vector<Point2>& arr) {
+        arr.resize(nx * ny);
+
+        // Build multijittered arrangement
+        for (uint32 x = 0; x < nx; ++x) {
+            for (uint32 y = 0; y < ny; ++y) {
+                Float dx = (y + ((Float)x + rng.uniform1D()) / nx) / ny;
+                Float dy = (x + ((Float)y + rng.uniform1D()) / ny) / nx;
+
+                arr[x * ny + y] = Point2(dx, dy);
+            }
+        }
+
+        // Shuffle the arrangement in the x
+        for (uint32 x = 0; x < nx; ++x) {
+            uint32 k = x + rng.uniformUInt32(nx - x);
+            for (uint32 y = 0; y < ny; ++y)
+                std::swap(arr[x * ny + y].x,
+                          arr[k * ny + y].x);
+        }
+
+        // Shuffle the arrangement in the y
+        for (uint32 y = 0; y < ny; ++y) {
+            uint32 k = y + rng.uniformUInt32(ny - y);
+            for (uint32 x = 0; x < nx; ++x) {
+                std::swap(arr[x * ny + y].y,
+                          arr[x * ny + k].y);
+            }
+        }
+    }
+
     inline void jittered2DArray(const RandGen& rng, uint32 numSamples, std::vector<Point2>& arr) {
         arr.resize(numSamples);
         nRooks(rng, numSamples, 2, &arr[0][0]);

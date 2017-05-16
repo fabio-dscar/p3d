@@ -18,7 +18,19 @@ namespace Photon {
         //Normal normal;
 
         PositionSample() : pdf(0) {}
-        PositionSample(const RayEvent& ref) : pdf(0) {}
+        PositionSample(const RayEvent& evt) : pdf(0) {
+            pos   = evt.point;
+            frame = Frame(evt.normal);
+        }
+
+        PositionSample(const SurfaceEvent& evt) : pdf(0) {
+            pos   = evt.point;
+            frame = evt.sFrame;
+        }
+
+        Normal normal() const {
+            return frame.normal();
+        }
     };
 
     class DirectionSample {
@@ -45,6 +57,10 @@ namespace Photon {
             normal = local.normal;
             dist   = (ref.point - local.point).length();
         }
+
+        Point3 hitPoint() const {
+            return ref->point + dist * wi;
+        }
     };
         
     class BSDFSample {
@@ -64,6 +80,18 @@ namespace Photon {
               evt(&evt),
               type(BSDFType::ALL),
               transp(Transport::RADIANCE) {}
+
+        BSDFSample(const SurfaceEvent& evt, const Vec3& worldWi, Transport mode)
+            : wo(evt.wo),
+              pdf(0),
+              eta(1.0),
+              evt(&evt),
+              type(BSDFType::ALL),
+              transp(mode) {
+        
+            // Set wi in shading frame space
+            wi = evt.sFrame.toLocal(worldWi);
+        }
 
         BSDFSample(const DirectSample& sample) 
             : wo(sample.ref->wo),

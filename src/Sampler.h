@@ -26,6 +26,7 @@ namespace Photon {
         }
 
         virtual void start(const Point2ui& pixel) = 0;
+        virtual void startSample(uint32 sample) = 0;
 
         virtual void allocArray1D(uint32 numSamples) = 0;
         virtual void allocArray2D(uint32 numSamples) = 0;
@@ -37,13 +38,17 @@ namespace Photon {
         virtual Point2 next2D() = 0;      
         virtual void nextND(uint32 N, std::vector<Float>& arr) const = 0;
 
-        virtual const Float*  next1DArray() = 0;
-        virtual const Point2* next2DArray() = 0;
+        virtual const Float*  next1DArray(uint32 numSamples) = 0;
+        virtual const Point2* next2DArray(uint32 numSamples) = 0;
 
         virtual std::unique_ptr<Sampler> copy(uint32 seed) const = 0;
 
         uint32 spp() const {
             return _spp;
+        }
+
+        Point2ui pixel() const {
+            return _currPixel;
         }
 
     protected:
@@ -53,6 +58,7 @@ namespace Photon {
         uint32 _numDims;
 
         uint32 _currSample;
+        Point2ui _currPixel;
     };
 
 }

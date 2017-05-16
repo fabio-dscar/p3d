@@ -29,6 +29,11 @@ namespace Photon {
                 jittered2DArray(_rng, (uint32)arrays2D[arr].size(), arrays2D[arr]);*/
         }
 
+        void startSample(uint32 sample) {
+            _currSample = sample;
+            
+        }
+
         void allocArray1D(uint32 numSamples) {
 
         }
@@ -62,11 +67,11 @@ namespace Photon {
                 arr[n] = _rng.uniform1D();
         }
 
-        const Float*  next1DArray() {
+        const Float*  next1DArray(uint32 numSamples) {
             return nullptr;
         }
 
-        const Point2* next2DArray() {
+        const Point2* next2DArray(uint32 numSamples) {
             return nullptr;
         }
 

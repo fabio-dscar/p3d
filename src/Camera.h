@@ -10,6 +10,8 @@
 #include <Transform.h>
 #include <Sampler.h>
 
+#include <Records.h>
+
 namespace Photon {
 
     class Camera {
@@ -34,7 +36,6 @@ namespace Photon {
         }
 
         Ray primaryRay(const Point2ui& pixel, Sampler& sampler) const;
-
         Ray primaryRay(const Point2& pixel, const Point2& lens) const;
 
         Film& film() const {
@@ -47,24 +48,57 @@ namespace Photon {
 
         void setLensParams(Float radius, Float focalDist);
 
-        void sampleDirection();
+        bool toRaster(const Ray& ray, Point2* raster) const {
+            Float cos = dot(ray.dir(), _n);
+            if (cos <= 0)
+                return false;
+
+            Float t = 1.0 / cos;
+            if (_lens.radius > 0)
+                t *= _lens.focalDist;
+
+            Point3 focus = ray(t);
+            Point3 vplane = _worldToPlane(focus);
+
+            // Check if point lies in view plane
+            Point2 p = Point2(vplane.x, vplane.y);
+            if (!_film.bounds().contains(p))
+                return false;
+
+            *raster = p;
+
+            return true;
+        }
+
+        virtual Float pdfPosition(PositionSample* ps) const = 0;
+
+        virtual Color evalWe(const Ray& ray) const = 0;
+        virtual Float pdfWe(const Ray& ray) const = 0;
+
+        virtual Color sampleDirect(const Point2& rand, DirectSample* sample) const = 0;
+        virtual Float pdfDirect(const DirectSample& sample) const = 0;
+
     protected:
         mutable Film _film;
         
         Transform _camToWorld;
-        Transform _camToClip;
+        //Transform _camToClip;
         Transform _planeToCam;
-        Transform _camToPlane;
+        //Transform _camToPlane;
+
+        Transform _worldToPlane;
         
         Float _fov;
         Float _near;
         Float _far;
 
-        Float _h;
-        Float _w;
+        Normal _n;
 
-        Float _lensRad;
-        Float _focalDist;      
+        struct Lens {
+            Float radius;
+            Float focalDist;
+            Float area;
+        } _lens;
     };
 
 }

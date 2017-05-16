@@ -40,13 +40,13 @@ namespace Photon {
         Integrator(const Scene& scene) 
             : _scene(&scene), _tileSize(TILE_SIZE), _renderTask(nullptr), _tiles() { 
 
-            _sampler = std::make_unique<StratifiedSampler>(8, 8, 6);
+            _sampler = std::make_unique<StratifiedSampler>(16, 16, 16);
         }
 
         Integrator(const Scene& scene, uint32 spp)
             : _scene(&scene), _tileSize(TILE_SIZE), _renderTask(nullptr), _tiles() {
 
-            _sampler = std::make_unique<StratifiedSampler>(8, 8, 6);
+            _sampler = std::make_unique<StratifiedSampler>(16, 16, 16);
         }
 
         virtual void initialize();

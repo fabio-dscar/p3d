@@ -6,6 +6,10 @@ bool PointLight::isDelta() const {
     return true;
 }
 
+Color PointLight::power() const {
+    return _Le * 4 * PI;
+}
+
 Color PointLight::evalL(const SurfaceEvent& it, const Vec3& wo) const {
     return Color::BLACK;
 }
@@ -43,7 +47,7 @@ Float PointLight::pdfDirect(const DirectSample& sample) const {
 }
 
 Color PointLight::sampleEmitDirection(const Point2& rand, const PositionSample& pos, DirectionSample* sample) const {
-    sample->wo = sampleUniformSphere(rand).posVec();
+    sample->wo  = sampleUniformSphere(rand).posVec();
     sample->pdf = INV4PI;
 
     return _Le;

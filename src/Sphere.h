@@ -52,20 +52,21 @@ namespace Photon {
                 Float cosMax = Math::sqrtSafe(1.0 - sinSqr);
 
                 // Sample a direction on the solid angle cone
-                Vec3  wi = sampleUniformCone(rand, cosMax);
-                Frame frame = Frame(Normal(normalize(hatW)));
+                const Vec3  wi = sampleUniformCone(rand, cosMax);
+                const Frame frame = Frame(Normal(hatW));
 
                 sample->wi  = frame.toWorld(wi);
                 sample->pdf = pdfUniformCone(cosMax);
 
                 // Build a ray into the sphere from the reference
-                Ray r = ref.spawnRay(sample->wi);
+                const Ray r = ref.spawnRay(sample->wi);
 
                 // Check for visibility
-                SurfaceEvent intr;
-                if (intersectRay(r, &intr)) {
-                    sample->dist = (intr.point - r.origin()).length();
-                    sample->normal = intr.normal;
+                if (intersectRay(r, nullptr)) {
+                    const Point3 hitp = r.hitPoint();
+
+                    sample->dist   = (hitp - r.origin()).length();
+                    sample->normal = Normal(normalize(hitp - _pos));
                 } else {
                     sample->pdf = 0;
                 }
@@ -92,30 +93,35 @@ namespace Photon {
         }
 
         Float pdfDirect(const DirectSample& sample) const {
-            Vec3 refToPos = _pos - sample.ref->point;
-            if (refToPos.lengthSqr() <= _radius * _radius) {
+            const Vec3 refToPos = _pos - sample.ref->point;
+            Float wLenSqr = refToPos.lengthSqr();
+            Float radSqr  = _radius * _radius;
+
+            if (wLenSqr <= radSqr) {
                 // Reference is inside sphere
+                Float pdfPos = 1.0 / area();
 
                 // Convert area pdf to solid angle density
                 Float distSqr = sample.dist * sample.dist;
                 Float dot = absDot(sample.normal, -sample.wi);
 
-                return (1.0 / area()) * distSqr / dot;
+                return pdfPos * distSqr / dot;
             } else {
 
                 // Compute pdf on cone of directions
-                Float sinMaxSqr = _radius * _radius / refToPos.lengthSqr();
-                Float cosMax = std::sqrt(std::max((Float)0, 1 - sinMaxSqr));
+                Float sinMaxSqr = radSqr / wLenSqr;
+                Float cosMax    = Math::sqrtSafe(1 - sinMaxSqr);
 
                 return pdfUniformCone(cosMax);
             }
         }
        
         void computeSurfaceEvent(const Ray& ray, SurfaceEvent& evt) const {
-            Vec3 centerToPt = ray.hitPoint() - _pos;
+            Vec3 centerToPt  = ray.hitPoint() - _pos;
+            const Vec3 wCenterToPt = normalize(centerToPt);
 
             // Reproject hit point into sphere
-            evt.point = _pos + _radius * normalize(centerToPt);;
+            evt.point = _pos + _radius * wCenterToPt;
 
             // Deal with sphere parameterization singularity
             if (std::abs(centerToPt.x) < 1e-4 && std::abs(centerToPt.y) < 1e-4)
@@ -131,7 +137,7 @@ namespace Photon {
             evt.uv.x = phi * INV2PI;
             evt.uv.y = theta * INVPI;
 
-            Normal normal = Normal(normalize(centerToPt));
+            Normal normal = Normal(wCenterToPt);
 
             Float zr = std::sqrt(centerToPt.x * centerToPt.x + centerToPt.y * centerToPt.y);
             Float invzr  = 1.0 / zr;
@@ -143,7 +149,7 @@ namespace Photon {
             Vec3 dpdv = PI * Vec3(centerToPt.z * cosPhi, centerToPt.z * sinPhi, -_radius * std::sin(theta));
             
             // Build the shading frame using the partial derivatives
-            evt.sFrame = Frame(normalize(dpdu), normalize(dpdv), normal);
+            evt.sFrame = Frame(dpdu, dpdv, normal);
             evt.wo = evt.sFrame.toLocal(-ray.dir());
         }
 

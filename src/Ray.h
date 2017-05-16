@@ -49,9 +49,6 @@ namespace Photon {
 
         Float arg(const Point3& point) const;
         Point3 Ray::operator()(Float t) const;
-
-        //Ray reflect(const SurfaceEvent& evt) const;
-        //Ray refract(const SurfaceEvent& evt, Float inIOR) const;
     };
 
 

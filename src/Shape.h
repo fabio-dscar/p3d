@@ -14,8 +14,8 @@ namespace Photon {
 
     class Shape {
     public:
-        Shape() : _light(nullptr), _bsdf(nullptr) { }
-        Shape(const AreaLight* light) : _light(light), _bsdf(nullptr) { }
+        Shape() : _light(nullptr), _bsdf(nullptr), _twoSided(false) { }
+        Shape(const AreaLight* light) : _light(light), _bsdf(nullptr), _twoSided(false) { }
 
         void setTransform(const Transform& objToWorld) {
             _objToWorld = objToWorld;
@@ -64,7 +64,10 @@ namespace Photon {
         }
 
         virtual void computeSurfaceEvent(const Ray& ray, SurfaceEvent& evt) const {
-
+            if (_twoSided) {
+                evt.normal *= sign(Frame::cosTheta(evt.wo));
+                evt.gFrame  = Frame(evt.normal);
+            }
         }
 
         virtual void  samplePosition(const Point2& rand, PositionSample* sample) const {
@@ -88,7 +91,9 @@ namespace Photon {
         const AreaLight* _light;
 
         Transform _objToWorld;
-        Transform _worldToObj;      
+        Transform _worldToObj;   
+
+        bool _twoSided;
     };
 
 }

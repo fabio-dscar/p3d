@@ -40,3 +40,16 @@ Color BSDF::sample(const Point2& rand, BSDFSample* sample) const {
 
     return eval(*sample);
 }
+
+Float NullBSDF::evalPdf(const BSDFSample& sample) const {
+    return 0;
+}
+
+Color NullBSDF::eval(const BSDFSample& sample) const {
+    return Color::BLACK;
+}
+
+Color NullBSDF::sample(const Point2& rand, BSDFSample* sample) const {
+    sample->pdf = 0;
+    return Color::BLACK;
+}

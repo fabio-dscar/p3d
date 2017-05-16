@@ -19,6 +19,8 @@ namespace Photon {
             return false;
         }
 
+        Color power() const;
+
         Color evalL(const SurfaceEvent& it, const Vec3& wo) const;
         Color evalL(const PositionSample& sample, const Vec3& wo) const;
 

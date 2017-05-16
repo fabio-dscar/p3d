@@ -6,34 +6,16 @@ namespace Photon {
 
     class Perspective : public Camera {
     public:
-        Perspective(const Transform& objToWorld, Vec2ui res, Float fov, Float near, Float far)
-            : Camera(objToWorld, res, near, far) { 
-        
-            // Build perspective matrix
-            Float invTan = 1.0 / std::tan(radians(fov) / 2.0);
-            Float zScale = far / (far - near);
-            Float zTrans = -far * near / (far - near);
+        Perspective(const Transform& objToWorld, Vec2ui res, Float fov, Float near, Float far);
 
-            Mat4 perspMat(invTan, 0, 0, 0,
-                          0, invTan, 0, 0,
-                          0, 0, zScale, zTrans,
-                          0, 0, 1, 0);
+        Color evalWe(const Ray& ray) const;
+        Float pdfWe(const Ray& ray) const;
+        Float pdfPosition(PositionSample* ps) const;
 
-            _camToClip = Transform(perspMat);
-            
-            // Aspect transform
-            Float aspect = res.x / res.y;
-            Transform aspectTr = scale(0.5 * aspect, 0.5, 1.0) *
-                                 translate(Vec3(1.0 / aspect, 1.0, 0.0));
-
-            _camToPlane = scale(res.x, res.y, 1.0) * aspectTr * _camToClip;
-            _planeToCam = inverse(_camToPlane);
-        }
-
-
-
+        Color sampleDirect(const Point2& rand, DirectSample* sample) const;
+        Float pdfDirect(const DirectSample& sample) const;
 
     private:
-        
+        Float _filmArea;
     };
 }

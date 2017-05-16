@@ -121,7 +121,7 @@ Color Integrator::sampleLight(const Light& light, const SurfaceEvent& evt, const
         Float bsdfPdf = 0;
 
         // Trace shadow ray from point in direction wi
-        Ray shadowRay = evt.spawnRay(dirSample.wi, dirSample.dist - F_EPSILON);
+        Ray shadowRay = evt.spawnRay(dirSample.wi, dirSample.dist);
         if (!_scene->isOccluded(shadowRay)) {
 
             // Evaluate BSDF for direct sample

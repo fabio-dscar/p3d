@@ -17,6 +17,10 @@ Float AreaLight::area() const {
     return _shape->area();
 }
 
+Color AreaLight::power() const {
+    return _shape->area() * PI * _Le;
+}
+
 Color AreaLight::evalL(const SurfaceEvent& it, const Vec3& wo) const {
     // Only emit towards orientation
     if (dot(it.sFrame.normal(), wo) <= 0)
@@ -66,7 +70,7 @@ Float AreaLight::pdfDirect(const DirectSample& sample) const {
 }
 
 Color AreaLight::sampleEmitDirection(const Point2& rand, const PositionSample& pos, DirectionSample* sample) const {
-    Vec3 w = sampleCosHemisphere(rand);
+    const Vec3 w = sampleCosHemisphere(rand);
 
     // Convert to world outgoing direction
     sample->wo  = pos.frame.toWorld(w);

@@ -20,7 +20,7 @@ namespace Photon {
         class NFFParser {
         public:
             static std::shared_ptr<Scene> fromFile(const std::string& filePath);
-               
+
         private:
             static void parseLight(Scene& scene);
             static void parseSphere(Scene& scene);

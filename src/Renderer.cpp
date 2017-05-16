@@ -9,6 +9,7 @@
 #include <Integrator.h>
 #include <WhittedRayTracer.h>
 #include <PathTracer.h>
+#include <BDPT.h>
 
 #include <json\json.hpp>
 #include <FreeImage.h>
@@ -23,14 +24,14 @@ void Renderer::initialize() {
 
 void Renderer::renderScene(const std::shared_ptr<Scene>& scene) {
     _scene = scene;
-    _integrator = std::make_shared<PathTracer>(*scene); // WhittedRayTracer
+    _integrator = std::make_shared<BidirPathTracer>(*scene); // WhittedRayTracer
 
     // Export file as an end callback after rendering
     std::function<void()> endCallback = EndCallback();
     if (_settings.exportFile)
         endCallback = [this]() { this->exportImage(); };
 
-    // Init and start raytracer
+    // Init and start render
     _integrator->initialize();
     _integrator->startRender(endCallback);
 }
@@ -60,9 +61,9 @@ void Renderer::exportImage() {
 
                 // Convert to [0, 255] range
                 Color pColor = film(i, y);
-                color.rgbRed = Math::clamp<uint32>(pColor.r * 255.0, 0u, 255u);
+                color.rgbRed   = Math::clamp<uint32>(pColor.r * 255.0, 0u, 255u);
                 color.rgbGreen = Math::clamp<uint32>(pColor.g * 255.0, 0u, 255u);
-                color.rgbBlue = Math::clamp<uint32>(pColor.b * 255.0, 0u, 255u);
+                color.rgbBlue  = Math::clamp<uint32>(pColor.b * 255.0, 0u, 255u);
 
                 FreeImage_SetPixelColor(bitmap, i, y, &color);
             }

@@ -55,9 +55,6 @@
     <Filter Include="Source Files\Math">
       <UniqueIdentifier>{5685a5e1-a6c1-4ee7-8cf6-727bf3415ec4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Grid">
-      <UniqueIdentifier>{816ddd8f-197e-48be-99e4-3c705fa0819b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Sampling">
       <UniqueIdentifier>{6731e4ce-7391-4711-974b-39c99ae8de7c}</UniqueIdentifier>
     </Filter>
@@ -87,6 +84,9 @@
     </Filter>
     <Filter Include="Source Files\Sampling">
       <UniqueIdentifier>{f6075872-2f62-477d-aa64-caa27234efa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Spatial">
+      <UniqueIdentifier>{816ddd8f-197e-48be-99e4-3c705fa0819b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -130,7 +130,7 @@
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\UniformGrid.cpp">
-      <Filter>Source Files\Grid</Filter>
+      <Filter>Source Files\Spatial</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Bounds.cpp">
       <Filter>Source Files\Geometry</Filter>
@@ -203,6 +203,18 @@
     </ClCompile>
     <ClCompile Include="..\..\src\StratifiedSampler.cpp">
       <Filter>Source Files\Sampling</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Box.cpp">
+      <Filter>Source Files\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Distribution.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Perspective.cpp">
+      <Filter>Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\BDPT.cpp">
+      <Filter>Source Files\Integrators</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -431,9 +443,6 @@
     <ClInclude Include="..\..\src\AshikhminShirley.h">
       <Filter>Header Files\Material</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\PiecewiseLinear.h">
-      <Filter>Header Files\Math</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\SmoothLayered.h">
       <Filter>Header Files\Material</Filter>
     </ClInclude>
@@ -441,6 +450,18 @@
       <Filter>Header Files\Sampling</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\RandomSampler.h">
+      <Filter>Header Files\Sampling</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Phong.h">
+      <Filter>Header Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Distribution.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\DirectionalLight.h">
+      <Filter>Header Files\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SobolSampler.h">
       <Filter>Header Files\Sampling</Filter>
     </ClInclude>
   </ItemGroup>

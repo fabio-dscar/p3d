@@ -20,14 +20,14 @@ Frame::Frame(const Vec3& x, const Vec3& y, const Vec3& z)
     _y.normalize();
     _z.normalize();
 
-    if (!consistent()) {
+    /*if (!consistent()) {
         Math::basisFromVector(z, &_x, &_y);
         _x.normalize();
         _y.normalize();
         _z = normalize(z);
 
         //std::cout << "WARNING_3" << std::endl;
-    }
+    }*/
 }
 
 Vec3 Frame::toWorld(const Vec3& vec) const {

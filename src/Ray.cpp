@@ -20,7 +20,9 @@ Ray::Ray(const Point3& origin, const Point3& target)
 
     _dir = normalize(target - origin);
     _maxT = arg(target);
-    _maxT -= _maxT * F_RAY_OFFSET;
+
+    // Apply offset - avoid self-intersection
+    _maxT -= _maxT * F_RAY_OFFSET; 
 }
 
 const Point3& Ray::origin() const {
@@ -71,36 +73,6 @@ bool Ray::isPrimary() const {
     return _isPrimary;
 }
 
-/*Ray Ray::reflect(const SurfaceEvent& evt) const {
-    // Calculate reflected vector
-    Float NdotD = dot(-_dir, evt.normal);
-    Vec3 r = normalize(2 * NdotD * evt.normal - (-_dir));
-
-    return Ray(evt.point, r);
-}
-
-Ray Ray::refract(const SurfaceEvent& evt, Float ior) const {
-    Float eta = ior / evt.obj->getMaterial().getIor();
-
-    if (evt.backface) // Check if we are leaving the material
-        eta = ior / eta;
-
-    Vec3 vt = dot(-_dir, evt.normal) * evt.normal - (-_dir);
-    Float sinIn = vt.length();
-    Float sinTr = eta * sinIn;
-
-    // If total internal reflection
-    if ((sinTr * sinTr) > 1.0f)
-        return reflect(evt);
-
-    Float cosTr = std::sqrt(1.0f - (sinTr * sinTr));
-
-    // Calculate refracted direction
-    Vec3 t = sinTr * normalize(vt) + cosTr * -evt.normal;
-    
-    return Ray(evt.point, normalize(t));
-}*/
-
 Point3 Ray::operator()(Float t) const {
     return _origin + t * _dir;
 }
@@ -128,7 +100,7 @@ Ray RayEvent::spawnRay(const Vec3& dir) const {
 }
 
 Ray RayEvent::spawnRay(const Vec3& dir, Float dist) const {
-    return Ray(point, dir, F_RAY_OFFSET, dist);
+    return Ray(point, dir, F_RAY_OFFSET, dist - F_EPSILON);
 }
 
 /* ----------------------------------------------------------

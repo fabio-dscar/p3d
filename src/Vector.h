@@ -316,7 +316,9 @@ namespace Math {
         T min() const;
         T max() const;
         uint32 maxDim() const;
-        uint32 minDim() const;  
+        uint32 minDim() const;
+
+        bool infinity() const;
     };
 
     template<typename T>

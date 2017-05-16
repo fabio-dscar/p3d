@@ -132,11 +132,11 @@ bool UniformGrid::contains(const Point3& pos) const {
 
 bool UniformGrid::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
     // Intersection cache, renewed per ray
-    std::unordered_map<uint32, bool> intersectMap;
+    //std::unordered_map<uint32, bool> intersectMap;
 
     // Test intersection with unbounded objects
-    for (std::shared_ptr<Shape> obj : _unboundedObjs)
-        obj->intersectRay(ray, evt);
+    for (uint32 idx = 0; idx < _unboundedObjs.size(); ++idx)
+        _unboundedObjs[idx]->intersectRay(ray, evt);
 
     // Get location of ray in grid
     Point3ui pt;
@@ -162,20 +162,33 @@ bool UniformGrid::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
     Vec3 t = tMin + adv;
 
     // Start incremental grid traversal
-    Voxel vox;
     uint32 min;
     do {
         min = t.minDim(); // Get component with smallest value
-        vox = voxel(pt);
 
+        const Voxel& vox = voxel(pt);
         if (vox.hasObjects()) {
-            for (uint32 id : vox.objIDs) {
+            /*for (uint32 id : vox.objIDs) {
                 // Only test intersection if not already
-                if (intersectMap.find(id) == intersectMap.end()) {
+                /*if (intersectMap.find(id) == intersectMap.end()) {
                     _objs[id]->intersectRay(ray, evt);
                     intersectMap[id] = true;
+                }*/
+
+            /*    _objs[id]->intersectRay(ray, evt);
+            }*/
+
+            for (uint32 idx = 0; idx < vox.objIDs.size(); ++idx)
+                _objs[vox.objIDs[idx]]->intersectRay(ray, evt);
+              
+            /*for (uint32 idx = 0; idx < vox.objIDs.size(); ++idx) {
+                uint32 id = vox.objIDs[idx];
+
+                if (intersectMap.find(id) == intersectMap.end()) {
+                    _objs[id]->intersectRay(ray, evt);                 
+                    intersectMap[id] = true;
                 }
-            }
+            }*/
 
             if (ray.maxT() < t[min])
                 return true;
@@ -191,12 +204,17 @@ bool UniformGrid::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
 
 bool UniformGrid::isOccluded(const Ray& ray) const {
     // Intersection cache, renewed per ray
-    std::unordered_map<uint32, bool> intersectMap;
+    //std::unordered_map<uint32, bool> intersectMap;
 
     // Test occlusion with unbounded
-    for (GridObject obj : _unboundedObjs)
+    for (uint32 idx = 0; idx < _unboundedObjs.size(); ++idx)
+        if (_unboundedObjs[idx]->isOccluded(ray))
+            return true;
+
+    /*for (GridObject obj : _unboundedObjs)
         if (obj->isOccluded(ray))
             return true;
+            */
 
     // Locate ray on the grid
     Point3ui pt;
@@ -222,14 +240,19 @@ bool UniformGrid::isOccluded(const Ray& ray) const {
     Vec3 t = tMin + adv;
 
     // Start incremental grid traversal
-    Voxel vox;
     uint32 min;
     do {
         min = t.minDim(); // Get component with smallest value
-        vox = voxel(pt);
         
+        const Voxel& vox = voxel(pt);
         if (vox.hasObjects()) {
-            for (uint32 id : vox.objIDs) {
+            for (uint32 idx = 0; idx < vox.objIDs.size(); ++idx)
+                if (_objs[vox.objIDs[idx]]->isOccluded(ray))
+                    return true;
+
+            /*for (uint32 idx = 0; idx < vox.objIDs.size(); ++idx) {
+                uint32 id = vox.objIDs[idx];
+
                 // Only test occlusion if not already
                 if (intersectMap.find(id) == intersectMap.end()) {
                     if (_objs[id]->isOccluded(ray))
@@ -237,7 +260,20 @@ bool UniformGrid::isOccluded(const Ray& ray) const {
 
                     intersectMap[id] = true;
                 }
-            }
+            }*/
+
+            /*for (uint32 id : vox.objIDs) {
+                // Only test occlusion if not already
+                /*if (intersectMap.find(id) == intersectMap.end()) {
+                    if (_objs[id]->isOccluded(ray))
+                        return true;
+
+                    intersectMap[id] = true;
+                }*/
+
+            /*    if (_objs[id]->isOccluded(ray))
+                    return true;
+            }*/
         }
 
         t[min]  += dt[min];

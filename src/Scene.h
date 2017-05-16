@@ -8,11 +8,18 @@
 #include <Bounds.h>
 #include <Shape.h>
 #include <UniformGrid.h>
+#include <Distribution.h>
 
 namespace Photon {
 
     // Forward declarations
     class Light;
+
+    enum LightStrategy {
+        ALL_LIGHTS = 0,
+        UNIFORM = 1,
+        POWER = 2
+    };
 
     class Scene {
     public:
@@ -38,15 +45,21 @@ namespace Photon {
         Bounds3 bounds() const;
 
         void useGrid(bool state);
+
+        const Light* sampleLightPdf(Float rand, Float* lightPdf) const;
+        LightStrategy lightStrategy() const;
+        DiscretePdf1D* lightDistribution() const;
     private:
         Color _background;
-        Camera _camera;
+        const Camera* _camera;
         Bounds3 _bounds;
         std::vector<Light const*> _lights;
         std::vector<std::shared_ptr<Shape>> _objects;
         std::unique_ptr<UniformGrid> _uniformGrid;
+        std::unique_ptr<DiscretePdf1D> _lightDistr;
         bool _hideLights;
         bool _useGrid;
+        LightStrategy _lightStrat;
     };
 
 }

@@ -1,33 +1,16 @@
 #pragma once
 
-#include <Vector.h>
-#include <Spectral.h>
-#include <Records.h>
+#include <Light.h>
 
 namespace Photon {
 
-    class RayEvent;
-
-    class Light {
+    class DirectionalLight : public Light {
     public:
-        Light() : _Le(1), _numSamples(1) {}
-        Light(const Color& emission) 
-            : _Le(emission), _numSamples(1) {}
-        Light(const Color& emission, uint32 nSamples) 
-            : _Le(emission), _numSamples(nSamples) {}
 
-        void setIntensity(const Color& Le);
-        const Color& color() const;
-        Color L(const RayEvent& evt, const Vec3& w) const;
 
-        uint32 numSamples() const {
-            return _numSamples;
+        Color power() const {
+
         }
-
-        virtual bool isEnvironment() const;
-        virtual bool isDelta() const;
-
-        virtual Color power() const = 0;
 
         // Evaluate L for outgoing wo at intersection
         virtual Color evalL(const SurfaceEvent& it, const Vec3& wo) const = 0;
@@ -45,9 +28,8 @@ namespace Photon {
         virtual Color sampleEmitDirection(const Point2& rand, const PositionSample& pos, DirectionSample* sample) const = 0;
         virtual Float pdfEmitDirection(const PositionSample& pos, const DirectionSample& sample) const = 0;
 
-    protected:
-        Color  _Le;
-        uint32 _numSamples;
+    private:
+        Vec3 _w;
     };
 
 }

@@ -289,7 +289,7 @@ Vec2 MicrofacetDist::sampleP22(Float theta, const Point2& rand) const {
             }
 
             const Float z = (u.y * (u.y * (u.y * 0.27385 - 0.73369) + 0.46341)) /
-                (u.y * (u.y * (u.y * 0.093073 + 0.309420) - 1.0) + 0.597999);
+                            (u.y * (u.y * (u.y * 0.093073 + 0.309420) - 1.0) + 0.597999);
             slope.y = S * z * std::sqrt(1.0 + slope.x * slope.x);
 
             return slope;
