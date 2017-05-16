@@ -85,14 +85,11 @@ Color Integrator::sampleBsdf(const SurfaceEvent& evt, const Point2& randBsdf) co
             return Color::BLACK;
 
         // Compute Le contributions from sampled wi
-        Float misWeight = 1.0;
-        DirectSample sample(evt);
-        sample.wi = wi;
-        sample.dist = dist(evt.point, lightIt.point);
-        sample.normal = lightIt.normal;
-
+    
         // Evaluate light pdf for BSDF sample
         // If BSDF is specular, it has a delta distribution, so avoid using MIS
+		Float misWeight = 1.0;
+		DirectSample sample(evt, lightIt);
         pdfLight = light->pdfDirect(sample);
         if (pdfLight == 0)
             return Color::BLACK;

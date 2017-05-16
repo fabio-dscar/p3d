@@ -53,7 +53,7 @@ namespace Photon {
 
     class PathTracer : public Integrator {
     public:
-        PathTracer(const Scene& scene, uint32 spp = 256)
+        PathTracer(const Scene& scene, uint32 spp = 4096)
             : Integrator(scene, spp), _maxDepth(16), _useAdaptive(false),
             _adaptWidth(20), _adaptHeight(20), _spp(spp) {}
 

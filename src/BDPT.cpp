@@ -19,7 +19,6 @@ Float Photon::toAreaDensity(Float pdf, const PathVertex& v0, const PathVertex& v
 
 Float Photon::shadingNormalFactor(const SurfaceEvent& evt, const Vec3& wo, const Vec3& wi) {
     // Apply shading normal correction
-
     const Normal shadNormal = evt.sFrame.normal();
     const Normal geoNormal = evt.normal;
 
@@ -51,6 +50,9 @@ Color Photon::geomTerm(const Scene& scene, const PathVertex& v0, const PathVerte
     return absDot(sn0, w) * absDot(sn1, w) / lenSqr;
 }
 
+Float Photon::calcMisWeight() {
+	return 0;
+}
 
 PathVertex PathVertex::createCameraVertex(const Camera& cam, const Ray& ray, const Color& beta) {
     PathVertex v;
@@ -301,4 +303,95 @@ Float PathVertex::evalLightDistrPdf(const Scene& scene, const PathVertex& next) 
     Float pdfDistr = distr->pdf(idx);
 
     return pdfDistr * pdfPos;
+}
+
+/* ======================================================================
+		BidirPathTracer member functions 
+ ========================================================================*/
+
+void BidirPathTracer::renderTile(uint32 tId, uint32 tileId) const {
+	const ImageTile& tile = _tiles[tileId];
+	Sampler& sampler = *tile.samp.get();
+
+	const Camera& camera = _scene->getCamera();
+	for (uint32 y = 0; y < tile.h; ++y) {
+		for (uint32 x = 0; x < tile.w; ++x) {
+			Point2ui pixel(x + tile.x, y + tile.y);
+
+			sampler.start(pixel);
+
+			// Iterate samples per pixel
+			Color color = Color::BLACK;
+			for (uint32 s = 0; s < sampler.spp(); ++s) {
+
+				// Generate camera path
+				Path cameraPath = createPath(PATH_CAMERA, _maxDepth + 2, sampler);
+
+				// Generate light path
+				Path lightPath = createPath(PATH_LIGHT, _maxDepth + 1, sampler);
+
+				// Perform all connections between the two paths
+				color += connectPaths(cameraPath, lightPath, sampler);
+			}
+
+			// Filter result
+			color /= _spp;
+
+			// Record sample on camera's film
+			camera.film().addColorSample(pixel.x, pixel.y, color);
+		}
+	}
+}
+
+Path BidirPathTracer::createPath(PathType type, uint32 maxDepth, Sampler& sampler) const {
+	const Camera& camera = _scene->getCamera();
+
+	Float pdf = 0;
+	Ray ray;
+	Path path(type, maxDepth);
+	Color beta(1);
+
+	if (type == PATH_LIGHT) {
+		// Choose a light according to sampling strategy
+		Float lightPdf = 1;
+		const Light* l = _scene->sampleLightPdf(sampler.next1D(), &lightPdf);
+
+		// Sample position on light
+		PositionSample ps;
+		l->samplePosition(sampler.next2D(), &ps);
+
+		if (ps.pdf == 0)
+			return path;
+
+		// Sample direction from sampled position
+		DirectionSample ds;
+		Color Le = l->sampleEmitDirection(sampler.next2D(), ps, &ds);
+
+		if (ds.pdf == 0 || Le.isBlack())
+			return path;
+
+		// Set starting ray
+		ray = Ray(ps.pos, ds.wo);
+
+		path[0] = PathVertex::createLightVertex(*l, ray, Le, ps.normal(), lightPdf * ps.pdf);
+
+		// Set starting throughput and pdf
+		beta *= Le * absDot(ps.normal(), ray.dir()) / (lightPdf * ps.pdf * ds.pdf);
+		pdf = ds.pdf;
+
+	}
+	else if (type == PATH_CAMERA) {
+		// Set starting ray
+		ray = camera.primaryRay(sampler.pixel(), sampler);
+
+		path[0] = PathVertex::createCameraVertex(camera, ray, Color(1));
+
+		// Set starting pdf
+		pdf = camera.pdfWe(ray);
+	}
+
+	// Build rest of path from starting ray
+	path.performWalk(*_scene, sampler, ray, beta, pdf);
+
+	return path;
 }

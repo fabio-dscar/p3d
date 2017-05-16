@@ -248,93 +248,9 @@ namespace Photon {
 
     private:
 
-        void renderTile(uint32 tId, uint32 tileId) const {         
-            const ImageTile& tile = _tiles[tileId];
-            Sampler& sampler = *tile.samp.get();
+		void renderTile(uint32 tId, uint32 tileId) const;
 
-            const Camera& camera = _scene->getCamera();
-            for (uint32 y = 0; y < tile.h; ++y) {
-                for (uint32 x = 0; x < tile.w; ++x) {
-                    Point2ui pixel(x + tile.x, y + tile.y);
-
-                    sampler.start(pixel);
-
-                    // Iterate samples per pixel
-                    Color color = Color::BLACK;
-                    for (uint32 s = 0; s < sampler.spp(); ++s) {
-
-                        // Generate camera path
-                        Path cameraPath = createPath(PATH_CAMERA, _maxDepth + 2, sampler);
-
-                        // Generate light path
-                        Path lightPath = createPath(PATH_LIGHT, _maxDepth + 1, sampler);
-
-                        // Perform all connections between the two paths
-                        color += connectPaths(cameraPath, lightPath, sampler);
-
-                    }
-
-                    // Filter result
-                    color /= _spp;
-
-                    // Record sample on camera's film
-                    camera.film().addColorSample(pixel.x, pixel.y, color);
-                }
-            }
-
-        }
-
-        Path createPath(PathType type, uint32 maxDepth, Sampler& sampler) const {
-            const Camera& camera = _scene->getCamera();
-           
-            Float pdf = 0;
-            Ray ray;
-            Path path(type, maxDepth);
-            Color beta(1);
-
-            if (type == PATH_LIGHT) {
-                // Choose a light according to sampling strategy
-                Float lightPdf = 1;
-                const Light* l = _scene->sampleLightPdf(sampler.next1D(), &lightPdf);
-
-                // Sample position on light
-                PositionSample ps;
-                l->samplePosition(sampler.next2D(), &ps);
-
-                if (ps.pdf == 0)
-                    return path;
-
-                // Sample direction from sampled position
-                DirectionSample ds;
-                Color Le = l->sampleEmitDirection(sampler.next2D(), ps, &ds);
-
-                if (ds.pdf == 0 || Le.isBlack())
-                    return path;
-
-                // Set starting ray
-                ray = Ray(ps.pos, ds.wo);
-
-                path[0] = PathVertex::createLightVertex(*l, ray, Le, ps.normal(), lightPdf * ps.pdf);
-
-                // Set starting throughput and pdf
-                beta *= Le * absDot(ps.normal(), ray.dir()) / (lightPdf * ps.pdf * ds.pdf);
-                pdf = ds.pdf;  
-
-            } else if (type == PATH_CAMERA) {
-                // Set starting ray
-                ray = camera.primaryRay(sampler.pixel(), sampler);
-
-                path[0] = PathVertex::createCameraVertex(camera, ray, Color(1));
-
-                // Set starting pdf
-                pdf = camera.pdfWe(ray);
-            }
-
-            // Build rest of path from starting ray
-            path.performWalk(*_scene, sampler, ray, beta, pdf);
-
-            return path;
-        }
+		Path createPath(PathType type, uint32 maxDepth, Sampler& sampler) const;
 
         Color connectPaths(const Path& cameraPath, const Path& lightPath, Sampler& sampler) const {
             const Camera& cam = _scene->getCamera();
@@ -344,6 +260,8 @@ namespace Photon {
                 for (uint32 s = 0; s <= lightPath.numVerts; ++s) {
                     int32 depth = t + s - 2;
 
+					// Do not connect the camera and light vertex directly
+					// Check if the length of the path is within bounds
                     if ((s == 1 && t == 1) || depth < 0 || depth > _maxDepth)
                         continue;
 
@@ -390,9 +308,11 @@ namespace Photon {
                     return Color::BLACK;
                    
                 // Create camera vertex and compute L
-                const Point3 hit   = ds.hitPoint();
-                const Ray camRay   = Ray(hit, -ds.wi);
-                PathVertex camVert = PathVertex::createCameraVertex(cam, camRay, Lc / ds.pdf);
+				const Color beta = Lc / ds.pdf;
+                const Point3 hit = ds.hitPoint();
+                const Ray camRay = Ray(hit, -ds.wi);	
+
+                PathVertex camVert = PathVertex::createCameraVertex(cam, camRay, beta);
 
                 // Check if point intersects view plane
                 // Get its raster position
