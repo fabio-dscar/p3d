@@ -24,8 +24,8 @@ void Renderer::initialize() {
 
 void Renderer::renderScene(const std::shared_ptr<Scene>& scene) {
     _scene = scene;
-    _integrator = std::make_shared<PathTracer>(*scene); // WhittedRayTracer
-
+    _integrator = std::make_shared<BidirPathTracer>(*scene); // WhittedRayTracer
+    
     // Export file as an end callback after rendering
     std::function<void()> endCallback = EndCallback();
     if (_settings.exportFile)
@@ -49,44 +49,15 @@ bool Renderer::hasCompleted() {
 }
 
 void Renderer::exportImage() {
-    FreeImage_Initialise();
-    //FIBITMAP* bitmap = FreeImage_AllocateT(FIT_RGB, _scene->getCamera().getWidth(), _scene->getCamera().getHeight());
-    FIBITMAP* bitmap = FreeImage_Allocate(_scene->getCamera().width(), _scene->getCamera().height(), 24);
-    if (bitmap) {
-        // Convert camera's film image to [0, 255 range]
-        parallelFor(0, _scene->getCamera().width(), 32, [&](uint32 i) {
-            for (uint32 y = 0; y < _scene->getCamera().height(); y++) {
-                RGBQUAD color;
-                const Film& film = _scene->getCamera().film();
-
-                // Convert to [0, 255] range
-                Color pColor = film(i, y);
-                color.rgbRed   = Math::clamp<uint32>(pColor.r * 255.0, 0u, 255u);
-                color.rgbGreen = Math::clamp<uint32>(pColor.g * 255.0, 0u, 255u);
-                color.rgbBlue  = Math::clamp<uint32>(pColor.b * 255.0, 0u, 255u);
-
-                FreeImage_SetPixelColor(bitmap, i, y, &color);
-            }
-        });
-
-        std::string outName(_settings.outFileName + "." + _settings.outFormat);
-        FREE_IMAGE_FORMAT format = FreeImage_GetFIFFromFormat(_settings.outFormat.c_str());
-        if (format == FIF_UNKNOWN) {
-            std::cerr << "Error: Unknown export image format." << std::endl;
-            return;
-        }
-
-        FreeImage_Save(format, bitmap, outName.c_str(), 0);
-        FreeImage_Unload(bitmap);
-    }
+    _scene->getCamera().film().exportImage(BufferType::COLOR);
 }
 
 void Renderer::initDefaultSettings() {
     // Init settings with default values
     _settings.renderToScreen = true;
-    _settings.exportFile = false;
+    _settings.exportFile  = false;
     _settings.outFileName = "out";
-    _settings.outFormat = "tiff";
+    _settings.outFormat   = "tiff";
 }
 
 void Renderer::loadSettingsFile(const std::string& settingsFilePath) {

@@ -34,13 +34,13 @@ Color AreaLight::evalL(const PositionSample& sample, const Vec3& wo) const {
     if (dot(sample.frame.normal(), wo) <= 0)
         return Color::BLACK;
 
-    return _Le;
+    return _Le * PI;
 }
 
 Color AreaLight::samplePosition(const Point2& rand, PositionSample* sample) const {
     _shape->samplePosition(rand, sample);
 
-    return _Le;
+    return power();
 }
 
 Float AreaLight::pdfPosition(const PositionSample& sample) const {

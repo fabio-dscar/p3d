@@ -4,126 +4,96 @@
 #include <Spectral.h>
 #include <Tonemap.h>
 #include <Filter.h>
-#include <Framebuffer.h>
 #include <Bounds.h>
+#include <Atomic.h>
 
 namespace Photon {
 
-    
+    enum BufferType {
+        COLOR, DEPTH, NORMAL, VISIBILITY, SAMPLES
+    };
+
+    struct FeaturesRecord {
+    public:
+        Normal normal;   // Shading normal at intersection
+        Point2 raster;   // Raster position of sample        
+        Float  dist;     // Primary ray distance
+        uint32 vis;      // Number of unoccluded shadow rays
+        uint32 nSamples;
+
+        FeaturesRecord() : dist(0), vis(0), nSamples(0) { }
+    };
+
+    struct Pixel {
+        Color       color;
+        Float       weight;
+        AtomicColor splat;
+        uint32      nSamples;
+
+#ifdef PHOTON_DOUBLE
+        uint8 pad[4]; // Make pixel 64 bytes
+#endif
+
+        Pixel() : nSamples(0), weight(0) { }
+
+    }; // 32 Bytes (4 byte FP)
+
     class Film {
     public:
-        Film(uint32 width, uint32 height)
-            : _res(width, height), _toneOp(FILMIC), _exposure(0.6) {
+        Film(const Vec2ui& res);
 
-            _bounds.expand(Point2(width, height));
+        void setToneOperator(ToneOperator op);
+        void setExposure(Float exp);
 
-            _film.resize(_res.x * _res.y * 3);
-            //_normal.resize(_width * _height * 3);
-            /*_depth.resize(_width * _height);*/
-        }
+        const Bounds2& bounds() const;
 
-        Film(const Vec2ui& res)
-            : _res(res), _toneOp(FILMIC), _exposure(0.6) {
+        uint32 width() const;
+        uint32 height() const;
+        Vec2ui resolution() const;
 
-            _bounds.expand(Point2(res.x, res.y));
+        Float aspect() const;
 
-            _film.resize(_res.x * _res.y * 3);
-            //_normal.resize(_width * _height * 3);
-            /*_depth.resize(_width * _height);*/
-        }
+        uint32 pixelArea() const;
 
-        const Bounds2& bounds() const {
-            return _bounds;
-        }
+        void addPreviewSample(uint32 x, uint32 y, const Color& color);
+        void addColorSample(uint32 x, uint32 y, const Color& color);
+        void addSplatSample(const Point2& pt, const Color& splat);
+        void addFeatureSample(const FeaturesRecord& record);
 
-        Vec2ui resolution() const {
-            return _res;
-        }
+        const Float* preview() const;
 
-        uint32 width() const {
-            return _res.x;
-        }
+        std::unique_ptr<Float[]> color() const;
+        std::unique_ptr<Float[]> depth() const;
+        std::unique_ptr<Float[]> normals() const;
+        std::unique_ptr<Float[]> sampleDensity() const;
+        std::unique_ptr<Float[]> visibility() const;
 
-        uint32 height() const {
-            return _res.y;
-        }
+        FeaturesRecord& feature(const Point2& p);
+        FeaturesRecord& feature(const Point2ui& p);
+        const FeaturesRecord& feature(uint32 idx) const;
+        const FeaturesRecord& feature(const Point2ui& p) const;
+        
+        Pixel& pixel(uint32 idx);
+        Pixel& pixel(const Point2ui& p);
+        Pixel& pixel(const Point2& p);
+        const Pixel& pixel(const Point2ui& p) const;
 
-        Float aspect() const {
-            return Float(_res.x) / Float(_res.y);
-        }
+        Pixel& operator()(const Point2& p);
 
-        uint32 pixelArea() const {
-            return _res.x * _res.y;
-        }
-
-        void setToneOperator(ToneOperator toneOp) {
-            _toneOp = toneOp;
-        }
-
-        void setExposure(Float exposure) {
-            _exposure = exposure;
-        }
-
-        void addColorSample(uint32 x, uint32 y, const Color& color) {
-            uint32 idx = x + _res.x * y;
-
-            //Color xyz = RGBToXYZ(color);
-            //Color rgb = XYZToRGB(xyz);
-
-            Color hdr = ToneMap(_toneOp, color, _exposure);
-            
-            _film[3 * idx]     = hdr.r;
-            _film[3 * idx + 1] = hdr.g;
-            _film[3 * idx + 2] = hdr.b;
-        }
-
-        void addSplatSample(uint32 x, uint32 y, const Color color) {
-
-        }
-
-        void addNormalSample(uint32 x, uint32 y, const Vec3& normal) {
-            uint32 idx = x + _res.x * y;
-
-            _normal[3 * idx]     = normal.x;
-            _normal[3 * idx + 1] = normal.y;
-            _normal[3 * idx + 2] = normal.z;
-        }
-
-        void addDepthSample(uint32 x, uint32 y, Float dist) {
-            //_depth[x + _width * y] = dist;
-        }
-
-        const std::vector<Float>& image() const {
-            //return _normal;
-            return _film;
-        }
-
-        /*const Float* image(uint32 row) const {
-        uint32 idx = _width * row;
-
-        return &_film[idx * 3];
-        }*/
-
-        Color operator()(uint32 x, uint32 y) const {
-            uint32 idx = x + _res.x * y;
-
-            return Color(_film[3 * idx], _film[3 * idx + 1], _film[3 * idx + 2]);
-        }
+        void exportImage(BufferType type) const;
 
     private:
-        Vec2ui _res;
+        Vec2ui  _res;
+        Bounds2 _bounds;
 
         ToneOperator _toneOp;
         Float _exposure;
 
-        std::vector<Float> _film;
-        const Filter*      _filter;
-        //Framebuffer        _film1;
+        Float _splatScale;
 
-        std::vector<Float> _normal;
-        /*std::vector<float>   _depth;*/
-
-        Bounds2 _bounds;
+        std::unique_ptr<Color[]> _preview;
+        std::unique_ptr<Pixel[]> _pixels;
+        std::unique_ptr<FeaturesRecord[]> _feats;
     };
 
 

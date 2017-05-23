@@ -17,15 +17,15 @@ namespace Photon {
             return Normal(_z);
         }
 
-        Vec3 x() const {
+        const Vec3& x() const {
             return _x;
         }
 
-        Vec3 y() const {
+        const Vec3& y() const {
             return _y;
         }
 
-        Vec3 z() const {
+        const Vec3& z() const {
             return _z;
         }
 

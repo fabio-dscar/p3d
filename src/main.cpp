@@ -48,7 +48,7 @@ void renderOpenGL() {
     _openglRenderer->renderToScreen();
 
     if (_renderer->hasCompleted()) {
-        _openglRenderer->renderToScreen();
+        _openglRenderer->renderToScreen(true);
         finish();
     }
 }
@@ -63,10 +63,14 @@ void photonInit() {
 
     // Initialize resource manager
     Resources::initialize();
+
+    // Initialize FreeImage
+    FreeImage_Initialise();
 }
 
 void photonShutdown() {
-
+    // Shutdown FreeImage
+    FreeImage_DeInitialise();
 }
 
 #include <Frame.h>
@@ -76,24 +80,7 @@ void photonShutdown() {
 #include <Records.h>
 
 int main(int argc, char* argv[]) {
-    std::string filePath("sphere_boxed.nff");
-   
-    /*std::vector<Coisas> vecs;
-    RandGen rand;
-    Frame frame = Frame(Normal(0, 0, -1));
-    const uint32 ang = 1;
-    
-    for (uint32 i = 0; i < 48; ++i) {
-        Coisas item;
-        item.dir = sampleUniformSphericalCap(Point2(rand.uniform1D(), rand.uniform1D()),
-                                             std::cos(Math::radians(ang)));
-        item.dir = frame.toWorld(item.dir);
-        item.pdf = pdfUniformSphericalCap(std::cos(Math::radians(ang)));
-        vecs.push_back(item);
-
-    }
-
-    return 0;*/
+    std::string filePath("oren-box.nff");
 
     // Command line arguments
     if (argc < 1) {
@@ -108,16 +95,6 @@ int main(int argc, char* argv[]) {
     _scene = Utils::NFFParser::fromFile(filePath);
     if (!_scene)
         Utils::throwError("Failed to load scene.");
-
-    //std::shared_ptr<Shape> quadric;
-
-    //quadric = std::make_shared<Quadric>(-1, -1, 1, 0, 0, 0, 0, 0, 0, -0.05);
-    //quadric = std::make_shared<Quadric>(2, 2, -1, 0, 0, 0, 0, 0, 0, -0.10);
-    //quadric = std::make_shared<Quadric>(1, 1, 0, 0, 0, 0, 0, 0, 0, -0.15);
-    //quadric->setBsdf(new Lambertian(Color(0.6, 0.6, 0.6)));
-    //quadric->setBsdf(new Specular(1.5, 1.0, Color(0), Color(1)));
-
-    //_scene->addShape(quadric);
 
     // Init system
     photonInit();

@@ -2,25 +2,29 @@
 
 using namespace Photon;
 
-// Utility functions
-Float Photon::toAreaDensity(Float pdf, const PathVertex& v0, const PathVertex& v1) {
-    const Vec3 w = v1.evt.point - v0.evt.point;
-    if (w.lengthSqr() == 0)
-        return 0;
+/* ======================================================================
+        Bidirectional PT utility functions
+========================================================================*/
 
-    Float invDistSqr = 1.0 / w.lengthSqr();
+// Convert from solid angle density to area density pdf
+Float Photon::toAreaDensity(Float pdf, const PathVertex& v0, const PathVertex& v1) {
+    const Vec3 w = v1.point() - v0.point();
+
+    Float lenSqr = w.lengthSqr();
+    if (lenSqr == 0)
+        return 0;
 
     Float dot = 1;
     if (v1.isSurface())
-        dot = absDot(v1.evt.normal, normalize(w));
+        dot = absDot(v1.geoNormal(), normalize(w));
 
-    return pdf * invDistSqr * dot;
+    return pdf * dot / lenSqr;
 }
 
 Float Photon::shadingNormalFactor(const SurfaceEvent& evt, const Vec3& wo, const Vec3& wi) {
     // Apply shading normal correction
     const Normal shadNormal = evt.sFrame.normal();
-    const Normal geoNormal = evt.normal;
+    const Normal geoNormal  = evt.normal;
 
     Float num   = absDot(shadNormal, wo) * absDot(geoNormal, wi);
     Float denom = absDot(shadNormal, wi) * absDot(geoNormal, wo);
@@ -32,27 +36,161 @@ Float Photon::shadingNormalFactor(const SurfaceEvent& evt, const Vec3& wo, const
 }
 
 Color Photon::geomTerm(const Scene& scene, const PathVertex& v0, const PathVertex& v1) {
-    // Compute visibility term
-    Ray ray = v0.evt.spawnRay(v1.evt.point);
-    if (scene.isOccluded(ray))
-        return Color::BLACK;
-
     // Compute geometric term
-    const Normal sn0 = v0.evt.sFrame.normal();
-    const Normal sn1 = v1.evt.sFrame.normal();
-
-    Vec3 w = v0.evt.point - v1.evt.point;
+    Vec3 w = v0.point() - v1.point();
     Float lenSqr = w.lengthSqr();
     if (lenSqr == 0)
         return Color::BLACK;
     w.normalize();
 
-    return absDot(sn0, w) * absDot(sn1, w) / lenSqr;
+    Float G = 1;
+    if (v0.isSurface())
+        G *= absDot(v0.normal(), w);
+
+    if (v1.isSurface())
+        G *= absDot(v1.normal(), w);
+
+    if (G == 0)
+        return Color::BLACK;
+
+    // Compute visibility term
+    if (!v0.visibility(scene, v1))
+        return Color::BLACK;
+
+    return G / lenSqr;
 }
 
-Float Photon::calcMisWeight() {
-	return 0;
+struct ProbPair {
+    Float pdfFwd;
+    Float pdfBack;
+};
+
+Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Path& lightPath, const PathVertex& sampled, uint32 t, uint32 s) {
+    Float sum = 0;
+
+    auto remap0 = [](Float v) -> Float { return v == 0 ? 1 : v; };
+
+    std::vector<ProbPair> cam(t);
+    cam.resize(t);
+
+    std::vector<ProbPair> light(s);
+    light.resize(s);
+    
+    for (int32 i = t - 1; i > 0; --i) {
+        const PathVertex& camVert = cameraPath[i];
+        cam[i].pdfFwd  = remap0(camVert.pdfFwd);
+        cam[i].pdfBack = remap0(camVert.pdfBack);
+    }
+
+    for (int32 i = s - 1; i >= 0; --i) {
+        const PathVertex& lightVert = lightPath[i];
+        light[i].pdfFwd  = remap0(lightVert.pdfFwd);
+        light[i].pdfBack = remap0(lightVert.pdfBack);
+    }
+
+    PathVertex lv, cv, prevLv, prevCv;
+
+    if (s > 0)
+        lv = lightPath[s - 1];
+
+    if (t > 0)
+        cv = cameraPath[t - 1];
+
+    if (s == 1) {
+        lv = sampled;
+        light[s - 1].pdfBack = remap0(sampled.pdfBack);
+        light[s - 1].pdfFwd  = remap0(sampled.pdfFwd);
+    } else if (t == 1) {
+        cv = sampled;
+        cam[t - 1].pdfBack = remap0(sampled.pdfBack);
+        cam[t - 1].pdfFwd  = remap0(sampled.pdfFwd);
+    }
+
+    if (s > 1)
+        prevLv = lightPath[s - 2];
+
+    if (t > 1)
+        prevCv = cameraPath[t - 2];
+
+    // Compute camera vertices reverse PDFs
+    if (t > 0) {
+        if (s > 0) {
+            if (s == 1)
+                cam[t - 1].pdfBack = lv.evalPdf(cv);
+            else
+                cam[t - 1].pdfBack = lv.evalPdf(prevLv, cv);
+        } else {
+            cam[t - 1].pdfBack = cv.evalLightDistrPdf(scene, prevCv);
+        }
+    }
+
+
+    if (t > 1) {
+        if (s > 0) {
+            cam[t - 2].pdfBack = cv.evalPdf(lv, prevCv);
+        } else {
+            cam[t - 2].pdfBack = cv.evalLightDistrPdf(scene, prevCv);
+        }
+    }
+
+    // Compute light vertices reverse PDFs
+    if (s > 0) {
+        if (t == 1)
+            light[s - 1].pdfBack = cv.evalPdf(lv);
+        else
+            light[s - 1].pdfBack = cv.evalPdf(prevCv, lv);
+    }
+
+    if (s > 1) {
+        light[s - 2].pdfBack = lv.evalPdf(cv, prevLv);
+    }
+
+    Float ri = 1;
+    for (int32 i = t - 1; i > 0; --i) {
+        Float p = cam[i].pdfBack / cam[i].pdfFwd;
+        ri *= p;
+        //ri *= p * p; // Power heuristic
+        if (!cameraPath[i].isDelta() && !cameraPath[i - 1].isDelta())
+            sum += ri;
+    }
+
+    ri = 1;
+    for (int32 i = s - 1; i >= 0; --i) {
+        Float p = light[i].pdfBack / light[i].pdfFwd;
+        ri *= p;
+        //ri *= p * p; // Power heuristic
+        uint32 idx = i > 0 ? i - 1 : 0;
+        if (!lightPath[i].isDelta() && !lightPath[idx].isDelta())
+            sum += ri;
+    }
+
+    return 1.0 / (1.0 + sum);
+
+    /*
+    Float ri = 1;
+    for (int i = t - 1; i > 0; --i) {
+        Float p = remap0(cameraPath[i].pdfBack) / remap0(cameraPath[i].pdfFwd);
+        ri *= p * p; // Power heuristic
+        if (!cameraPath[i].isDelta() && !cameraPath[i - 1].isDelta())
+            sum += ri;
+    }
+
+    ri = 1;
+    for (int i = s - 1; i >= 0; --i) {
+        Float p = remap0(lightPath[i].pdfBack) / remap0(lightPath[i].pdfFwd);
+        ri *= p * p; // Power heuristic
+        uint32 idx = i > 0 ? i - 1 : 0;
+        if (!lightPath[i].isDelta() && !lightPath[idx].isDelta())
+            sum += ri;
+    }*/
+
+	//return 1 / (1 + sum);
 }
+
+
+/* ======================================================================
+        PathVertex member functions
+========================================================================*/
 
 PathVertex PathVertex::createCameraVertex(const Camera& cam, const Ray& ray, const Color& beta) {
     PathVertex v;
@@ -107,7 +245,8 @@ bool PathVertex::isDelta() const {
     if (type == LIGHT)
         return light->isDelta();
 
-    return (type == SURFACE && evt.obj->bsdf()->isType(SPECULAR));
+    return (type == SURFACE && 
+           (evt.obj->bsdf() && evt.obj->bsdf()->isType(SPECULAR)));
 }
 
 bool PathVertex::isEndpoint() const {
@@ -149,7 +288,7 @@ const Point3& PathVertex::point() const {
             return light.evt.point;
             break;
         default:
-            return Point3();
+            return evt.point;
     } 
 }
 
@@ -165,11 +304,27 @@ const RayEvent& PathVertex::event() const {
             return light.evt;
             break;
         default:
-            return RayEvent();
+            return evt;
     }
 }
 
-const Normal& PathVertex::normal() const {
+const Normal& PathVertex::geoNormal() const {
+    switch (type) {
+        case SURFACE:
+            return evt.normal;
+            break;
+        case CAMERA:
+            return cam.evt.normal;
+            break;
+        case LIGHT:
+            return light.evt.normal;
+            break;
+        default:
+            return evt.normal;
+    }
+}
+
+Normal PathVertex::normal() const {
     switch (type) {
         case SURFACE:
             return evt.sFrame.normal();
@@ -181,7 +336,7 @@ const Normal& PathVertex::normal() const {
             return light.evt.normal;
             break;
         default:
-            return Normal();
+            return evt.normal;
     }
 }
 
@@ -226,6 +381,10 @@ Color PathVertex::evalBsdf(const PathVertex& ref, Transport mode) const {
     // Build BSDFSample and evaluate BSDF
     BSDFSample bs = BSDFSample(evt, pToRef, mode);
     Color f = evt.obj->bsdf()->eval(bs);
+
+    // Avoid light leaks
+    if (dot(evt.normal, pToRef) * Frame::cosTheta(bs.wi) <= 0)
+        return Color::BLACK;
 
     // Perform shading normal correction
     if (!f.isBlack() && mode == IMPORTANCE)
@@ -272,11 +431,15 @@ Float PathVertex::evalPdf(const PathVertex& next) const {
         const Ray ray = Ray(point(), normalize(wnext));
 
         pdf = cam->pdfWe(ray);
-    } else if (isLight()) {
-        const DirectSample ds(next.event(), event());
+    } else if (isLight()) {         
         const Light* l = getLight();
+        const PositionSample ps(event());
+        const DirectionSample ds(normalize(wnext));
 
-        pdf = l->pdfDirect(ds);
+        pdf = l->pdfEmitDirection(ps, ds);
+
+        // const DirectSample ds(next.event(), event());
+        // pdf = l->pdfDirect(ds);
     }
 
     return toAreaDensity(pdf, *this, next);
@@ -294,9 +457,11 @@ Float PathVertex::evalLightDistrPdf(const Scene& scene, const PathVertex& next) 
     if (!distr)
         return pdfPos;
 
+    const Light* light = getLight();
+
     // Get index for this light in light array
     auto lights = scene.getLights();
-    auto iter   = std::find(lights.begin(), lights.end(), light.ptr);
+    auto iter   = std::find(lights.begin(), lights.end(), light);
     uint32 idx  = std::distance(lights.begin(), iter);
 
     // Evaluate distribution PDF
@@ -331,14 +496,17 @@ void BidirPathTracer::renderTile(uint32 tId, uint32 tileId) const {
 				Path lightPath = createPath(PATH_LIGHT, _maxDepth + 1, sampler);
 
 				// Perform all connections between the two paths
-				color += connectPaths(cameraPath, lightPath, sampler);
+				Color Li = connectPaths(cameraPath, lightPath, sampler);
+
+                // Record sample on camera's film
+                camera.film().addColorSample(pixel.x, pixel.y, Li);
+
+                color += Li;
 			}
 
-			// Filter result
-			color /= _spp;
-
-			// Record sample on camera's film
-			camera.film().addColorSample(pixel.x, pixel.y, color);
+			// Use box filter for preview
+			color /= sampler.spp();
+			camera.film().addPreviewSample(pixel.x, pixel.y, color);
 		}
 	}
 }

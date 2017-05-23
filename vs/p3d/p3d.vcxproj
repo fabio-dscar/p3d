@@ -133,8 +133,10 @@
     <ClCompile Include="..\..\src\BSDF.cpp" />
     <ClCompile Include="..\..\src\Camera.cpp" />
     <ClCompile Include="..\..\src\Distribution.cpp" />
+    <ClCompile Include="..\..\src\Film.cpp" />
     <ClCompile Include="..\..\src\Frame.cpp" />
     <ClCompile Include="..\..\src\Fresnel.cpp" />
+    <ClCompile Include="..\..\src\Image.cpp" />
     <ClCompile Include="..\..\src\Integrator.cpp" />
     <ClCompile Include="..\..\src\Lambertian.cpp" />
     <ClCompile Include="..\..\src\Light.cpp" />
@@ -172,6 +174,7 @@
     <ClInclude Include="..\..\src\Animation.h" />
     <ClInclude Include="..\..\src\AreaLight.h" />
     <ClInclude Include="..\..\src\AshikhminShirley.h" />
+    <ClInclude Include="..\..\src\Atomic.h" />
     <ClInclude Include="..\..\src\BDPT.h" />
     <ClInclude Include="..\..\src\Bounds.h" />
     <ClInclude Include="..\..\src\Box.h" />
@@ -186,9 +189,9 @@
     <ClInclude Include="..\..\src\Film.h" />
     <ClInclude Include="..\..\src\Filter.h" />
     <ClInclude Include="..\..\src\Frame.h" />
-    <ClInclude Include="..\..\src\Framebuffer.h" />
     <ClInclude Include="..\..\src\Fresnel.h" />
     <ClInclude Include="..\..\src\GaussianFilter.h" />
+    <ClInclude Include="..\..\src\Image.h" />
     <ClInclude Include="..\..\src\ImageTexture.h" />
     <ClInclude Include="..\..\src\Integrator.h" />
     <ClInclude Include="..\..\src\IntTypes.h" />

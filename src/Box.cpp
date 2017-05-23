@@ -21,7 +21,7 @@ bool Box::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
 
         // Compute intersections and sort
         Float tNear = (_min[i] - rayOrigin[i]) * invDir;
-        Float tFar = (_max[i] - rayOrigin[i]) * invDir;
+        Float tFar  = (_max[i] - rayOrigin[i]) * invDir;
         if (tNear > tFar)
             std::swap(tNear, tFar);
 

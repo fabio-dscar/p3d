@@ -30,7 +30,7 @@ namespace Photon {
             void startRender();
             void resize(int32 w, int32 h);
             void cleanup();
-            void renderToScreen() const;
+            void renderToScreen(bool finished = false) const;
 
             // Set callbacks
             void setDisplayCallback(void(*display)());

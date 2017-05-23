@@ -224,14 +224,17 @@ void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
                 sampler.startSample(s);
 
                 const Ray ray = camera.primaryRay(pixel, sampler);
-                color += tracePath(ray, sampler, pixel);
+                Color Li = tracePath(ray, sampler, pixel);
+
+                // Record sample on camera's film
+                camera.film().addColorSample(pixel.x, pixel.y, Li);
+
+                color += Li;
             }
 
-            // Filter result
+            // Use a box filter for the preview
             color /= _spp;
-
-            // Record sample on camera's film
-            camera.film().addColorSample(pixel.x, pixel.y, color);
+            camera.film().addPreviewSample(pixel.x, pixel.y, color);
         }
     }
 }
@@ -250,36 +253,7 @@ Color PathTracer::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) cons
     const Point2 ls = sampler.next2D();
     const Point2 bs = sampler.next2D();
 
-    Color direct = sampleLight(*light, evt, ls, bs);
-
-    /*if (light->isDelta()) {
-        const Point2 ls = sampler.next2D();
-        const Point2 bs = sampler.next2D();
-
-        direct += sampleLight(*light, evt, ls, bs);
-    } else {
-        uint32 nSamples = light->numSamples();
-        Color contrib = Color::BLACK;
-
-        const Point2* lightVec = sampler.next2DArray(nSamples);
-        const Point2* bsdfVec  = sampler.next2DArray(nSamples);
-
-        if (!lightVec || !bsdfVec) {
-            nSamples = 1;
-
-            const Point2 ls = sampler.next2D();
-            const Point2 bs = sampler.next2D();
-
-            contrib += sampleLight(*light, evt, ls, bs);
-        } else {
-            for (uint32 i = 0; i < nSamples; ++i)
-                contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
-        }
-
-        direct += contrib / nSamples;
-    }*/
-
-    return direct / lightPdf;
+    return sampleLight(*light, evt, ls, bs) / lightPdf;
 }
 
 Color PathTracer::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) const {
@@ -356,6 +330,10 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
         if (!bsdf || bsdf->isType(BSDFType::NONE))
             break;  // Leave if null bsdf (e.g. light sources)
 
+        // Avoid light leaks
+        if (dot(event.normal, -subPath.dir()) * Frame::cosTheta(event.wo) <= 0)
+            break;
+
         /* -----------------------------------------------------------------------------------
                 Direct Illumination
         --------------------------------------------------------------------------------------*/
@@ -393,6 +371,16 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
             beta /= (1 - q);
         }
 
+        // Store primary ray's scene features
+        if (subPath.isPrimary()) {
+            FeaturesRecord feat;
+            feat.dist   = (ray.origin() - event.point).length();
+            feat.raster = Point2(pixel.x, pixel.y);
+            feat.normal = event.sFrame.normal();
+
+            _scene->getCamera().film().addFeatureSample(feat);
+        }
+
         /*if (subPath.isPrimary()) {
             const Camera& c = _scene->getCamera();
             //c.film().addNormalSample(pixel.x, pixel.y, normalize(event.wo()));
@@ -403,10 +391,10 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
             //c.film().addNormalSample(pixel.x, pixel.y, normalize(abs(sample.wi)));
 
             //Normal n = Normal(event.uv.x, event.uv.y, 0);
-            //c.film().addNormalSample(pixel.x, pixel.y, abs(normalize(n)));
-            //c.film().addNormalSample(pixel.x, pixel.y, normalize(abs(event.sFrame.z())));
+            //c.film().addNormalSample(pixel.x, pixel.y, abs(event.normal));
+            c.film().addNormalSample(pixel.x, pixel.y, normalize(abs(event.sFrame.z())));
 
-            c.film().addNormalSample(pixel.x, pixel.y, normalize(Normal(abs(event.uv.x), abs(event.uv.y), 0)));
+            //c.film().addNormalSample(pixel.x, pixel.y, normalize(Normal(abs(event.uv.x), abs(event.uv.y), 0)));
 
             return 0;
         }*/

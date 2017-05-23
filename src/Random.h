@@ -91,29 +91,33 @@ namespace Photon {
         // Build multijittered arrangement
         for (uint32 x = 0; x < nx; ++x) {
             for (uint32 y = 0; y < ny; ++y) {
-                Float dx = (y + ((Float)x + rng.uniform1D()) / nx) / ny;
-                Float dy = (x + ((Float)y + rng.uniform1D()) / ny) / nx;
+                Float dx = ((Float)y + ((Float)x + rng.uniform1D()) / (Float)nx) / (Float)ny;
+                Float dy = ((Float)x + ((Float)y + rng.uniform1D()) / (Float)ny) / (Float)nx;
 
-                arr[x * ny + y] = Point2(dx, dy);
+                arr[x + nx * y] = Point2(dx, dy);
             }
         }
 
+        permute(rng, nx * ny, 2, 0, &arr[0][0]);
+        permute(rng, nx * ny, 2, 1, &arr[0][0]);
+
         // Shuffle the arrangement in the x
-        for (uint32 x = 0; x < nx; ++x) {
+        /*for (uint32 x = 0; x < nx; ++x) {        
             uint32 k = x + rng.uniformUInt32(nx - x);
-            for (uint32 y = 0; y < ny; ++y)
-                std::swap(arr[x * ny + y].x,
-                          arr[k * ny + y].x);
+            for (uint32 y = 0; y < ny; ++y) {              
+                std::swap(arr[x + nx * y].x,
+                          arr[k + nx * y].x);
+            }
         }
 
         // Shuffle the arrangement in the y
         for (uint32 y = 0; y < ny; ++y) {
             uint32 k = y + rng.uniformUInt32(ny - y);
-            for (uint32 x = 0; x < nx; ++x) {
-                std::swap(arr[x * ny + y].y,
-                          arr[x * ny + k].y);
+            for (uint32 x = 0; x < nx; ++x) {         
+                std::swap(arr[x + nx * y].y,
+                          arr[x + nx * k].y);
             }
-        }
+        }*/
     }
 
     inline void jittered2DArray(const RandGen& rng, uint32 numSamples, std::vector<Point2>& arr) {

@@ -488,7 +488,8 @@ void NFFParser::parseCamera(Scene& scene) {
     Vec3 up;
     Float fov, near;
     Vec2ui res;
-    Float radius, focalDist;
+    Float radius = 0;
+    Float focalDist = 0;
 
     // 'from' line
     loadLine();

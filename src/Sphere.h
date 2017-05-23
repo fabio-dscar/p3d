@@ -20,7 +20,7 @@ namespace Photon {
         bool isOccluded(const Ray& ray) const;
 
         Bounds3 bbox() const {
-            Vec3 radVec(_radius + F_EPSILON);
+            const Vec3 radVec(_radius + F_EPSILON);
             return Bounds3(_pos - radVec, _pos + radVec);
         }
 
@@ -107,7 +107,6 @@ namespace Photon {
 
                 return pdfPos * distSqr / dot;
             } else {
-
                 // Compute pdf on cone of directions
                 Float sinMaxSqr = radSqr / wLenSqr;
                 Float cosMax    = Math::sqrtSafe(1 - sinMaxSqr);

@@ -4,7 +4,7 @@
 
 namespace Photon {
 
-    class BoxFilter : public Filter{
+    class BoxFilter : public Filter {
     public:
         BoxFilter() { }
 

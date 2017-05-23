@@ -946,7 +946,7 @@ namespace Photon {
 
         template<typename T>
         inline Point2T<T> abs(const Point2T<T>& pt) {
-            return Vector2<T>(std::abs(pt.x), std::abs(pt.y));
+            return Point2T<T>(std::abs(pt.x), std::abs(pt.y));
         }
 
         template<typename T>

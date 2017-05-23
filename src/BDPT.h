@@ -8,16 +8,19 @@
 
 #include <Scene.h>
 
+using namespace std::placeholders;
+
 namespace Photon {
 
     class Camera;
     class Light;
     class PathVertex;
+    class Path;
 
     Float toAreaDensity(Float pdf, const PathVertex& v0, const PathVertex& v1);
     Float shadingNormalFactor(const SurfaceEvent& evt, const Vec3& wo, const Vec3& wi);
     Color geomTerm(const Scene& scene, const PathVertex& v0, const PathVertex& v1);
-    Float calcMisWeight();
+    Float calcMisWeight(const Scene& scene, const Path& cameraPath, const Path& lightPath, const PathVertex& sampled, uint32 t, uint32 s);
 
     enum VertexType {
         SURFACE, CAMERA, LIGHT
@@ -71,9 +74,10 @@ namespace Photon {
 
         void setEvent(VertexType vertType, const SurfaceEvent& event);
 
-        const Point3&   point()  const;
-        const Normal&   normal() const;
-        const RayEvent& event()  const;
+        const Point3&   point()     const;     
+        const RayEvent& event()     const;
+        const Normal&   geoNormal() const;
+        Normal normal() const;
         
         bool connectible() const;
         bool isLight()     const;
@@ -139,7 +143,7 @@ namespace Photon {
         void performWalk(const Scene& scene, Sampler& sampler, const Ray& wo, Color beta, Float pdf) {
             Ray subPath = wo;
 
-            Float pdfFwd = pdf;
+            Float pdfFwd  = pdf;
             Float pdfBack = 0;
 
             const BSDF* bsdf = nullptr;
@@ -160,14 +164,18 @@ namespace Photon {
                     break;
                 }
 
-                // Fetch intersection's BSDF
-                bsdf = event.obj->bsdf();
-                if (!bsdf || bsdf->isType(BSDFType::NONE))
-                    break;  // Leave if null bsdf (e.g. light sources)
+                // Avoid light leaks
+                if (dot(event.normal, -subPath.dir()) * Frame::cosTheta(event.wo) <= 0)
+                    break;
 
                 // Create surface vertex
                 vert = PathVertex::createSurfaceVertex(event, beta, pdfFwd, prev);
                 ++numVerts;
+
+                // Fetch intersection's BSDF
+                bsdf = event.obj->bsdf();
+                if (!bsdf || bsdf->isType(BSDFType::NONE))
+                    break;  // Leave if null bsdf (e.g. light sources)
 
                 // Sample BSDF for scattered direction
                 BSDFSample bs = BSDFSample(event);
@@ -224,11 +232,10 @@ namespace Photon {
             : L(c), raster(), mis(0) { }
     };
 
-    using namespace std::placeholders;
 
     class BidirPathTracer : public Integrator {
     public:
-        BidirPathTracer(const Scene& scene, uint32 spp = 1)
+        BidirPathTracer(const Scene& scene, uint32 spp = 1024)
             : Integrator(scene), _maxDepth(16), _spp(spp) {
             
         }
@@ -255,36 +262,52 @@ namespace Photon {
         Color connectPaths(const Path& cameraPath, const Path& lightPath, Sampler& sampler) const {
             const Camera& cam = _scene->getCamera();
             
+            // Record features on features buffer
+            if (cameraPath.numVerts > 1) {
+                const PathVertex& v0 = cameraPath[0];
+                const PathVertex& v1 = cameraPath[1];
+                if (v1.isSurface()) {
+                    FeaturesRecord rec;
+
+                    Point2ui pixel = sampler.pixel();
+                    rec.raster = Point2(pixel.x, pixel.y);                   
+                    rec.dist   = dist(v0.event().point, v1.event().point);
+                    rec.normal = v1.normal();
+
+                    cam.film().addFeatureSample(rec);
+                }
+            }
+
+            // Compute contributions of all paths
             Color L = Color::BLACK;
             for (uint32 t = 1; t <= cameraPath.numVerts; ++t) {
                 for (uint32 s = 0; s <= lightPath.numVerts; ++s) {
                     int32 depth = t + s - 2;
 
 					// Do not connect the camera and light vertex directly
-					// Check if the length of the path is within bounds
+					// Also check if the length of the path is within bounds
                     if ((s == 1 && t == 1) || depth < 0 || depth > _maxDepth)
                         continue;
 
                     StratResult strat = computeStrategy(sampler, cameraPath, lightPath, t, s);
 
                     if (t != 1) {
-                        L += strat.L;
+                        L += strat.L * strat.mis;
                     } else {
-                        if (!strat.L.isBlack()) {
-                            Point2 raster = strat.raster;
-
-                            ; // Add splat
-                        }                      
+                        // Add splat
+                        if (!strat.L.isBlack())                    
+                            cam.film().addSplatSample(strat.raster, strat.L * strat.mis);                    
                     }
                 }
             }
 
-            return Color::BLACK;
+            return L;
         }
 
         StratResult computeStrategy(Sampler& sampler, const Path& cameraPath, const Path& lightPath, uint32 t, uint32 s) const {            
             const Camera& cam = _scene->getCamera();
    
+            PathVertex sampled;
             StratResult ret;
 
             Color L = Color::BLACK;
@@ -295,6 +318,7 @@ namespace Photon {
             } else if (t == 1) {
                 // Only use light path vertices
                 // Connect to a point in the camera
+
                 const PathVertex& lv = lightPath[s - 1];
 
                 if (!lv.connectible())
@@ -323,13 +347,18 @@ namespace Photon {
 
                 // Compute radiance associated with connection
                 L += lv.beta * camVert.beta * lv.evalBsdf(camVert, IMPORTANCE);
-                L *= absDot(lv.normal(), ds.wi);
+                if (lv.isSurface())
+                    L *= absDot(lv.normal(), ds.wi);
 
                 // Compute visibility term
                 if (!L.isBlack() && !lv.visibility(*_scene, camVert))
                     return Color::BLACK;
 
+                sampled = camVert;
             } else if (s == 1) {
+                // Only use camera path vertices
+                // Connect to a point at one light
+
                 const PathVertex& cv = cameraPath[t - 1];
 
                 if (!cv.isSurface())
@@ -355,7 +384,7 @@ namespace Photon {
 
                 // Create light vertex
                 Float pdf  = ds.pdf * lightPdf;
-                Color beta = Le / pdf;
+                Color beta = Le / lightPdf;
 
                 const Point3 hit   = ds.hitPoint();
                 const Ray lightRay = Ray(hit, -ds.wi); 
@@ -363,18 +392,14 @@ namespace Photon {
 
                 // Compute radiance associated with connection
                 L += cv.beta * lightVert.beta * cv.evalBsdf(lightVert, RADIANCE);
-                L *= absDot(cv.normal(), ds.wi);
+                if (cv.isSurface())
+                    L *= absDot(cv.normal(), ds.wi);
 
                 // Compute visibility term
                 if (!L.isBlack() && !cv.visibility(*_scene, lightVert))
                     return Color::BLACK;
 
-                    /*{
-                    const Ray visRay = cv.evt.spawnRay(ds.wi, ds.dist);
-                    if (_scene->isOccluded(visRay))
-                        return Color::BLACK;
-                        }*/
-
+                sampled = lightVert;
             } else {
                 const PathVertex& cv = cameraPath[t - 1];
                 const PathVertex& lv = lightPath[s - 1];
@@ -390,9 +415,8 @@ namespace Photon {
             if (L.isBlack())
                 return Color::BLACK;
 
-            // TODO: Caluculate MIS
-            Float mis = calcMisWeight();
-            ret.L   = L * mis;
+            Float mis = calcMisWeight(*_scene, cameraPath, lightPath, sampled, t, s);
+            ret.L   = L;
             ret.mis = mis;
 
             return ret;
@@ -400,7 +424,7 @@ namespace Photon {
 
     private:
         uint32 _spp;
-        uint32 _maxDepth;
+        int32 _maxDepth;
     };
 
     

@@ -16,7 +16,7 @@ namespace Photon {
 
     class Camera {
     public:
-        Camera() : _film(1280, 720) { }
+        Camera() : _film(Vec2ui(1280, 720)) { }
         Camera(const Transform& camToWorld, Vec2ui res, Float near, Float far);
         
         uint32 width() const {

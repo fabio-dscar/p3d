@@ -89,8 +89,15 @@ void OpenGLRenderer::cleanup() {
     destroyBufferObjects();
 }
 
-void OpenGLRenderer::renderToScreen() const {
+void OpenGLRenderer::renderToScreen(bool finished) const {
     const Film& film = _scene->getCamera().film();
+    const Float* imgPtr = film.preview();
+
+    std::unique_ptr<Float[]> image = nullptr;
+    if (finished) {
+        image = film.color();
+        imgPtr = image.get();
+    }
 
     // Draw camera film
     glBindVertexArray(_vaoId);
@@ -99,7 +106,7 @@ void OpenGLRenderer::renderToScreen() const {
     glBindBuffer(GL_ARRAY_BUFFER, _vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, _sizePoints, &_points[0], GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, _vboId[1]);
-    glBufferData(GL_ARRAY_BUFFER, _sizeColors, &(film.image()[0]), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _sizeColors, imgPtr, GL_DYNAMIC_DRAW);
 
     glUniformMatrix4fv(_uniformId, 1, GL_FALSE, _m);
     glBindVertexArray(_vaoId);

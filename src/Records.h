@@ -39,6 +39,7 @@ namespace Photon {
         Float pdf;
 
         DirectionSample() : pdf(0) {}
+        DirectionSample(const Vec3& wo) : wo(wo) {}
     };
 
     class DirectSample {
@@ -52,10 +53,14 @@ namespace Photon {
         DirectSample() : ref(nullptr), pdf(0), dist(0) {}
         DirectSample(const RayEvent& ref) : ref(&ref), pdf(0), dist(0) {}
         DirectSample(const RayEvent& ref, const RayEvent& local) : ref(&ref), pdf(0) {
-          
-            wi     = -local.wo;
+
+            wi   = local.point - ref.point;
+            dist = wi.length();
+            wi  /= dist;
             normal = local.normal;
-            dist   = (ref.point - local.point).length();
+
+            //wi = -local.wo;
+            //dist = (ref.point - local.point).length();
         }
 
         Point3 hitPoint() const {
