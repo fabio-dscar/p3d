@@ -5,6 +5,8 @@
 #include <PhotonTracer.h>
 #include <IntTypes.h>
 
+#include <functional>
+
 namespace Photon {
     
 #if PHOTON_DOUBLE
@@ -58,6 +60,8 @@ namespace Photon {
 
         bool solQuadratic(Float a, Float b, Float c, Float* x0, Float* x1);
         bool solSystem2x2(const Float A[2][2], const Float b[2], Float* x0, Float* x1);
+
+        bool newtonRaphson(Float x0, Float* sol, std::function<Float(Float)> f, std::function<Float(Float)> df, uint32 iters);
     }
 
 }

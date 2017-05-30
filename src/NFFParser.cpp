@@ -14,6 +14,8 @@
 #include <Box.h>
 #include <Quad.h>
 #include <TriMesh.h>
+#include <Perspective.h>
+
 
 #include <PointLight.h>
 #include <AreaLight.h>
@@ -98,17 +100,17 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
         } else if (cmd.compare(0, 7, "rotateZ") == 0) {
             Float angle = parseFloat();
             _matStack.rotateZ(angle);
-        }
+        } else
 
         if (cmd.compare(0, 3, "obj") == 0) {
             parseTriMesh(*scene);
-        }
+        } else
 
         if (cmd.compare(0, 4, "grid") == 0) {
             std::string str = parseStr();
             if (str.compare(0, 3, "off") == 0)
                 scene->useGrid(false);
-        }
+        } else
 
         /*if (cmd.compare(0, 7, "sampler") == 0) {
 
@@ -322,12 +324,9 @@ void NFFParser::parsePlane(Scene& scene) {
 }
 
 void NFFParser::parseQuad(Scene& scene) {
-    // Find the normal of the plane
-    Point3 origin = parsePoint3();
-    Vec3 edge1 = parseVector3();
-    Vec3 edge2 = parseVector3();
+    const Transform tr = Transform(_matStack.loadMatrix());
 
-    std::shared_ptr<Quad> quad = std::make_shared<Quad>(origin, edge1, edge2);
+    std::shared_ptr<Quad> quad = std::make_shared<Quad>(tr);
     quad->setBsdf(_bsdf);
 
     // Add plane
@@ -436,10 +435,11 @@ void NFFParser::parseTriMesh(Scene& scene) {
 }
 
 void NFFParser::parseBox(Scene & scene) {
-    Point3 min = parsePoint3();
-    Point3 max = parsePoint3();
+    //Point3 min = parsePoint3();
+    //Point3 max = parsePoint3();
 
-    std::shared_ptr<Box> box = std::make_shared<Box>(min, max);
+    //std::shared_ptr<Box> box = std::make_shared<Box>(min, max);
+    std::shared_ptr<Box> box = std::make_shared<Box>(_matStack.loadMatrix());
     box->setBsdf(_bsdf);
 
     scene.addShape(box);
@@ -459,7 +459,19 @@ void NFFParser::parseBox(Scene & scene) {
 }*/
 
 void NFFParser::parsePlanarLight(Scene& scene) {
+    const Transform tr = Transform(_matStack.loadMatrix());
 
+    std::shared_ptr<Quad> quad = std::make_shared<Quad>(tr);
+
+    // Parse light emission
+    Color emission  = parseColor();
+    uint32 nSamples = parseInt();
+
+    Light* light = new AreaLight(quad, emission, nSamples);
+    quad->setLight((AreaLight*)light);
+
+    // Add sphere
+    scene.addShape(quad);
 }
 
 void NFFParser::parseSphericalLight(Scene& scene) {
@@ -470,7 +482,7 @@ void NFFParser::parseSphericalLight(Scene& scene) {
     std::shared_ptr<Sphere> s = std::make_shared<Sphere>(pos, radius);
 
     // Parse light emission
-    Color emission = parseColor();
+    Color emission  = parseColor();
     uint32 nSamples = parseInt();
 
     Light* light = new AreaLight(s, emission, nSamples);
@@ -479,8 +491,6 @@ void NFFParser::parseSphericalLight(Scene& scene) {
     // Add sphere
     scene.addShape(s);
 }
-
-#include <Perspective.h>
 
 void NFFParser::parseCamera(Scene& scene) {
     std::string cmd;

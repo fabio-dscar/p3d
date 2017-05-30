@@ -70,7 +70,7 @@ namespace Photon {
         
         PathVertex() : beta(1), pdfFwd(0), pdfBack(0) {}
         PathVertex(const Camera* cam, const Ray& ray, const Color& beta) 
-            : type(CAMERA), beta(beta), cam(cam, ray) { }
+            : type(CAMERA), beta(beta), cam(cam, ray), pdfFwd(0), pdfBack(0) { }
 
         void setEvent(VertexType vertType, const SurfaceEvent& event);
 
@@ -147,6 +147,7 @@ namespace Photon {
             Float pdfBack = 0;
 
             const BSDF* bsdf = nullptr;
+            Transport transp = (type == PATH_LIGHT) ? IMPORTANCE : RADIANCE;
 
             uint32 depth = 1;
             while (depth < maxDepth) {
@@ -155,9 +156,8 @@ namespace Photon {
 
                 SurfaceEvent event;
                 if (!scene.intersectRay(subPath, &event)) {
-
                     // If tracing from the camera
-                    if (type == PATH_CAMERA) {
+                    if (transp == RADIANCE) {
                         // Escaped ray
                     }
 
@@ -178,7 +178,7 @@ namespace Photon {
                     break;  // Leave if null bsdf (e.g. light sources)
 
                 // Sample BSDF for scattered direction
-                BSDFSample bs = BSDFSample(event);
+                BSDFSample bs = BSDFSample(event, transp);
                 Color f = bsdf->sample(sampler.next2D(), &bs);
 
                 // Leave if no contribution from sampled direction
@@ -187,20 +187,21 @@ namespace Photon {
 
                 // Update the throughput
                 beta *= f * Frame::absCosTheta(bs.wi) / bs.pdf;
-
+                
                 // Evaluate backwards pdf
                 BSDFSample rev = bs;
                 std::swap(rev.wi, rev.wo);
                 rev.type = BSDFType::ALL;
-                pdfBack = bsdf->evalPdf(rev);
+                pdfBack  = bsdf->evalPdf(rev);
+                pdfFwd   = bs.pdf;
 
                 if (hasType(bs.type, BSDFType(SPECULAR))) {
                     pdfBack = 0;
-                    pdfFwd = 0;
+                    pdfFwd  = 0;
                 }
                 
                 // If tracing from a light, perform shading normal correction
-                if (type == PATH_LIGHT)
+                if (transp == IMPORTANCE)
                     beta *= shadingNormalFactor(event, event.toWorld(bs.wo), event.toWorld(bs.wi));
 
                 // Spawn a new ray in the sampled direction
@@ -235,8 +236,8 @@ namespace Photon {
 
     class BidirPathTracer : public Integrator {
     public:
-        BidirPathTracer(const Scene& scene, uint32 spp = 1024)
-            : Integrator(scene), _maxDepth(16), _spp(spp) {
+        BidirPathTracer(const Scene& scene, uint32 spp = 64)
+            : Integrator(scene), _maxDepth(4), _spp(spp) {
             
         }
 
@@ -284,7 +285,7 @@ namespace Photon {
                 for (uint32 s = 0; s <= lightPath.numVerts; ++s) {
                     int32 depth = t + s - 2;
 
-					// Do not connect the camera and light vertex directly
+					// Do not connect the camera and light endpoints directly
 					// Also check if the length of the path is within bounds
                     if ((s == 1 && t == 1) || depth < 0 || depth > _maxDepth)
                         continue;
@@ -295,7 +296,7 @@ namespace Photon {
                         L += strat.L * strat.mis;
                     } else {
                         // Add splat
-                        if (!strat.L.isBlack())                    
+                        if (!strat.L.isBlack())                 
                             cam.film().addSplatSample(strat.raster, strat.L * strat.mis);                    
                     }
                 }
@@ -310,11 +311,14 @@ namespace Photon {
             PathVertex sampled;
             StratResult ret;
 
+            if (t > 1 && s != 0 && cameraPath[t - 1].type == VertexType::LIGHT)
+                return Color::BLACK;
+
             Color L = Color::BLACK;
             if (s == 0) {
                 // Only camera path vertices
                 L += cameraPath.evalL(t);
-
+ 
             } else if (t == 1) {
                 // Only use light path vertices
                 // Connect to a point in the camera
@@ -361,7 +365,7 @@ namespace Photon {
 
                 const PathVertex& cv = cameraPath[t - 1];
 
-                if (!cv.isSurface())
+                if (!cv.connectible())
                     return Color::BLACK;
 
                 // Choose a light source using the light distribution
@@ -389,6 +393,10 @@ namespace Photon {
                 const Point3 hit   = ds.hitPoint();
                 const Ray lightRay = Ray(hit, -ds.wi); 
                 PathVertex lightVert = PathVertex::createLightVertex(*light, lightRay, beta, ds.normal, pdf);
+               
+                PositionSample ps(lightVert.event());
+                light->pdfPosition(ps);
+                lightVert.pdfFwd = ps.pdf * lightPdf;
 
                 // Compute radiance associated with connection
                 L += cv.beta * lightVert.beta * cv.evalBsdf(lightVert, RADIANCE);

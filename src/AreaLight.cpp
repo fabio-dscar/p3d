@@ -23,7 +23,7 @@ Color AreaLight::power() const {
 
 Color AreaLight::evalL(const SurfaceEvent& it, const Vec3& wo) const {
     // Only emit towards orientation
-    if (dot(it.sFrame.normal(), wo) <= 0)
+    if (dot(it.normal, wo) <= 0)
         return Color::BLACK;
 
     return _Le;

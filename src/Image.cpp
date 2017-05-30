@@ -7,7 +7,7 @@ using namespace Photon;
 Image::Image(const Vec2ui res, uint32 bpp, uint32 nChannels, std::unique_ptr<Float[]>& bits)
     : _bits(std::move(bits)), _res(res), _bpp(bpp), _nChannels(nChannels) {
 
-    _filename = "out141414";
+    _filename = "testststststs";
     _ext = "png";
 }
 

@@ -19,12 +19,12 @@ using namespace Photon;
 using json = nlohmann::json;
 
 void Renderer::initialize() {
-
+    
 }
 
 void Renderer::renderScene(const std::shared_ptr<Scene>& scene) {
     _scene = scene;
-    _integrator = std::make_shared<BidirPathTracer>(*scene); // WhittedRayTracer
+    _integrator = std::make_shared<PathTracer>(*scene); // WhittedRayTracer
     
     // Export file as an end callback after rendering
     std::function<void()> endCallback = EndCallback();

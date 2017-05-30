@@ -66,9 +66,7 @@ Color Specular::sample(const Point2& rand, BSDFSample* sample) const {
         sample->wi   = Frame::reflect(wo);
         sample->pdf  = both ? fresn : 1.0;
 
-        Float scale  = both ? 1.0 : fresn;
-
-        return _refl * scale / Frame::absCosTheta(sample->wi);
+        return _refl * fresn / Frame::absCosTheta(sample->wi);
     } else {
         if (fresn == 1) {
             sample->pdf = 0;
@@ -86,7 +84,7 @@ Color Specular::sample(const Point2& rand, BSDFSample* sample) const {
         sample->eta  = eta;
 
         // Scale for non-symmetry of transport
-        Float scale = both ? 1.0 : (1.0 - fresn);
+        Float scale = (1.0 - fresn);
         if (sample->transp == Transport::RADIANCE)
             scale *= (1.0 / eta) * (1.0 / eta);
 

@@ -151,14 +151,17 @@
     <ClCompile Include="..\..\src\Perspective.cpp" />
     <ClCompile Include="..\..\src\Plane.cpp" />
     <ClCompile Include="..\..\src\PointLight.cpp" />
+    <ClCompile Include="..\..\src\Quad.cpp" />
     <ClCompile Include="..\..\src\Quat.cpp" />
     <ClCompile Include="..\..\src\Ray.cpp" />
     <ClCompile Include="..\..\src\Renderer.cpp" />
     <ClCompile Include="..\..\src\Resources.cpp" />
     <ClCompile Include="..\..\src\Scene.cpp" />
+    <ClCompile Include="..\..\src\Shape.cpp" />
     <ClCompile Include="..\..\src\Spectral.cpp" />
     <ClCompile Include="..\..\src\Specular.cpp" />
     <ClCompile Include="..\..\src\Sphere.cpp" />
+    <ClCompile Include="..\..\src\SpotLight.cpp" />
     <ClCompile Include="..\..\src\StratifiedSampler.cpp" />
     <ClCompile Include="..\..\src\ThinSpecular.cpp" />
     <ClCompile Include="..\..\src\Threading.cpp" />
@@ -231,6 +234,7 @@
     <ClInclude Include="..\..\src\SobolSampler.h" />
     <ClInclude Include="..\..\src\Spectral.h" />
     <ClInclude Include="..\..\src\Specular.h" />
+    <ClInclude Include="..\..\src\SpotLight.h" />
     <ClInclude Include="..\..\src\StratifiedSampler.h" />
     <ClInclude Include="..\..\src\Task.h" />
     <ClInclude Include="..\..\src\Texture.h" />

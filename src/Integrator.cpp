@@ -45,62 +45,58 @@ void Integrator::cleanup() {
     _tiles.shrink_to_fit();
 }
 
-Color Integrator::sampleBsdf(const SurfaceEvent& evt, const Point2& randBsdf) const {
-    Color Ldir = Color::BLACK;
-    Float pdfLight;
-    Color bsdfF;
+Color Integrator::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const {
+    LightStrategy strat = _scene->lightStrategy();
+    if (strat == ALL_LIGHTS || !_scene->lightDistribution())
+        return estimateDirectAll(evt, sampler);
 
-    const BSDF& bsdf = *evt.obj->bsdf();
+    Float lightPdf = 1;
+    const Light* light = _scene->sampleLightPdf(sampler.next1D(), &lightPdf);
 
-    // Sample and eval BSDF
-    BSDFSample bsdfSample(evt);
-    bsdfF = bsdf.sample(randBsdf, &bsdfSample);
-    bsdfF *= Frame::absCosTheta(bsdfSample.wi);
+    if (!light || lightPdf == 0)
+        return Color::BLACK;
 
-    if (bsdfSample.pdf > 0 && !bsdfF.isBlack() &&
-        dot(evt.normal, evt.toWorld(bsdfSample.wi)) * Frame::cosTheta(bsdfSample.wi) > 0) {
+    const Point2 ls = sampler.next2D();
+    const Point2 bs = sampler.next2D();
 
-        // World space bsdf sampled direction
-        Vec3 wi = evt.toWorld(bsdfSample.wi);
+    return sampleLight(*light, evt, ls, bs) / lightPdf;
+}
 
-        // Evaluate light emission
-        Color Li = Color::BLACK;
-        Ray ray = evt.spawnRay(wi);
+Color Integrator::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) const {
+    Color direct = Color::BLACK;
 
-        SurfaceEvent lightIt;
-        const Light* light = nullptr;
-        if (_scene->intersectRay(ray, &lightIt)) {
-            if (!lightIt.obj->isLight())
-                return Color::BLACK;
+    // Sample all lights
+    for (const Light* light : _scene->getLights()) {
+        uint32 nSamples = light->numSamples();
 
-            Li = lightIt.emission(-wi);
-            light = lightIt.obj->areaLight();
+        if (light->isDelta()) {
+            const Point2 ls = sampler.next2D();
+            const Point2 bs = sampler.next2D();
+
+            direct += sampleLight(*light, evt, ls, bs);
         } else {
-            // Evaluate infinite light (if that is the case)
+            Color contrib = Color::BLACK;
 
-            //Li = light.evalInfinite
+            const Point2* lightVec = sampler.next2DArray(nSamples);
+            const Point2* bsdfVec = sampler.next2DArray(nSamples);
+
+            if (!lightVec || !bsdfVec) {
+                nSamples = 1;
+
+                const Point2 ls = sampler.next2D();
+                const Point2 bs = sampler.next2D();
+
+                contrib += sampleLight(*light, evt, ls, bs);
+            } else {
+                for (uint32 i = 0; i < nSamples; ++i)
+                    contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
+            }
+
+            direct += contrib / nSamples;
         }
-
-        if (light == nullptr)
-            return Color::BLACK;
-
-        // Compute Le contributions from sampled wi
-    
-        // Evaluate light pdf for BSDF sample
-        // If BSDF is specular, it has a delta distribution, so avoid using MIS
-		Float misWeight = 1.0;
-		DirectSample sample(evt, lightIt);
-        pdfLight = light->pdfDirect(sample);
-        if (pdfLight == 0)
-            return Color::BLACK;
-
-        misWeight = powerHeuristicBetaTwo(bsdfSample.pdf, pdfLight, 1, 1);
- 
-        if (!Li.isBlack())
-            Ldir += bsdfF * Li * misWeight / bsdfSample.pdf;
     }
 
-    return Ldir;
+    return direct;
 }
 
 Color Integrator::sampleLight(const Light& light, const SurfaceEvent& evt, const Point2& randLight, const Point2& randBsdf) const {
@@ -129,7 +125,7 @@ Color Integrator::sampleLight(const Light& light, const SurfaceEvent& evt, const
             // If it has contribution, use MIS to combine sample strategies
             // Also check geometry normal orientation to avoid light leaks
             if (!bsdfF.isBlack() && dot(evt.normal, dirSample.wi) * Frame::cosTheta(bsdfSample.wi) > 0) {
-                Color contrib = bsdfF * Li; // / dirSample.pdf;
+                Color contrib = bsdfF * Li * Frame::absCosTheta(bsdfSample.wi); // / dirSample.pdf;
                 if (!light.isDelta())
                     contrib *= powerHeuristicBetaTwo(dirSample.pdf, bsdfPdf, 1, 1);
 
@@ -193,4 +189,3 @@ Color Integrator::sampleLight(const Light& light, const SurfaceEvent& evt, const
 
     return Ldir;
 }
-

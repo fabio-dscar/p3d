@@ -49,7 +49,7 @@ Float PointLight::pdfDirect(const DirectSample& sample) const {
 Color PointLight::sampleEmitDirection(const Point2& rand, const PositionSample& pos, DirectionSample* sample) const {
     sample->wo  = sampleUniformSphere(rand).posVec();
     sample->pdf = INV4PI;
-
+    
     return _Le;
 }
 

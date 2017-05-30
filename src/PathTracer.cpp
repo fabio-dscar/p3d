@@ -233,13 +233,13 @@ void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
             }
 
             // Use a box filter for the preview
-            color /= _spp;
+            color /= sampler.spp();
             camera.film().addPreviewSample(pixel.x, pixel.y, color);
         }
     }
 }
 
-Color PathTracer::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const { 
+/*Color PathTracer::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const { 
     LightStrategy strat = _scene->lightStrategy();
     if (strat == ALL_LIGHTS || !_scene->lightDistribution())
         return estimateDirectAll(evt, sampler);
@@ -291,7 +291,7 @@ Color PathTracer::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) c
     }
 
     return direct;
-}
+}*/
 
 #define DEBUG(str) std::cout << str << std::endl;
 

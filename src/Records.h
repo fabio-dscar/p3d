@@ -86,6 +86,14 @@ namespace Photon {
               type(BSDFType::ALL),
               transp(Transport::RADIANCE) {}
 
+        BSDFSample(const SurfaceEvent& evt, Transport transp)
+            : wo(evt.wo),
+            pdf(0),
+            eta(1.0),
+            evt(&evt),
+            type(BSDFType::ALL),
+            transp(transp) {}
+
         BSDFSample(const SurfaceEvent& evt, const Vec3& worldWi, Transport mode)
             : wo(evt.wo),
               pdf(0),

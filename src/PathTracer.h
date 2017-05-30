@@ -53,8 +53,8 @@ namespace Photon {
 
     class PathTracer : public Integrator {
     public:
-        PathTracer(const Scene& scene, uint32 spp = 1024)
-            : Integrator(scene, spp), _maxDepth(16), _useAdaptive(false),
+        PathTracer(const Scene& scene, uint32 spp = 64)
+            : Integrator(scene, spp), _maxDepth(4), _useAdaptive(false),
             _adaptWidth(20), _adaptHeight(20), _spp(spp) {}
 
         PathTracer(const Scene& scene, RendererSettings settings)
@@ -64,8 +64,9 @@ namespace Photon {
         void startRender(EndCallback endCallback = EndCallback());
 
     private:
-        Color estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) const;
-        Color estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const;
+        /*Color estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) const;
+        Color estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const;*/
+
         void renderTile(uint32 tId, uint32 tileId) const;
         void renderTileAdaptive(uint32 tId, uint32 tileId) const;
 

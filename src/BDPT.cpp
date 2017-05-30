@@ -63,29 +63,34 @@ Color Photon::geomTerm(const Scene& scene, const PathVertex& v0, const PathVerte
 struct ProbPair {
     Float pdfFwd;
     Float pdfBack;
+    bool delta;
 };
 
 Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Path& lightPath, const PathVertex& sampled, uint32 t, uint32 s) {
-    Float sum = 0;
+    if (s + t == 2)
+        return 1;
 
+    Float sum = 0;
     auto remap0 = [](Float v) -> Float { return v == 0 ? 1 : v; };
 
     std::vector<ProbPair> cam(t);
-    cam.resize(t);
+    //cam.resize(t);
 
     std::vector<ProbPair> light(s);
-    light.resize(s);
+    //light.resize(s);
     
-    for (int32 i = t - 1; i > 0; --i) {
+    for (int32 i = t - 1; i >= 0; --i) {
         const PathVertex& camVert = cameraPath[i];
         cam[i].pdfFwd  = remap0(camVert.pdfFwd);
         cam[i].pdfBack = remap0(camVert.pdfBack);
+        cam[i].delta   = camVert.isDelta();
     }
 
     for (int32 i = s - 1; i >= 0; --i) {
         const PathVertex& lightVert = lightPath[i];
         light[i].pdfFwd  = remap0(lightVert.pdfFwd);
         light[i].pdfBack = remap0(lightVert.pdfBack);
+        light[i].delta   = lightVert.isDelta();
     }
 
     PathVertex lv, cv, prevLv, prevCv;
@@ -100,10 +105,12 @@ Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Pa
         lv = sampled;
         light[s - 1].pdfBack = remap0(sampled.pdfBack);
         light[s - 1].pdfFwd  = remap0(sampled.pdfFwd);
+        light[s - 1].delta   = sampled.isDelta();
     } else if (t == 1) {
         cv = sampled;
         cam[t - 1].pdfBack = remap0(sampled.pdfBack);
         cam[t - 1].pdfFwd  = remap0(sampled.pdfFwd);
+        cam[t - 1].delta   = sampled.isDelta();
     }
 
     if (s > 1)
@@ -111,6 +118,12 @@ Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Pa
 
     if (t > 1)
         prevCv = cameraPath[t - 2];
+
+    /*if (t > 0)
+        cam[t - 1].delta = false;
+    
+    if (s > 0)
+        light[s - 1].delta = false;*/
 
     // Compute camera vertices reverse PDFs
     if (t > 0) {
@@ -147,20 +160,20 @@ Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Pa
 
     Float ri = 1;
     for (int32 i = t - 1; i > 0; --i) {
-        Float p = cam[i].pdfBack / cam[i].pdfFwd;
-        ri *= p;
+        Float p = remap0(cam[i].pdfBack) / remap0(cam[i].pdfFwd);
+        ri *= p * p;
         //ri *= p * p; // Power heuristic
-        if (!cameraPath[i].isDelta() && !cameraPath[i - 1].isDelta())
+        if (!cam[i].delta && !cam[i - 1].delta)
             sum += ri;
     }
 
     ri = 1;
     for (int32 i = s - 1; i >= 0; --i) {
-        Float p = light[i].pdfBack / light[i].pdfFwd;
-        ri *= p;
+        Float p = remap0(light[i].pdfBack) / remap0(light[i].pdfFwd);
+        ri *= p * p;
         //ri *= p * p; // Power heuristic
         uint32 idx = i > 0 ? i - 1 : 0;
-        if (!lightPath[i].isDelta() && !lightPath[idx].isDelta())
+        if (!light[i].delta && !light[idx].delta)
             sum += ri;
     }
 
@@ -234,11 +247,13 @@ bool PathVertex::connectible() const {
 }
 
 bool PathVertex::isLight() const {
-    return (type == VertexType::LIGHT) || evt.obj->isLight();
+    return (type == VertexType::LIGHT) || 
+           (type == VertexType::SURFACE && evt.obj->isLight());
 }
 
 bool PathVertex::isSurface() const {
-    return type == VertexType::SURFACE;
+    //return type == SURFACE;
+    return !(normal() == Normal());
 }
 
 bool PathVertex::isDelta() const {
@@ -544,7 +559,7 @@ Path BidirPathTracer::createPath(PathType type, uint32 maxDepth, Sampler& sample
 		path[0] = PathVertex::createLightVertex(*l, ray, Le, ps.normal(), lightPdf * ps.pdf);
 
 		// Set starting throughput and pdf
-		beta *= Le * absDot(ps.normal(), ray.dir()) / (lightPdf * ps.pdf * ds.pdf);
+		beta = Le * absDot(ps.normal(), ray.dir()) / (lightPdf * ps.pdf * ds.pdf);
 		pdf = ds.pdf;
 
 	}

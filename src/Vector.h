@@ -386,6 +386,8 @@ namespace Math {
 
         Normal3<T> operator-() const;
 
+        bool operator==(Normal3<T> vec) const;
+
         T operator[] (uint32 idx) const;
         T& operator[](uint32 idx);
 

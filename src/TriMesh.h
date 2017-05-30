@@ -4,8 +4,6 @@
 
 #include <Vector.h>
 #include <Shape.h>
-#include <Vertex.h>
-
 #include <Transform.h>
 
 namespace Photon {
@@ -22,6 +20,13 @@ namespace Photon {
         void computeSurfaceEvent(const Ray& ray, SurfaceEvent& evt) const;
 
         Bounds3 bbox() const;
+        Float area() const;
+
+        void  samplePosition(const Point2& rand, PositionSample* sample) const;
+        Float pdfPosition(const PositionSample& sample) const;
+
+        void  sampleDirect(const Point2& rand, DirectSample* sample) const;
+        Float pdfDirect(const DirectSample& sample) const;
     private:
         const TriMesh* _mesh;
         const uint32*  _idx;

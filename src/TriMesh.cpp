@@ -178,3 +178,68 @@ void MeshTriangle::computeSurfaceEvent(const Ray& ray, SurfaceEvent& evt) const 
     evt.gFrame = Frame(evt.normal);
     evt.sFrame = sFrame;
 }
+
+Float MeshTriangle::area() const {
+    // Retrieve vertices from mesh
+    const Point3 V0 = _mesh->vertex(_idx[0]);
+    const Point3 V1 = _mesh->vertex(_idx[1]);
+    const Point3 V2 = _mesh->vertex(_idx[2]);
+
+    // Compute triangle edges
+    const Vec3 E1 = V1 - V0;
+    const Vec3 E2 = V2 - V0;
+
+    return 0.5 * cross(E1, E2).length();
+}
+
+void MeshTriangle::samplePosition(const Point2& rand, PositionSample* sample) const {
+    // Retrieve vertices from mesh
+    const Point3 V0 = _mesh->vertex(_idx[0]);
+    const Point3 V1 = _mesh->vertex(_idx[1]);
+    const Point3 V2 = _mesh->vertex(_idx[2]);
+
+    // Compute triangle edges
+    const Vec3 E1 = V1 - V0;
+    const Vec3 E2 = V2 - V0;
+
+    Normal n = Normal(cross(E1, E2));
+
+    Point3 baryc = Point3(1 - rand.x - rand.y, rand.x, rand.y);
+
+    sample->pdf   = 1.0 / (0.5 * n.length());
+    sample->pos   = baryc.x * V0 + baryc.y * V1 + baryc.z * V2;
+    sample->frame = Frame(n);
+}
+
+Float MeshTriangle::pdfPosition(const PositionSample& sample) const {
+    return 1.0 / area();
+}
+
+void MeshTriangle::sampleDirect(const Point2& rand, DirectSample* sample) const {
+    const RayEvent& ref = *sample->ref;
+
+    PositionSample ps;
+    samplePosition(rand, &ps);
+
+    // Compute direction from reference
+    const Vec3 refToPt = ps.pos - ref.point;
+    Float distSqr = refToPt.lengthSqr();
+
+    sample->dist   = sqrt(distSqr);
+    sample->wi     = refToPt / sample->dist;
+    sample->normal = ps.frame.normal();
+
+    // Convert to solid angle density
+    Float dot = absDot(sample->normal, -sample->wi);
+    sample->pdf = ps.pdf * distSqr / dot;
+}
+
+Float MeshTriangle::pdfDirect(const DirectSample& sample) const {
+    Float pdfPos = 1.0 / area();
+
+    // Convert area pdf to solid angle density
+    Float distSqr = sample.dist * sample.dist;
+    Float dot = absDot(sample.normal, -sample.wi);
+
+    return pdfPos * distSqr / dot;
+}

@@ -142,5 +142,24 @@ namespace Photon {
             return true;
         }
 
+        inline bool newtonRaphson(Float x0, Float* sol, std::function<Float(Float)> f, std::function<Float(Float)> df, uint32 iters) {
+            Float xn = x0;
+            for (uint32 i = 0; i < iters; ++i) {
+                Float deriv = df(xn);
+                if (deriv == 0)
+                    return false;
+                
+                Float c = xn - f(xn) / deriv;
+                if (std::abs(c - xn) < F_EPSILON * std::abs(c)) {
+                    *sol = c;
+                    break;
+                }
+                    
+                xn = c;
+            }
+
+            *sol = xn;
+            return true;
+        }
     }
 }

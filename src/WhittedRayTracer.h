@@ -31,12 +31,10 @@ namespace Photon {
         void startRender(EndCallback endCallback = EndCallback());
 
     private:
-        Color estimateDirect(const SurfaceEvent& evt) const;
-
         void renderTile(uint32 tId, uint32 tileId) const;
 
         // Whitted algorithm
-        Color traceRay(const Ray& ray, Float ior, uint32 depth, const Vec2ui& pixel = Vec2ui(0)) const;
+        Color traceRay(const Ray& ray, uint32 depth, Sampler& sampler, const Point2ui& pixel = Point2ui(0)) const;
 
         uint32 _spp;
         uint32 _maxDepth;

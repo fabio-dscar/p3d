@@ -81,7 +81,7 @@ Float Perspective::pdfWe(const Ray& ray) const {
 
     Float cos3 = cos * cos * cos;
 
-    return 1 / (_filmArea * cos3);
+    return 1.0 / (_filmArea * cos3);
 }
 
 Float Perspective::pdfPosition(PositionSample* ps) const {

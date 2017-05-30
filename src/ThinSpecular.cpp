@@ -71,9 +71,7 @@ Color ThinSpecular::sample(const Point2& rand, BSDFSample* sample) const {
         sample->wi   = Frame::reflect(wo);
         sample->pdf  = both ? fresn : 1.0;
 
-        Float scale = both ? 1.0 : fresn;
-
-        return _refl * scale / Frame::absCosTheta(sample->wi);
+        return _refl * fresn / Frame::absCosTheta(sample->wi);
     } else {
         if (fresn == 1) {
             sample->pdf = 0;
@@ -85,8 +83,6 @@ Color ThinSpecular::sample(const Point2& rand, BSDFSample* sample) const {
         sample->wi   = -wo;  // Refraction from very thin sheet
         sample->pdf  = both ? (1.0 - fresn) : 1.0;
 
-        Float scale = both ? 1.0 : (1.0 - fresn);
-
-        return _refr * scale / Frame::absCosTheta(sample->wi);
+        return _refr * (1.0 - fresn) / Frame::absCosTheta(sample->wi);
     }
 }

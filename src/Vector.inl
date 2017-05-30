@@ -1092,6 +1092,11 @@ namespace Photon {
         }
 
         template<typename T>
+        bool Normal3<T>::operator==(Normal3<T> vec) const {
+            return x == vec.x && y == vec.y && z == vec.z;
+        }
+
+        template<typename T>
         Float Normal3<T>::lengthSqr() const {
             return x * x + y * y + z * z;
         }
