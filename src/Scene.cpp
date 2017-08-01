@@ -12,11 +12,18 @@
 
 using namespace Photon;
 
-Scene::Scene() : _background(0), _camera(), _lights(), _bounds(), 
+Scene::Scene() : _background(0), _camera(), _lights(), _bounds(Point3(0)), 
                  _uniformGrid(nullptr), _hideLights(false), _useGrid(true), 
                  _lightDistr(nullptr), _lightStrat(POWER) { }
 
 void Scene::prepareRender() {
+    // Build bounding box
+    for (std::shared_ptr<Shape> s : _objects) {
+        const Bounds3 bbox = s->bbox();
+        if (bbox.isBounded())
+            _bounds.expand(bbox);
+    }
+
     // Initialize spatial subdivision, if needed
     if (_useGrid) {
         _uniformGrid = std::make_unique<UniformGrid>(*this, 2.0f);
@@ -31,6 +38,10 @@ void Scene::prepareRender() {
         vals[l] = (_lightStrat == POWER) ? _lights[l]->power().lum() : 1;
 
     _lightDistr = std::make_unique<DiscretePdf1D>(vals);
+
+    // Initialize lights
+    for (Light* light : _lights)
+        light->initialize(*this);
 }
 
 DiscretePdf1D* Scene::lightDistribution() const {
@@ -69,11 +80,21 @@ const Camera& Scene::getCamera() const {
     return *_camera;
 }
 
-void Scene::addLight(Light const* light) {
+void Scene::addLight(Light* light) {
     _lights.push_back(light);
 }
 
-const std::vector<Light const*>& Scene::getLights() const {
+void Scene::addAreaLight(AreaLight* light) {
+    std::shared_ptr<Shape> shape = light->shape();
+
+    // If the shape emits light, add to the light list
+    if (shape) {
+        addShape(light->shape());
+        _lights.push_back(light);
+    }
+}
+
+const std::vector<Light*>& Scene::getLights() const {
     return _lights;
 }
 
@@ -82,23 +103,7 @@ void Scene::useGrid(bool state) {
 }
 
 void Scene::addShape(const std::shared_ptr<Shape> object) {
-    // The scene incrementally builds its bounding box
-    if (object->bbox().isBounded()) {
-        if (!_bounds.isBounded() || _objects.size() == 0)
-            _bounds = object->bbox();
-        else
-            _bounds.expand(object->bbox());
-    }
-
-    // If the shape emits light, add to the light list
-    if (object->isLight()) {
-        _lights.push_back(object->areaLight());
-
-        if (!_hideLights)
-            _objects.push_back(object);
-    } else {
-        _objects.push_back(object);
-    }
+    _objects.push_back(object);
 }
 
 const std::vector<std::shared_ptr<Shape>>& Scene::getShapes() const {

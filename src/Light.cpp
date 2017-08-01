@@ -5,11 +5,15 @@
 
 using namespace Photon;
 
+void Light::initialize(const Scene& scene) {
+
+}
+
 void Light::setIntensity(const Color& Le) {
     _Le = Le;
 }
 
-const Color& Light::color() const {
+const Color& Light::emission() const {
     return _Le;
 }
 
@@ -20,6 +24,9 @@ Color Light::L(const RayEvent& evt, const Vec3& w) const {
     return Color(0);
 }
 
+uint32 Light::numSamples() const {
+    return 1;
+}
 
 bool Light::isEnvironment() const {
     return false;

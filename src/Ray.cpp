@@ -109,7 +109,7 @@ Ray RayEvent::spawnRay(const Vec3& dir, Float dist) const {
 void SurfaceEvent::setEvent(const Ray& ray, Shape const* shape, const Normal& n) {
     obj    = shape;
     point  = ray.hitPoint();
-    normal = n;
+    normal = normalize(n);
     gFrame = Frame(normal); 
     wo     = gFrame.toLocal(-ray.dir());
     sFrame = gFrame;

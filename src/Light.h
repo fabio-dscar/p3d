@@ -3,27 +3,27 @@
 #include <Vector.h>
 #include <Spectral.h>
 #include <Records.h>
+#include <Transform.h>
 
 namespace Photon {
 
     class RayEvent;
+    class Scene;
 
     class Light {
     public:
-        Light() : _Le(1), _numSamples(1) {}
-        Light(const Color& emission) 
-            : _Le(emission), _numSamples(1) {}
-        Light(const Color& emission, uint32 nSamples) 
-            : _Le(emission), _numSamples(nSamples) {}
+        Light() : _Le(1) {}
+        Light(const Color& emission) : _Le(emission) {}
+        Light(const Color& emission, const Transform& objToWorld)
+            : _Le(emission), _objToWorld(objToWorld), _worldToObj(inverse(objToWorld)) {}
 
         void setIntensity(const Color& Le);
-        const Color& color() const;
+        const Color& emission() const;
         Color L(const RayEvent& evt, const Vec3& w) const;
 
-        uint32 numSamples() const {
-            return _numSamples;
-        }
+        virtual void initialize(const Scene& scene);
 
+        virtual uint32 numSamples() const;
         virtual bool isEnvironment() const;
         virtual bool isDelta() const;
 
@@ -46,8 +46,10 @@ namespace Photon {
         virtual Float pdfEmitDirection(const PositionSample& pos, const DirectionSample& sample) const = 0;
 
     protected:
-        Color  _Le;
-        uint32 _numSamples;
+        Color _Le;
+
+        Transform _objToWorld;
+        Transform _worldToObj;
     };
 
 }

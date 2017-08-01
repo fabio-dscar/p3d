@@ -24,7 +24,7 @@ void Renderer::initialize() {
 
 void Renderer::renderScene(const std::shared_ptr<Scene>& scene) {
     _scene = scene;
-    _integrator = std::make_shared<PathTracer>(*scene); // WhittedRayTracer
+    _integrator = std::make_shared<PathTracer>(*scene); // or <BidirPathTracer>
     
     // Export file as an end callback after rendering
     std::function<void()> endCallback = EndCallback();
@@ -49,7 +49,7 @@ bool Renderer::hasCompleted() {
 }
 
 void Renderer::exportImage() {
-    _scene->getCamera().film().exportImage(BufferType::COLOR);
+    _scene->getCamera().film().exportImage(BufferType::COLOR, "color", "png");
 }
 
 void Renderer::initDefaultSettings() {

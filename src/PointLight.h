@@ -8,9 +8,10 @@ namespace Photon {
 
     class PointLight : public Light {
     public:
-        PointLight() : Light(Color(1), 1) { }
-        PointLight(const Point3& pos) : Light(Color(1), 1), _pos(pos) { }
-        PointLight(const Point3& pos, const Color& color) : Light(color, 1), _pos(pos) { }
+        PointLight() : Light(Color(1)) { }
+        PointLight(const Point3& pos) : Light(Color(1)), _pos(pos) { }
+        PointLight(const Point3& pos, const Color& color) : Light(color, translate(pos.posVec())), _pos(pos) { }
+        PointLight(const Transform& objToWorld, const Color& color) : Light(color, objToWorld), _pos(objToWorld(Point3(0, 0, 0))) {}
 
         bool isDelta() const;
 

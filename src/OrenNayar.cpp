@@ -3,16 +3,14 @@
 using namespace Photon;
 
 OrenNayar::OrenNayar(const Color& rho, Float sigma)
-    : BSDF(BSDFType(BSDFType::DIFFUSE |
-                    BSDFType::REFLECTION)) {
+    : BSDF(BSDFType(DIFFUSE | REFLECTION)) {
 
     _kd = std::make_shared<ConstTexture<Color>>(rho);
     _sigma = sigma;
 }
 
 OrenNayar::OrenNayar(const std::shared_ptr<Texture<Color>>& diffuseTex, Float sigma)
-    : BSDF(BSDFType(BSDFType::DIFFUSE |
-                    BSDFType::REFLECTION)) {
+    : BSDF(BSDFType(DIFFUSE | REFLECTION)) {
 
     _kd = diffuseTex;
     _sigma = sigma;
@@ -69,21 +67,20 @@ Color OrenNayar::eval(const BSDFSample& sample) const {
     Float C1 = 1.0 - 0.5 * sigma2 / (sigma2 + 0.33);
     Float C2 = 0.45 * tmp1;
     Float C3 = 0.125 * tmp1 * tmp2 * tmp2;
-    Float C4 = 0.17 * sigma2 / (sigma2 + 0.13);
 
     if (maxCos > 0)
         C2 *= sinAlpha;
     else
         C2 *= sinAlpha - tmp3 * tmp3 * tmp3;
 
-    /* Compute tan(0.5 * (alpha+beta)) using the half-angle formulae */
-    Float tanHalf = (sinAlpha + sinBeta) / (Math::sqrtSafe(1.0 - sinAlpha * sinAlpha)
-                                            + Math::sqrtSafe(1.0 - sinBeta  * sinBeta));
+    Float tanHalf = std::tan(0.5 * (alpha + beta));
 
     Color rho = _kd->fetch(sample.evt->uv);
 
-    Color snglScat = rho * (C1 + maxCos * C2 * tanBeta + (1.0 - std::abs(maxCos)) * C3 * tanHalf);
-    Color dblScat  = rho * rho * (C4 * (1.0 - maxCos * tmp3 * tmp3));
+    Color Lr1 = rho * (C1 + maxCos * C2 * tanBeta + (1.0 - std::abs(maxCos)) * C3 * tanHalf);
 
-    return  (snglScat + dblScat) * INVPI;
+    Float C4  = 0.17 * sigma2 / (sigma2 + 0.13);
+    Color Lr2 = rho * rho * (C4 * (1.0 - maxCos * tmp3 * tmp3));
+
+    return  (Lr1 + Lr2) * INVPI;
 }

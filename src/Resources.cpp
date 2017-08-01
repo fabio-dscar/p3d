@@ -10,7 +10,13 @@
 
 using namespace Photon;
 
-#include <Lambertian.h>
+std::shared_ptr<Transform> Resources::addTransform(const Transform& transform) {
+    std::shared_ptr<Transform> tr = std::make_shared<Transform>(transform);
+    
+    _transforms.push_back(tr);
+    
+    return tr;
+}
 
 std::shared_ptr<TriMesh> Resources::loadObj(const std::string& path, const std::string& name) {
 

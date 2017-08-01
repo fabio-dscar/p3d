@@ -35,6 +35,8 @@ namespace Photon {
             static void parseBsdf(Scene& scene);
             static void parseCamera(Scene& scene);
 
+            static void parseDirectionalLight(Scene& scene);
+            static void parseSpotLight(Scene& scene);
             static void parsePlanarLight(Scene& scene);
             static void parseSphericalLight(Scene& scene);
 

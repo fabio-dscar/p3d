@@ -57,6 +57,15 @@ void mousePress(int button, int state, int x, int y) {
     std::cout << "Click at pixel: (" << x << ", " << _scene->getCamera().height() - y << ")" << std::endl;
 }
 
+void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) {
+    printf("\n*** ");
+    if (fif != FIF_UNKNOWN) {
+        printf("%s Format\n", FreeImage_GetFormatFromFIF(fif));
+    }
+    printf(message);
+    printf(" ***\n");
+}
+
 void photonInit() {
     // Initialize threading
     Threading::initThreads(Threading::getNumberOfProcessors());
@@ -66,6 +75,7 @@ void photonInit() {
 
     // Initialize FreeImage
     FreeImage_Initialise();
+    FreeImage_SetOutputMessage(FreeImageErrorHandler);
 }
 
 void photonShutdown() {
@@ -79,8 +89,45 @@ void photonShutdown() {
 
 #include <Records.h>
 
+#include <FreeImage.h>
+
+void loadImg() {
+    std::string outName("images/default.png");
+
+    FREE_IMAGE_FORMAT format = FreeImage_GetFIFFromFormat("png");
+    FIBITMAP* bitmap = FreeImage_Load(format, outName.c_str(), BMP_DEFAULT);
+
+    if (bitmap) {
+
+        uint32 w = FreeImage_GetWidth(bitmap);
+        uint32 h = FreeImage_GetHeight(bitmap);
+
+        uint32 bpp = FreeImage_GetBPP(bitmap);
+
+        std::cout << w << " " << h << " " << bpp << std::endl;
+
+        BITMAPINFOHEADER* header = FreeImage_GetInfoHeader(bitmap);
+
+        bool isTransp = FreeImage_IsTransparent(bitmap);
+
+        std::cout << isTransp << std::endl;
+
+        FREE_IMAGE_TYPE type = FreeImage_GetImageType(bitmap);
+
+        std::cout << type << std::endl;
+
+        FIRGBAF* bits = (FIRGBAF*)FreeImage_GetScanLine(bitmap, 0);
+
+        
+
+        // bitmap successfully loaded!
+        FreeImage_Unload(bitmap);
+    }
+}
+
 int main(int argc, char* argv[]) {
-    std::string filePath("oren-box.nff");
+    //std::string filePath("sanity.nff");
+    std::string filePath("spot.nff");
 
     // Command line arguments
     if (argc < 1) {

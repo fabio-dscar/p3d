@@ -24,10 +24,10 @@ namespace Photon {
         Bounds3 bbox() const;
         Float area() const;
 
-        void samplePosition(const Point2& rand, PositionSample* sample) const;
+        void  samplePosition(const Point2& rand, PositionSample* sample) const;
         Float pdfPosition(const PositionSample& sample) const;
 
-        void sampleDirect(const Point2& rand, DirectSample* sample) const;
+        void  sampleDirect(const Point2& rand, DirectSample* sample) const;
         Float pdfDirect(const DirectSample& sample) const;
 
     private:

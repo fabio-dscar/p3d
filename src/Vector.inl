@@ -292,7 +292,7 @@ namespace Photon {
         template<typename T>
         inline void basisFromVector(const Vector3<T>& vec1, Vector3<T>* vec2, Vector3<T>* vec3) {
             // [Duff et. al, 2017] "Building an Orthonormal Basis, Revisited"
-            Float sign = std::copysign(1.0, vec1.z);
+            const Float sign = std::copysign(1.0, vec1.z);
             const Float a = -1.0 / (sign + vec1.z);
             const Float b = vec1.x * vec1.y * a;
 

@@ -99,7 +99,7 @@ void Sphere::sampleDirect(const Point2& rand, DirectSample* sample) const {
         const Vec3  wi = sampleUniformCone(rand, cosMax);
         const Frame frame = Frame(Normal(hatW));
 
-        sample->wi = frame.toWorld(wi);
+        sample->wi  = frame.toWorld(wi);
         sample->pdf = pdfUniformCone(cosMax);
 
         // Build a ray into the sphere from the reference
@@ -193,5 +193,7 @@ void Sphere::computeSurfaceEvent(const Ray& ray, SurfaceEvent& evt) const {
 
     // Build the shading frame using the partial derivatives
     evt.sFrame = Frame(dpdu, dpdv, normal);
+    evt.gFrame = evt.sFrame;
     evt.wo = evt.sFrame.toLocal(-ray.dir());
+    //evt.normal = normal;
 }

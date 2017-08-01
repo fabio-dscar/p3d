@@ -25,7 +25,7 @@ Specular::Specular(Float intIor, Float extIor, const Color& refl, const Color& r
     _refl(refl), _refr(refr) {}
 
 Float Specular::eta() const {
-    return _extIor / _intIor;
+    return _eta;
 }
 
 Float Specular::evalPdf(const BSDFSample& sample) const {
@@ -48,7 +48,7 @@ Color Specular::sample(const Point2& rand, BSDFSample* sample) const {
     }
 
     Float cosT;
-    Vec3  wo    = sample->evt->wo;
+    Vec3  wo    = sample->wo;
     Float cosI  = Frame::cosTheta(wo);
     Float fresn = fresnelDielectric(_intIor, _extIor, cosI, cosT);
 
@@ -60,24 +60,21 @@ Color Specular::sample(const Point2& rand, BSDFSample* sample) const {
     if (!both)
         u = refl ? 0 : 1;
 
-    if (u < fresn) {
+    if (u <= fresn) {
         // Reflection
+
         sample->type = BSDFType(REFLECTION | SPECULAR);
         sample->wi   = Frame::reflect(wo);
         sample->pdf  = both ? fresn : 1.0;
 
         return _refl * fresn / Frame::absCosTheta(sample->wi);
     } else {
-        if (fresn == 1) {
-            sample->pdf = 0;
-            return Color::BLACK;
-        }
+        // Refraction
 
         Float eta = _extIor / _intIor;
         if (cosI < 0) // If we are leaving the surface
             eta = 1.0 / eta;  // Swap Iors
 
-        // Refraction
         sample->type = BSDFType(REFRACTION | SPECULAR);
         sample->wi   = Frame::refract(wo, eta, cosT);
         sample->pdf  = both ? (1 - fresn) : 1.0;

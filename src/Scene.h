@@ -33,8 +33,9 @@ namespace Photon {
         void addCamera(const Camera& camera);
         const Camera& getCamera() const;
 
-        void addLight(Light const* light);
-        const std::vector<Light const*>& getLights() const;
+        void addLight(Light* light);
+        void addAreaLight(AreaLight* light);
+        const std::vector<Light*>& getLights() const;
 
         void addShape(const std::shared_ptr<Shape> object);
         const std::vector<std::shared_ptr<Shape>>& getShapes() const;
@@ -53,7 +54,7 @@ namespace Photon {
         Color _background;
         const Camera* _camera;
         Bounds3 _bounds;
-        std::vector<Light const*> _lights;
+        std::vector<Light*> _lights;
         std::vector<std::shared_ptr<Shape>> _objects;
         std::unique_ptr<UniformGrid> _uniformGrid;
         std::unique_ptr<DiscretePdf1D> _lightDistr;

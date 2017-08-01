@@ -47,6 +47,8 @@ namespace Photon {
     protected:
         Transform _objToWorld;
         Transform _worldToObj;
+        //std::shared_ptr<Transform> _objToWorld;
+        //std::shared_ptr<Transform> _worldToObj;
 
     private:
         const BSDF* _bsdf;

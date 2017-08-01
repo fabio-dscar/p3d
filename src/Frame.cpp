@@ -42,7 +42,7 @@ Vec3 Frame::toLocal(const Vec3& vec) const {
     return Vec3(dotU, dotV, dotN);
 }
 
-bool Frame::consistent() {
+bool Frame::orthonormal() {
     Float lenX = _x.length();
     Float lenY = _y.length();
     Float lenZ = _z.length();
@@ -145,7 +145,7 @@ Float Frame::sinPhi(const Vec3& w) {
     if (std::abs(sin) < F_EPSILON)
         return 1;
 
-    return Math::clamp<Float>(w.x / sin, -1.0, 1.0);
+    return Math::clamp<Float>(w.y / sin, -1.0, 1.0);
 }
 
 Float Frame::cosPhiSqr(const Vec3& w) {

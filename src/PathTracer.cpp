@@ -16,7 +16,7 @@ using namespace std::placeholders;
 void PathTracer::initialize() {
     
     if (_scene->lightStrategy() == ALL_LIGHTS) {
-        std::vector<const Light*> lights = _scene->getLights();
+        std::vector<Light*> lights = _scene->getLights();
 
         for (uint32 spp = 0; spp < _spp; ++spp) {
             for (const Light* l : lights) {
@@ -49,7 +49,7 @@ bool PathTracer::checkAdaptiveThreshold(const Color* samples, uint32 num) const 
             Color diff = samples[i] - samples[it];
             Float max = std::max(abs(diff.r), std::max(abs(diff.g), abs(diff.b)));
             //return false;
-            if (max > 0.1) // Threshold check
+            if (max > 0.05) // Threshold check
                 return true;
         }
     }
@@ -57,7 +57,7 @@ bool PathTracer::checkAdaptiveThreshold(const Color* samples, uint32 num) const 
     return false;
 }
 
-Color PathTracer::subdivide(Sampler& sampler, const Point2& min, const Point2& max, std::vector<Color>& table, const Point2ui& pixel, Float weight) const {
+Color PathTracer::subdivide(Sampler& sampler, const Point2& min, const Point2& max, std::vector<Color>& table, const Point2ui& pixel, Float weight, uint32* nSamples) const {
     const Camera& camera = _scene->getCamera();
     Color res = Color::BLACK;
 
@@ -145,8 +145,9 @@ Color PathTracer::subdivide(Sampler& sampler, const Point2& min, const Point2& m
                 min = Math::min(min, samples[adjIdx[i][s]]);
                 max = Math::max(max, samples[adjIdx[i][s]]);
             }
-           
-            res += subdivide(sampler, min, max, table, pixel, weight / 4.0);
+            
+            *nSamples += 5;
+            res += subdivide(sampler, min, max, table, pixel, weight / 4.0, nSamples);
         }
     }
 
@@ -176,13 +177,14 @@ void PathTracer::renderTileAdaptive(uint32 tId, uint32 tileId) const {
     };
 
     // Initialize 1D array for samples
-    std::vector<Color> sampleTable = std::vector<Color>();
-    sampleTable.resize(w * h);
+    std::vector<Color> sampleTable(w * h); 
 
     const Camera& camera = _scene->getCamera();
     for (uint32 y = 0; y < tile.h; ++y) {
         for (uint32 x = 0; x < tile.w; ++x) {
             Point2ui pixel(x + tile.x, y + tile.y);
+    
+            sampler.start(pixel);
 
             Color samples[4];
             Color sum = Color::BLACK;
@@ -193,14 +195,18 @@ void PathTracer::renderTileAdaptive(uint32 tId, uint32 tileId) const {
                 sum += samples[i];
                 sampleTable[tblIdx[i]] = samples[i];
             }
-
+            
+            uint32 nSamples = 4;
             Color Li = Color::BLACK;
-            if (!checkAdaptiveThreshold(&samples[0], 4))
+            if (!checkAdaptiveThreshold(&samples[0], 4)) {
                 Li = sum / 4.0;  // Just compute the average
-            else
-                Li = subdivide(sampler, pts[2], pts[1], sampleTable, pixel, 1.0 / 4.0);
+            } else {
+                nSamples += 5; // Compute 5 new samples
+                Li = subdivide(sampler, pts[2], pts[1], sampleTable, pixel, 1.0 / 4.0, &nSamples);
+            }
 
-            camera.film().addColorSample(pixel.x, pixel.y, Li);
+            camera.film().addColorSample(pixel.x, pixel.y, Li, nSamples);
+            camera.film().addPreviewSample(pixel.x, pixel.y, Li);
         }
     }
 
@@ -223,6 +229,8 @@ void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
             for (uint32 s = 0; s < sampler.spp(); ++s) {
                 sampler.startSample(s);
 
+                //pixel = Point2ui(253, 348);
+
                 const Ray ray = camera.primaryRay(pixel, sampler);
                 Color Li = tracePath(ray, sampler, pixel);
 
@@ -238,60 +246,6 @@ void PathTracer::renderTile(uint32 tId, uint32 tileId) const {
         }
     }
 }
-
-/*Color PathTracer::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const { 
-    LightStrategy strat = _scene->lightStrategy();
-    if (strat == ALL_LIGHTS || !_scene->lightDistribution())
-        return estimateDirectAll(evt, sampler);
-
-    Float lightPdf = 1;
-    const Light* light = _scene->sampleLightPdf(sampler.next1D(), &lightPdf);
-
-    if (!light || lightPdf == 0)
-        return Color::BLACK;
-
-    const Point2 ls = sampler.next2D();
-    const Point2 bs = sampler.next2D();
-
-    return sampleLight(*light, evt, ls, bs) / lightPdf;
-}
-
-Color PathTracer::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) const {
-    Color direct = Color::BLACK;
-
-    // Sample all lights
-    for (const Light* light : _scene->getLights()) {
-        uint32 nSamples = light->numSamples();
-
-        if (light->isDelta()) {
-            const Point2 ls = sampler.next2D();
-            const Point2 bs = sampler.next2D();
-
-            direct += sampleLight(*light, evt, ls, bs);
-        } else {
-            Color contrib = Color::BLACK;
-
-            const Point2* lightVec = sampler.next2DArray(nSamples);
-            const Point2* bsdfVec  = sampler.next2DArray(nSamples);
-
-            if (!lightVec || !bsdfVec) {
-                nSamples = 1;
-
-                const Point2 ls = sampler.next2D();
-                const Point2 bs = sampler.next2D();
-
-                contrib += sampleLight(*light, evt, ls, bs);
-            } else {
-                for (uint32 i = 0; i < nSamples; ++i)
-                    contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
-            }
-
-            direct += contrib / nSamples;
-        }
-    }
-
-    return direct;
-}*/
 
 #define DEBUG(str) std::cout << str << std::endl;
 
@@ -337,9 +291,8 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
         /* -----------------------------------------------------------------------------------
                 Direct Illumination
         --------------------------------------------------------------------------------------*/
-        // Only perform direct illumination if not on a specular surface
-        //if (!bsdf->isType(BSDFType::SPECULAR))
-        Li += beta * estimateDirect(event, sampler);
+        DirectIllumStats dlStats;
+        Li += beta * estimateDirect(event, sampler, &dlStats);
 
         /* -----------------------------------------------------------------------------------
                 Indirect Illumination
@@ -361,13 +314,11 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
 
         // Possibly end path with russian roulette
         Float rr = (refrScale * beta).max();
-        if (depth > 2 && rr < 0.8) {
+        if (depth > 4 && rr < 0.8) {
             Float q = Math::max(0.01, 1.0 - rr);
-            if (sampler.next1D() < q) {
-                //std::cout << "Stopped: " << depth << std::endl;
+            if (sampler.next1D() < q)
                 break;  // Stop path
-            }
-
+            
             beta /= (1 - q);
         }
 
@@ -378,26 +329,11 @@ Color PathTracer::tracePath(const Ray& ray, Sampler& sampler, const Point2ui& pi
             feat.raster = Point2(pixel.x, pixel.y);
             feat.normal = event.sFrame.normal();
 
+            if (dlStats.numRays > 0)
+                feat.vis = dlStats.numUnoccluded / dlStats.numRays;
+
             _scene->getCamera().film().addFeatureSample(feat);
         }
-
-        /*if (subPath.isPrimary()) {
-            const Camera& c = _scene->getCamera();
-            //c.film().addNormalSample(pixel.x, pixel.y, normalize(event.wo()));
-
-            //if (subPath.dir().x == 0 && subPath.dir().y == 0 && subPath.dir().z == 0)
-            //    std::cout << "Ops";
-
-            //c.film().addNormalSample(pixel.x, pixel.y, normalize(abs(sample.wi)));
-
-            //Normal n = Normal(event.uv.x, event.uv.y, 0);
-            //c.film().addNormalSample(pixel.x, pixel.y, abs(event.normal));
-            c.film().addNormalSample(pixel.x, pixel.y, normalize(abs(event.sFrame.z())));
-
-            //c.film().addNormalSample(pixel.x, pixel.y, normalize(Normal(abs(event.uv.x), abs(event.uv.y), 0)));
-
-            return 0;
-        }*/
 
         // Spawn a new ray in the sampled direction
         subPath = event.spawnRay(event.toWorld(sample.wi));

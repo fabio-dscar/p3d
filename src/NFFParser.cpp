@@ -16,8 +16,9 @@
 #include <TriMesh.h>
 #include <Perspective.h>
 
-
+#include <DirectionalLight.h>
 #include <PointLight.h>
+#include <SpotLight.h>
 #include <AreaLight.h>
 #include <Spectral.h>
 
@@ -37,8 +38,8 @@
 
 #include <Resources.h>
 
-#include <StratifiedSampler.h>
-#include <RandomSampler.h>
+//#include <StratifiedSampler.h>
+//#include <RandomSampler.h>
 
 using namespace Photon;
 using namespace Photon::Utils;
@@ -147,6 +148,10 @@ std::shared_ptr<Scene> NFFParser::fromFile(const std::string& filePath) {
             scene->setBackgroundColor(parseColor());
         } else if (cmd.compare(0, 1, "l") == 0) {
             parseLight(*scene);
+        } else if (cmd.compare(0, 4, "spot") == 0) {
+            parseSpotLight(*scene);
+        } else if (cmd.compare(0, 4, "dirl") == 0) {
+            parseDirectionalLight(*scene);
         } else if (cmd.compare(0, 3, "als") == 0) {
             parseSphericalLight(*scene);
         } else if (cmd.compare(0, 3, "alp") == 0) {
@@ -203,12 +208,12 @@ void NFFParser::parseBsdf(Scene& scene) {
         Color refl   = parseColor();
         Color refr   = parseColor();
         bsdf = new Specular(intEta, extEta, refl, refr);
-        //bsdf = new RoughSpecular(BECKMANN, 0.2, 1.5, 1.0);
-        //bsdf = new MicrofacetReflection(GGX, Vec2(0.0001, 0.003), intEta, extEta);
-        //bsdf = new MicrofacetRefraction(GGX, Vec2(0.05, 0.001), intEta, extEta);
-
-        //bsdf = new Mirror();
-        //std::cout << "Specular BSDF acquired!" << std::endl;
+    } else if (bsdfName.compare(0, 12, "ThinSpecular") == 0) {
+        Float intEta = parseFloat();
+        Float extEta = parseFloat();
+        Color refl = parseColor();
+        Color refr = parseColor();
+        bsdf = new ThinSpecular(intEta, extEta, refl, refr);
     } else if (bsdfName.compare(0, 9, "Conductor") == 0) {
         Color refl = parseColor();
         Color eta = parseColor();
@@ -253,7 +258,6 @@ void NFFParser::parseBsdf(Scene& scene) {
 }
 
 void NFFParser::parseLight(Scene& scene) {
-
     // Parse position
     Point3 v = parsePoint3();
   
@@ -458,6 +462,40 @@ void NFFParser::parseBox(Scene & scene) {
     _material = mtl;
 }*/
 
+void NFFParser::parseDirectionalLight(Scene& scene) {
+    Transform tr = Transform(_matStack.loadMatrix());
+
+    Light* l = new DirectionalLight(tr, Color(1));
+
+    scene.addLight(l);
+}
+
+void NFFParser::parseSpotLight(Scene& scene) {
+    Point3 pos = parsePoint3();
+    Point3 at = parsePoint3();
+    Vec3 up = parseVector3();
+
+    // Parse color if available
+    Color emission = Color(1);
+    if (!isBufferEmpty())
+        emission = parseColor();
+
+    Float cosMax = std::cos(radians(45));
+    if (!isBufferEmpty())
+        cosMax = std::cos(radians(parseFloat()));
+
+    Float attStart = 0;
+    if (!isBufferEmpty())
+        attStart = std::cos(radians(parseFloat()));
+    
+    const Transform tr = lookAt(pos, at, up);
+
+    Light* l = new SpotLight(tr, emission, cosMax, attStart);
+
+    // Add light to scene
+    scene.addLight(l);
+}
+
 void NFFParser::parsePlanarLight(Scene& scene) {
     const Transform tr = Transform(_matStack.loadMatrix());
 
@@ -470,8 +508,8 @@ void NFFParser::parsePlanarLight(Scene& scene) {
     Light* light = new AreaLight(quad, emission, nSamples);
     quad->setLight((AreaLight*)light);
 
-    // Add sphere
-    scene.addShape(quad);
+    // Add planar light
+    scene.addAreaLight((AreaLight*)light);
 }
 
 void NFFParser::parseSphericalLight(Scene& scene) {
@@ -488,8 +526,8 @@ void NFFParser::parseSphericalLight(Scene& scene) {
     Light* light = new AreaLight(s, emission, nSamples);
     s->setLight((AreaLight*)light);
 
-    // Add sphere
-    scene.addShape(s);
+    // Add spherical light
+    scene.addAreaLight((AreaLight*)light);
 }
 
 void NFFParser::parseCamera(Scene& scene) {

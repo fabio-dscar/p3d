@@ -35,18 +35,27 @@ namespace Photon {
         }
     };
 
+    struct DirectIllumStats {
+        uint32 numRays;
+        uint32 numUnoccluded;
+        uint32 numLights;
+
+        DirectIllumStats() :
+            numRays(0), numUnoccluded(0), numLights(0) { }
+    };
+
     class Integrator {
     public:
         Integrator(const Scene& scene) 
             : _scene(&scene), _tileSize(TILE_SIZE), _renderTask(nullptr), _tiles() { 
 
-            _sampler = std::make_unique<StratifiedSampler>(8, 8, 16);
+            _sampler = std::make_unique<StratifiedSampler>(8, 8, 8);
         }
 
         Integrator(const Scene& scene, uint32 spp)
             : _scene(&scene), _tileSize(TILE_SIZE), _renderTask(nullptr), _tiles() {
 
-            _sampler = std::make_unique<StratifiedSampler>(8, 8, 16);
+            _sampler = std::make_unique<StratifiedSampler>(8, 8, 8);
         }
 
         virtual void initialize();
@@ -60,8 +69,8 @@ namespace Photon {
     protected:
         Color sampleLight(const Light& light, const SurfaceEvent& evt, const Point2& randLight, const Point2& randBsdf) const;
 
-        Color estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const;
-        Color estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) const;
+        Color estimateDirect(const SurfaceEvent& evt, Sampler& sampler, DirectIllumStats* stats = nullptr) const;
+        Color estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler, DirectIllumStats* stats = nullptr) const;
 
         Scene const* _scene;
         uint32 _tileSize;

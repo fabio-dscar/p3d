@@ -57,7 +57,7 @@ namespace Photon {
         uint32 _spp;
         uint32 _numDims;
 
-        uint32 _currSample;
+        uint32   _currSample;
         Point2ui _currPixel;
     };
 

@@ -135,8 +135,8 @@ bool UniformGrid::intersectRay(const Ray& ray, SurfaceEvent* evt) const {
     //std::unordered_map<uint32, bool> intersectMap;
 
     // Test intersection with unbounded objects
-    for (uint32 idx = 0; idx < _unboundedObjs.size(); ++idx)
-        _unboundedObjs[idx]->intersectRay(ray, evt);
+    //for (uint32 idx = 0; idx < _unboundedObjs.size(); ++idx)
+    //    _unboundedObjs[idx]->intersectRay(ray, evt);
 
     // Get location of ray in grid
     Point3ui pt;
@@ -207,9 +207,9 @@ bool UniformGrid::isOccluded(const Ray& ray) const {
     //std::unordered_map<uint32, bool> intersectMap;
 
     // Test occlusion with unbounded
-    for (uint32 idx = 0; idx < _unboundedObjs.size(); ++idx)
-        if (_unboundedObjs[idx]->isOccluded(ray))
-            return true;
+    //for (uint32 idx = 0; idx < _unboundedObjs.size(); ++idx)
+    //    if (_unboundedObjs[idx]->isOccluded(ray))
+    //        return true;
 
     /*for (GridObject obj : _unboundedObjs)
         if (obj->isOccluded(ray))

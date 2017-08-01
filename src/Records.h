@@ -64,7 +64,7 @@ namespace Photon {
         }
 
         Point3 hitPoint() const {
-            return ref->point + dist * wi;
+            return ref->point + (dist - dist * F_EPSILON) * wi;
         }
     };
         
@@ -88,11 +88,11 @@ namespace Photon {
 
         BSDFSample(const SurfaceEvent& evt, Transport transp)
             : wo(evt.wo),
-            pdf(0),
-            eta(1.0),
-            evt(&evt),
-            type(BSDFType::ALL),
-            transp(transp) {}
+              pdf(0),
+              eta(1.0),
+              evt(&evt),
+              type(BSDFType::ALL),
+              transp(transp) {}
 
         BSDFSample(const SurfaceEvent& evt, const Vec3& worldWi, Transport mode)
             : wo(evt.wo),
@@ -116,6 +116,10 @@ namespace Photon {
 
             // Set wi in shading frame space
             wi = evt->sFrame.toLocal(sample.wi);
+        }
+
+        void invert() {
+            std::swap(wo, wi);
         }
     };
 

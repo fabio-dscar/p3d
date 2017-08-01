@@ -10,7 +10,7 @@ namespace Photon {
     public:
         DiscretePdf1D(const std::vector<Float>& vals);
 
-        Float pdf(uint32 idx) const;
+        Float  pdf(uint32 idx) const;
         uint32 cdf(uint32 idx) const;
         uint32 sample(Float rand) const;
 

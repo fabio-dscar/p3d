@@ -6,7 +6,7 @@ Perspective::Perspective(const Transform& objToWorld, Vec2ui res, Float fov, Flo
     : Camera(objToWorld, res, near, far) {
 
     // Build perspective matrix
-    Float invTan = 1.0 / std::tan(radians(fov) / 2.0);
+    Float invTan = 1.0 / std::tan(radians(fov / 2.0));
     Float zScale = far / (far - near);
     Float zTrans = -far * near / (far - near);
 
@@ -16,17 +16,17 @@ Perspective::Perspective(const Transform& objToWorld, Vec2ui res, Float fov, Flo
                   0, 0, 1, 0);
 
     Transform camToClip = Transform(perspMat);
-
+    
     // Aspect transform
-    Float aspect = res.x / res.y;
-    Transform aspectTr = scale(0.5 * aspect, 0.5, 1.0) *
-        translate(Vec3(1.0 / aspect, 1.0, 0.0));
+    Float aspect = (Float)res.x / res.y;
+    Transform aspectTr = scale(0.5, 0.5 * aspect, 1.0) *
+                         translate(Vec3(1.0, 1.0 / aspect, 0.0));
 
     Transform camToPlane = scale(res.x, res.y, 1.0) * aspectTr * camToClip;
     _planeToCam = inverse(camToPlane);
 
     // Compute view plane normal in world space
-    _n = Normal(_camToWorld(Vec3(0, 0, 1)));
+    _n = normalize(_camToWorld(Normal(0, 0, 1)));
 
     _worldToPlane = camToPlane * inverse(_camToWorld);
 

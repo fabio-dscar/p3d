@@ -85,7 +85,9 @@ void Quad::samplePosition(const Point2& rand, PositionSample* sample) const {
 
     sample->pos = _objToWorld(quad);
     sample->pdf = 1.0 / area();
-    sample->frame = Frame(_objToWorld(Normal(0, 0, 1)));
+
+    const Normal n = _objToWorld(Normal(0, 0, 1));
+    sample->frame = Frame(n);
 }
 
 Float Quad::pdfPosition(const PositionSample& sample) const {

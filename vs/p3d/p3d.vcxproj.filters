@@ -88,6 +88,9 @@
     <Filter Include="Source Files\Spatial">
       <UniqueIdentifier>{816ddd8f-197e-48be-99e4-3c705fa0819b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Spectral">
+      <UniqueIdentifier>{17ba0bd6-b23a-4ddc-90b4-d5c8a2a28eff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp">
@@ -149,9 +152,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Frame.cpp">
       <Filter>Source Files\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Spectral.cpp">
-      <Filter>Header Files\Spectral</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\BSDF.cpp">
       <Filter>Source Files\Material</Filter>
@@ -229,6 +229,21 @@
       <Filter>Source Files\Geometry</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\SpotLight.cpp">
+      <Filter>Source Files\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Phong.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Random.cpp">
+      <Filter>Source Files\Sampling</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RandomSampler.cpp">
+      <Filter>Source Files\Sampling</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Spectral.cpp">
+      <Filter>Source Files\Spectral</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\DirectionalLight.cpp">
       <Filter>Source Files\Lights</Filter>
     </ClCompile>
   </ItemGroup>

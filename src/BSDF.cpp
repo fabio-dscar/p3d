@@ -33,7 +33,7 @@ Color BSDF::sample(const Point2& rand, BSDFSample* sample) const {
     sample->wi = sampleCosHemisphere(rand);
 
     // Make hemispheres agree
-    sample->wi.z *= Math::sign(sample->evt->wo.z);
+    sample->wi.z *= Math::sign(sample->wo.z);
 
     sample->pdf  = evalPdf(*sample);
     sample->type = _type;

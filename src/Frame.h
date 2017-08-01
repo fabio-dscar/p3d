@@ -29,7 +29,7 @@ namespace Photon {
             return _z;
         }
 
-        bool consistent();
+        bool orthonormal();
 
         static Vec3 reflect(const Vec3& wi);
         static Vec3 reflect(const Vec3& wi, const Vec3& n);

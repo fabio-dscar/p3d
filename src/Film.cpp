@@ -69,6 +69,12 @@ void Film::addColorSample(uint32 x, uint32 y, const Color& color) {
     p.nSamples++;
 }
 
+void Film::addColorSample(uint32 x, uint32 y, const Color& color, uint32 nSamples) {
+    Pixel& p = pixel(Point2ui(x, y));
+    p.color += color;
+    p.nSamples += nSamples;
+}
+
 void Film::addSplatSample(const Point2& pt, const Color& splat) {
     Pixel& p  = pixel(pt);
     p.splat.add(splat);
@@ -79,7 +85,8 @@ void Film::addFeatureSample(const FeaturesRecord& record) {
         FeaturesRecord& rec = feature(record.raster);
         rec.dist   += record.dist;
         rec.normal += record.normal;
-        rec.raster  = record.raster;     
+        rec.raster  = record.raster;
+        rec.vis    += record.vis;
         rec.nSamples++;
     }
 }
@@ -113,6 +120,40 @@ std::unique_ptr<Float[]> Film::color() const {
                                 px.splat.b.val());
 
             splat = ToneMap(_toneOp, splat / px.nSamples, _exposure);
+            out[nChannels * idx]     += splat.r;
+            out[nChannels * idx + 1] += splat.g;
+            out[nChannels * idx + 2] += splat.b;
+        }
+    });
+
+    return std::move(out);
+}
+
+std::unique_ptr<Float[]> Film::colorHdr() const {
+    const Float nPixels = pixelArea();
+    const Float nChannels = 3;
+
+    if (!_pixels)
+        return nullptr;
+
+    std::unique_ptr<Float[]> out = std::make_unique<Float[]>(nPixels * nChannels);
+    parallelFor(0, _res.x, 32, [&](uint32 i) {
+        for (uint32 y = 0; y < _res.y; ++y) {
+            const Pixel& px = pixel(Point2ui(i, y));
+
+            // TODO: filters, for now apply box
+            uint32 idx = i + _res.x * y;
+
+            Color filtered = px.color / px.nSamples;
+            out[nChannels * idx]     = filtered.r;
+            out[nChannels * idx + 1] = filtered.g;
+            out[nChannels * idx + 2] = filtered.b;
+
+            Color splat = Color(px.splat.r.val(),
+                                px.splat.g.val(),
+                                px.splat.b.val());
+
+            splat /= px.nSamples;
             out[nChannels * idx]     += splat.r;
             out[nChannels * idx + 1] += splat.g;
             out[nChannels * idx + 2] += splat.b;
@@ -179,9 +220,6 @@ std::unique_ptr<Float[]> Film::sampleDensity() const {
     const Float nPixels   = pixelArea();
     const Float nChannels = 1;
 
-    if (!_feats)
-        return nullptr;
-
     // Find highest number of samples on a pixel
     uint32 maxSamples = 0;
     parallelFor(0, _res.x, 32, [&](uint32 i) {
@@ -206,30 +244,20 @@ std::unique_ptr<Float[]> Film::sampleDensity() const {
 }
 
 std::unique_ptr<Float[]> Film::visibility() const {
-    // TODO
     const Float nPixels = pixelArea();
     const Float nChannels = 1;
 
     if (!_feats)
         return nullptr;
 
-    // Find maximum distance
-    Float maxDist = 0;
-    parallelFor(0, _res.x, 32, [&](uint32 i) {
-        for (uint32 y = 0; y < _res.y; y++) {
-            const FeaturesRecord& rec = feature(Point2ui(i, y));
-            maxDist = std::max(maxDist, rec.dist / rec.nSamples);
-        }
-    });
-
-    // Output normalized buffer
+    // Output filtered buffer
     std::unique_ptr<Float[]> out = std::make_unique<Float[]>(nPixels * nChannels);
     parallelFor(0, _res.x, 32, [&](uint32 i) {
         for (uint32 y = 0; y < _res.y; y++) {
             const FeaturesRecord& rec = feature(Point2ui(i, y));
 
             uint32 idx = i + _res.x * y;
-            out[nChannels * idx] = rec.dist / (rec.nSamples * maxDist);
+            out[nChannels * idx] = rec.vis / rec.nSamples;
         }
     });
 
@@ -287,38 +315,49 @@ Pixel& Film::operator()(const Point2& p) {
     return _pixels[idx];
 }
 
-void Film::exportImage(BufferType type) const {
+void Film::exportImage(BufferType type, const std::string& filename, const std::string& ext) const {
     std::unique_ptr<Float[]> buffer = nullptr;
 
-    uint32 bpp, nChannels;
+    bool isHdr = Image::isHdrExtension(ext);
 
+    uint32 nChannels;
+    std::string exportName = filename;
     switch (type) {
         case COLOR:
-            bpp = 24; nChannels = 3;
-            buffer = color();
+            nChannels = 3;  
+            buffer = isHdr ? colorHdr() : color();
             break;
         case NORMAL:
-            bpp = 24; nChannels = 3;
+            exportName.append("-normals");
+            nChannels = 3;
             buffer = normals();
             break;
         case DEPTH:
-            bpp = 8; nChannels = 1;
+            exportName.append("-depth");
+            nChannels = 1;
             buffer = depth();
             break;
         case VISIBILITY:
-            bpp = 8; nChannels = 1;
+            exportName.append("-vis");
+            nChannels = 1;
             buffer = visibility();
             break;
         case SAMPLES:
-            bpp = 8; nChannels = 1;
+            exportName.append("-samples");
+            nChannels = 1;
             buffer = sampleDensity();
             break;
         default:
+            std::cerr << "Error: Unknown return film buffer." << std::endl;
+            return;
             break;
     };
 
+    uint32 bpc = isHdr ? 32 : 8;
+    uint32 bpp = bpc * nChannels;
+
     if (buffer.get()) {
         Image img = Image(_res, bpp, nChannels, buffer);
-        img.exportImage();
+        img.exportImage(exportName, ext);
     }
 }

@@ -47,7 +47,7 @@ namespace Photon {
         std::unique_ptr<Voxel[]> _grid;
         std::vector<GridObject> _unboundedObjs;
         Scene const* _scene;
-        uint32 _numObjs;              // Number of in scene
+        uint32 _numObjs;              // Number of objects in scene
         Bounds3 _bounds;              // Bounds of the grid
         Vec3ui _dims;                 // Number of voxels in each axis
         Vec3 _invSize;                // Inverse of size in each dimension (world units)

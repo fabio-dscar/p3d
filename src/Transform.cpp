@@ -30,7 +30,7 @@ Ray Transform::operator()(const Ray& ray) const {
 }
 
 Bounds3 Transform::operator()(const Bounds3& box) const {
-    const Transform &Tr = *this;
+    const Transform& Tr = *this;
 
     Bounds3 ret(Point3(0));
     ret.expand(Tr(Point3(box[0].x, box[0].y, box[0].z)));
@@ -50,36 +50,33 @@ Transform Transform::operator*(const Transform& t) {
                      mul(t._invMat, _invMat));
 }
 
-template<typename T>
-Point3T<T> Transform::operator()(const Point3T<T>& pt) const {
-    T x = _mat.m[0][0] * pt.x + _mat.m[0][1] * pt.y + _mat.m[0][2] * pt.z + _mat.m[0][3];
-    T y = _mat.m[1][0] * pt.x + _mat.m[1][1] * pt.y + _mat.m[1][2] * pt.z + _mat.m[1][3];
-    T z = _mat.m[2][0] * pt.x + _mat.m[2][1] * pt.y + _mat.m[2][2] * pt.z + _mat.m[2][3];
-    T w = _mat.m[3][0] * pt.x + _mat.m[3][1] * pt.y + _mat.m[3][2] * pt.z + _mat.m[3][3];
+Point3 Transform::operator()(const Point3& pt) const {
+    Float x = _mat.m[0][0] * pt.x + _mat.m[0][1] * pt.y + _mat.m[0][2] * pt.z + _mat.m[0][3];
+    Float y = _mat.m[1][0] * pt.x + _mat.m[1][1] * pt.y + _mat.m[1][2] * pt.z + _mat.m[1][3];
+    Float z = _mat.m[2][0] * pt.x + _mat.m[2][1] * pt.y + _mat.m[2][2] * pt.z + _mat.m[2][3];
+    Float w = _mat.m[3][0] * pt.x + _mat.m[3][1] * pt.y + _mat.m[3][2] * pt.z + _mat.m[3][3];
 
     if (w == 1)
-        return Point3T<T>(x, y, z);
+        return Point3(x, y, z);
     else
-        return Point3T<T>(x, y, z) / w;
+        return Point3(x, y, z) / w;
 }
 
-template<typename T>
-Vector3<T> Transform::operator()(const Vector3<T>& vec) const {
-    T x = _mat.m[0][0] * vec.x + _mat.m[0][1] * vec.y + _mat.m[0][2] * vec.z;
-    T y = _mat.m[1][0] * vec.x + _mat.m[1][1] * vec.y + _mat.m[1][2] * vec.z;
-    T z = _mat.m[2][0] * vec.x + _mat.m[2][1] * vec.y + _mat.m[2][2] * vec.z;
+Vec3 Transform::operator()(const Vec3& vec) const {
+    Float x = _mat.m[0][0] * vec.x + _mat.m[0][1] * vec.y + _mat.m[0][2] * vec.z;
+    Float y = _mat.m[1][0] * vec.x + _mat.m[1][1] * vec.y + _mat.m[1][2] * vec.z;
+    Float z = _mat.m[2][0] * vec.x + _mat.m[2][1] * vec.y + _mat.m[2][2] * vec.z;
 
-    return Vector3<T>(x, y, z);
+    return Vec3(x, y, z);
 }
 
-/*template<typename T>
-Normal3<T> Transform::operator()(const Normal3<T>& norm) const {
-    T x = _invMat.m[0][0] * norm.x + _invMat.m[1][0] * norm.y + _invMat.m[2][0] * norm.z;
-    T y = _invMat.m[0][1] * norm.x + _invMat.m[1][1] * norm.y + _invMat.m[2][1] * norm.z;
-    T z = _invMat.m[0][2] * norm.x + _invMat.m[1][2] * norm.y + _invMat.m[2][2] * norm.z;
+Normal Transform::operator()(const Normal& norm) const {
+    Float x = _invMat.m[0][0] * norm.x + _invMat.m[1][0] * norm.y + _invMat.m[2][0] * norm.z;
+    Float y = _invMat.m[0][1] * norm.x + _invMat.m[1][1] * norm.y + _invMat.m[2][1] * norm.z;
+    Float z = _invMat.m[0][2] * norm.x + _invMat.m[1][2] * norm.y + _invMat.m[2][2] * norm.z;
 
-    return Normal3<T>(x, y, z);
-}*/
+    return Normal(x, y, z);
+}
 
 bool Transform::flipsOrientation() const {
     return det3x3(_mat) < 0;
@@ -153,6 +150,38 @@ Transform Photon::rotateZ(Float degrees) {
 
     // The inverse of rotation matrices is their own transpose 
     return Transform(mat, transpose(mat));
+}
+
+Transform Photon::lookAt(const Point3& pos, const Point3& at, const Vec3& up) {
+    Mat4 lookAtMat;
+
+    Vec3 n = -normalize(pos - at);
+    Vec3 u = normalize(cross(up + Vec3(0.05, 0, 0.05), n));
+    Vec3 v = cross(n, u);
+
+    // Rotation
+    lookAtMat(0, 0) = u.x;
+    lookAtMat(1, 0) = u.y;
+    lookAtMat(2, 0) = u.z;
+    lookAtMat(3, 0) = 0;
+
+    lookAtMat(0, 1) = v.x;
+    lookAtMat(1, 1) = v.y;
+    lookAtMat(2, 1) = v.z;
+    lookAtMat(3, 1) = 0;
+
+    lookAtMat(0, 2) = n.x;
+    lookAtMat(1, 2) = n.y;
+    lookAtMat(2, 2) = n.z;
+    lookAtMat(3, 2) = 0;
+
+    // Translation
+    lookAtMat(0, 3) = pos.x;
+    lookAtMat(1, 3) = pos.y;
+    lookAtMat(2, 3) = pos.z;
+    lookAtMat(3, 3) = 1;
+
+    return Transform(lookAtMat);
 }
 
 Transform Photon::ortho(Float zNear, Float zFar) {

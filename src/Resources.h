@@ -6,6 +6,7 @@
 namespace Photon {
 
     class TriMesh;
+    class Transform;
 
     // A singleton manager for resources, to be initialized at the start
     class Resources {
@@ -27,11 +28,14 @@ namespace Photon {
         }
 
         std::shared_ptr<TriMesh> loadObj(const std::string& path, const std::string& name);
+        std::shared_ptr<Transform> addTransform(const Transform& transform);
 
     private:
         Resources() { }
 
         std::unordered_map<std::string, std::shared_ptr<TriMesh>> _meshMap;
+        //std::unordered_map<std::string, std::shared_ptr<Transform>> _transfMap;
+        std::vector<std::shared_ptr<Transform>> _transforms;
     };
 
 }

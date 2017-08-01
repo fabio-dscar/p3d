@@ -8,12 +8,11 @@ namespace Photon {
 
     class SpotLight : public Light {
     public:
-        SpotLight() : Light(Color(1), 1) {}
-        SpotLight(const Point3& pos) : Light(Color(1), 1), _pos(pos) {}
-        SpotLight(const Point3& pos, const Color& color) : Light(color, 1), _pos(pos) {}
+        SpotLight() : Light(Color(1)) {}
+        SpotLight(const Transform& objToWorld, const Color& color);
+        SpotLight(const Transform& objToWorld, const Color& color, Float cosMax, Float attStart);
 
         bool isDelta() const;
-
         Color power() const;
 
         Color evalL(const SurfaceEvent& it, const Vec3& wo) const;

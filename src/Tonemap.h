@@ -4,7 +4,7 @@
 
 namespace Photon {
 
-    static const Float GAMMA = 2.2; // 2.4
+    static const Float GAMMA = 2.4; // 2.4 prev: 2.2
 
     enum ToneOperator {
         LINEAR,

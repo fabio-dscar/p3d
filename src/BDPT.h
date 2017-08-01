@@ -33,13 +33,14 @@ namespace Photon {
         const T* ptr;
 
         EndVertex(const T* ptr, const RayEvent& event)
-            : evt(event), ptr(ptr) { }
+            : evt(event), ptr(ptr), { }
 
         EndVertex(const T* ptr, const Ray& ray)
             : ptr(ptr) {
 
-            evt.wo    = ray.dir();
-            evt.point = ray.origin();
+            evt.wo     = ray.dir();
+            evt.point  = ray.origin();
+            evt.normal = Normal(0);
         }
 
         EndVertex(const T* ptr, const Ray& ray, const Normal& n)
@@ -190,8 +191,9 @@ namespace Photon {
                 
                 // Evaluate backwards pdf
                 BSDFSample rev = bs;
-                std::swap(rev.wi, rev.wo);
                 rev.type = BSDFType::ALL;
+                rev.invert();
+                
                 pdfBack  = bsdf->evalPdf(rev);
                 pdfFwd   = bs.pdf;
 
@@ -233,11 +235,12 @@ namespace Photon {
             : L(c), raster(), mis(0) { }
     };
 
+#define DEBUG(str) std::cout << str << std::endl;
 
     class BidirPathTracer : public Integrator {
     public:
         BidirPathTracer(const Scene& scene, uint32 spp = 64)
-            : Integrator(scene), _maxDepth(4), _spp(spp) {
+            : Integrator(scene), _maxDepth(8), _spp(spp) {
             
         }
 
@@ -279,6 +282,8 @@ namespace Photon {
                 }
             }
 
+            //std::cout << "-> Pixel: (" << sampler.pixel().x << ", " << sampler.pixel().y << ")" << std::endl;
+
             // Compute contributions of all paths
             Color L = Color::BLACK;
             for (uint32 t = 1; t <= cameraPath.numVerts; ++t) {
@@ -299,6 +304,25 @@ namespace Photon {
                         if (!strat.L.isBlack())                 
                             cam.film().addSplatSample(strat.raster, strat.L * strat.mis);                    
                     }
+
+                    /*std::cout << "Strat (s, t) = (" << s << ", " << t << ")" << std::endl;
+                    std::cout << "L: (" << strat.L.r << ", " << strat.L.g << ", " << strat.L.b << ")" << std::endl;
+                    std::cout << "MIS weight: " << strat.mis << std::endl;
+                    std::cout.flush();
+
+                    std::cin.get();*/
+
+#ifdef PHOTON_DEBUG
+                    if (std::isinf(strat.L.r) || std::isnan(strat.L.r) ||
+                        std::isinf(strat.L.g) || std::isnan(strat.L.g) ||
+                        std::isinf(strat.L.b) || std::isnan(strat.L.b)) {
+                        DEBUG("Radiance not a number/infinite!!");
+                    }
+
+                    if (strat.L.r < 0 || strat.L.g < 0 || strat.L.b < 0)
+                        DEBUG("Radiance below zero!!");
+#endif
+
                 }
             }
 
@@ -336,7 +360,7 @@ namespace Photon {
                     return Color::BLACK;
                    
                 // Create camera vertex and compute L
-				const Color beta = Lc / ds.pdf;
+                const Color beta = Lc / ds.pdf;
                 const Point3 hit = ds.hitPoint();
                 const Ray camRay = Ray(hit, -ds.wi);	
 
@@ -375,10 +399,6 @@ namespace Photon {
                 if (!light || lightPdf == 0)
                     return Color::BLACK;
 
-                // Sample the light source
-                const Point2 ls = sampler.next2D();
-                const Point2 bs = sampler.next2D();
-
                 // Sample direction to light source
                 DirectSample ds(cv.event());
                 Color Le = light->sampleDirect(sampler.next2D(), &ds);
@@ -395,8 +415,8 @@ namespace Photon {
                 PathVertex lightVert = PathVertex::createLightVertex(*light, lightRay, beta, ds.normal, pdf);
                
                 PositionSample ps(lightVert.event());
-                light->pdfPosition(ps);
-                lightVert.pdfFwd = ps.pdf * lightPdf;
+                Float posPdf = light->pdfPosition(ps);
+                lightVert.pdfFwd = posPdf * lightPdf;
 
                 // Compute radiance associated with connection
                 L += cv.beta * lightVert.beta * cv.evalBsdf(lightVert, RADIANCE);

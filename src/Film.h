@@ -18,7 +18,7 @@ namespace Photon {
         Normal normal;   // Shading normal at intersection
         Point2 raster;   // Raster position of sample        
         Float  dist;     // Primary ray distance
-        uint32 vis;      // Number of unoccluded shadow rays
+        Float  vis;      // Ratio of unoccluded shadow rays by all rays
         uint32 nSamples;
 
         FeaturesRecord() : dist(0), vis(0), nSamples(0) { }
@@ -50,19 +50,20 @@ namespace Photon {
         uint32 width() const;
         uint32 height() const;
         Vec2ui resolution() const;
-
-        Float aspect() const;
+        Float  aspect() const;
 
         uint32 pixelArea() const;
-
+   
         void addPreviewSample(uint32 x, uint32 y, const Color& color);
         void addColorSample(uint32 x, uint32 y, const Color& color);
+        void addColorSample(uint32 x, uint32 y, const Color& color, uint32 nSamples);
         void addSplatSample(const Point2& pt, const Color& splat);
         void addFeatureSample(const FeaturesRecord& record);
 
         const Float* preview() const;
 
         std::unique_ptr<Float[]> color() const;
+        std::unique_ptr<Float[]> colorHdr() const;
         std::unique_ptr<Float[]> depth() const;
         std::unique_ptr<Float[]> normals() const;
         std::unique_ptr<Float[]> sampleDensity() const;
@@ -80,7 +81,7 @@ namespace Photon {
 
         Pixel& operator()(const Point2& p);
 
-        void exportImage(BufferType type) const;
+        void exportImage(BufferType type, const std::string& filename, const std::string& ext) const;
 
     private:
         Vec2ui  _res;

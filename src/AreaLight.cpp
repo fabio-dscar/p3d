@@ -6,6 +6,18 @@
 
 using namespace Photon;
 
+std::shared_ptr<Shape> AreaLight::shape() const {
+    return _shape;
+}
+
+bool AreaLight::isDelta() const {
+    return false;
+}
+
+uint32 AreaLight::numSamples() const {
+    return _numSamples;
+}
+
 Color AreaLight::L(const RayEvent& evt, const Vec3& w) const {
     if (Math::dot(evt.normal, w) > 0)
         return _Le;
@@ -34,7 +46,7 @@ Color AreaLight::evalL(const PositionSample& sample, const Vec3& wo) const {
     if (dot(sample.frame.normal(), wo) <= 0)
         return Color::BLACK;
 
-    return _Le * PI;
+    return _Le;
 }
 
 Color AreaLight::samplePosition(const Point2& rand, PositionSample* sample) const {
@@ -76,7 +88,8 @@ Color AreaLight::sampleEmitDirection(const Point2& rand, const PositionSample& p
     sample->wo  = pos.frame.toWorld(w);
     sample->pdf = pdfCosHemisphere(Frame::cosTheta(w));
 
-    return _Le;
+    //return _Le;
+    return power();
 }
 
 Float AreaLight::pdfEmitDirection(const PositionSample& pos, const DirectionSample& sample) const {

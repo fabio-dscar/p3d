@@ -1,5 +1,7 @@
 #include <StratifiedSampler.h>
 
+#include <Sampling.h>
+
 using namespace Photon;
 
 StratifiedSampler::StratifiedSampler(uint32 nx, uint32 ny, uint32 numDims) : _nx(nx), _ny(ny), Sampler(nx * ny) {

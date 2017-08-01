@@ -49,7 +49,7 @@ Color Photon::geomTerm(const Scene& scene, const PathVertex& v0, const PathVerte
 
     if (v1.isSurface())
         G *= absDot(v1.normal(), w);
-
+       
     if (G == 0)
         return Color::BLACK;
 
@@ -67,7 +67,7 @@ struct ProbPair {
 };
 
 Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Path& lightPath, const PathVertex& sampled, uint32 t, uint32 s) {
-    if (s + t == 2)
+    if ((s + t) == 2)
         return 1;
 
     Float sum = 0;
@@ -142,7 +142,7 @@ Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Pa
         if (s > 0) {
             cam[t - 2].pdfBack = cv.evalPdf(lv, prevCv);
         } else {
-            cam[t - 2].pdfBack = cv.evalLightDistrPdf(scene, prevCv);
+            cam[t - 2].pdfBack = cv.evalPdf(prevCv);
         }
     }
 
@@ -158,11 +158,20 @@ Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Pa
         light[s - 2].pdfBack = lv.evalPdf(cv, prevLv);
     }
 
+
+    /*std::cout << "Camera path:" << std::endl;
+    for (int32 i = t - 1; i > 0; --i)
+        std::cout << "v[" << i << "]: (" << cam[i].pdfBack << ", " << cam[i].pdfFwd << ")   w = " << remap0(cam[i].pdfBack) / remap0(cam[i].pdfFwd) << std::endl;
+
+    std::cout << "Light path:" << std::endl;
+    for (int32 i = s - 1; i >= 0; --i)
+        std::cout << "v[" << i << "]: (" << light[i].pdfBack << ", " << light[i].pdfFwd << ")   w = " << remap0(light[i].pdfBack) / remap0(light[i].pdfFwd) << std::endl;
+        */
+
     Float ri = 1;
     for (int32 i = t - 1; i > 0; --i) {
         Float p = remap0(cam[i].pdfBack) / remap0(cam[i].pdfFwd);
         ri *= p * p;
-        //ri *= p * p; // Power heuristic
         if (!cam[i].delta && !cam[i - 1].delta)
             sum += ri;
     }
@@ -171,33 +180,12 @@ Float Photon::calcMisWeight(const Scene& scene, const Path& cameraPath, const Pa
     for (int32 i = s - 1; i >= 0; --i) {
         Float p = remap0(light[i].pdfBack) / remap0(light[i].pdfFwd);
         ri *= p * p;
-        //ri *= p * p; // Power heuristic
         uint32 idx = i > 0 ? i - 1 : 0;
         if (!light[i].delta && !light[idx].delta)
             sum += ri;
     }
 
     return 1.0 / (1.0 + sum);
-
-    /*
-    Float ri = 1;
-    for (int i = t - 1; i > 0; --i) {
-        Float p = remap0(cameraPath[i].pdfBack) / remap0(cameraPath[i].pdfFwd);
-        ri *= p * p; // Power heuristic
-        if (!cameraPath[i].isDelta() && !cameraPath[i - 1].isDelta())
-            sum += ri;
-    }
-
-    ri = 1;
-    for (int i = s - 1; i >= 0; --i) {
-        Float p = remap0(lightPath[i].pdfBack) / remap0(lightPath[i].pdfFwd);
-        ri *= p * p; // Power heuristic
-        uint32 idx = i > 0 ? i - 1 : 0;
-        if (!lightPath[i].isDelta() && !lightPath[idx].isDelta())
-            sum += ri;
-    }*/
-
-	//return 1 / (1 + sum);
 }
 
 
@@ -466,8 +454,10 @@ Float PathVertex::evalLightDistrPdf(const Scene& scene, const PathVertex& next) 
 
     // Evaluate position PDF
     PositionSample ps(event());
-    Float pdfPos = light->pdfPosition(ps);
-    
+    //Float pdfPos = light->pdfPosition(ps);
+    DirectSample ds(next.event(), event());
+    Float pdfPos = light->pdfDirect(ds);
+
     DiscretePdf1D* distr = scene.lightDistribution();
     if (!distr)
         return pdfPos;
@@ -503,6 +493,7 @@ void BidirPathTracer::renderTile(uint32 tId, uint32 tileId) const {
 			// Iterate samples per pixel
 			Color color = Color::BLACK;
 			for (uint32 s = 0; s < sampler.spp(); ++s) {
+                sampler.startSample(s);
 
 				// Generate camera path
 				Path cameraPath = createPath(PATH_CAMERA, _maxDepth + 2, sampler);
@@ -560,9 +551,9 @@ Path BidirPathTracer::createPath(PathType type, uint32 maxDepth, Sampler& sample
 
 		// Set starting throughput and pdf
 		beta = Le * absDot(ps.normal(), ray.dir()) / (lightPdf * ps.pdf * ds.pdf);
-		pdf = ds.pdf;
-
-	}
+		pdf  = ds.pdf;
+	
+    }
 	else if (type == PATH_CAMERA) {
 		// Set starting ray
 		ray = camera.primaryRay(sampler.pixel(), sampler);

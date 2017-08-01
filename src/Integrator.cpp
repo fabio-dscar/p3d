@@ -45,7 +45,7 @@ void Integrator::cleanup() {
     _tiles.shrink_to_fit();
 }
 
-Color Integrator::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) const {
+Color Integrator::estimateDirect(const SurfaceEvent& evt, Sampler& sampler, DirectIllumStats* stats) const {
     LightStrategy strat = _scene->lightStrategy();
     if (strat == ALL_LIGHTS || !_scene->lightDistribution())
         return estimateDirectAll(evt, sampler);
@@ -59,10 +59,21 @@ Color Integrator::estimateDirect(const SurfaceEvent& evt, Sampler& sampler) cons
     const Point2 ls = sampler.next2D();
     const Point2 bs = sampler.next2D();
 
-    return sampleLight(*light, evt, ls, bs) / lightPdf;
+    Color Li = sampleLight(*light, evt, ls, bs);
+
+    // Record direct lighting stats
+    if (stats) {
+        stats->numLights++;
+        stats->numRays++;
+
+        if (!Li.isBlack())
+            stats->numUnoccluded++;
+    }
+
+    return Li / lightPdf;
 }
 
-Color Integrator::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) const {
+Color Integrator::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler, DirectIllumStats* stats) const {
     Color direct = Color::BLACK;
 
     // Sample all lights
@@ -73,12 +84,23 @@ Color Integrator::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) c
             const Point2 ls = sampler.next2D();
             const Point2 bs = sampler.next2D();
 
-            direct += sampleLight(*light, evt, ls, bs);
+            Color Li = sampleLight(*light, evt, ls, bs);
+            direct += Li;
+
+            // Record direct lighting stats
+            if (stats) {
+                stats->numLights++;
+                stats->numRays++;
+
+                if (!Li.isBlack()) 
+                    stats->numUnoccluded++;
+            }
+
         } else {
             Color contrib = Color::BLACK;
 
             const Point2* lightVec = sampler.next2DArray(nSamples);
-            const Point2* bsdfVec = sampler.next2DArray(nSamples);
+            const Point2* bsdfVec  = sampler.next2DArray(nSamples);
 
             if (!lightVec || !bsdfVec) {
                 nSamples = 1;
@@ -87,12 +109,29 @@ Color Integrator::estimateDirectAll(const SurfaceEvent& evt, Sampler& sampler) c
                 const Point2 bs = sampler.next2D();
 
                 contrib += sampleLight(*light, evt, ls, bs);
+
+                // Record unoccluded shadow ray
+                if (stats && !contrib.isBlack())
+                    stats->numUnoccluded++;
+
             } else {
-                for (uint32 i = 0; i < nSamples; ++i)
-                    contrib += sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
+                for (uint32 i = 0; i < nSamples; ++i) {
+                    Color Li = sampleLight(*light, evt, lightVec[i], bsdfVec[i]);
+                    contrib += Li;
+
+                    // Record unoccluded shadow ray
+                    if (stats && !Li.isBlack())
+                        stats->numUnoccluded++;
+                }
             }
 
             direct += contrib / nSamples;
+
+            // Record direct lighting stats
+            if (stats) {
+                stats->numLights++;
+                stats->numRays += nSamples;
+            }      
         }
     }
 

@@ -8,17 +8,17 @@ namespace Photon {
 
     class AreaLight : public Light {
     public:
-        AreaLight() : Light(), _shape(nullptr) { }
+        AreaLight() : Light(), _shape(nullptr), _numSamples(0) { }
         AreaLight(std::shared_ptr<Shape> shape, const Color& emission, uint32 nSamples) 
-            : Light(emission, nSamples), _shape(shape) { }
+            : Light(emission), _shape(shape), _numSamples(nSamples) { }
+
+        std::shared_ptr<Shape> shape() const;
 
         Color L(const RayEvent& evt, const Vec3& w) const;
         Float area() const;
-
-        bool isDelta() const {
-            return false;
-        }
-
+            
+        bool isDelta() const;
+        uint32 numSamples() const;
         Color power() const;
 
         Color evalL(const SurfaceEvent& it, const Vec3& wo) const;
@@ -34,6 +34,8 @@ namespace Photon {
         Float pdfEmitDirection(const PositionSample& pos, const DirectionSample& sample) const;
 
     private:
+        uint32 _numSamples;
+
         std::shared_ptr<Shape> _shape;
     };
 

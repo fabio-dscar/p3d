@@ -53,12 +53,12 @@ Color ThinSpecular::sample(const Point2& rand, BSDFSample* sample) const {
     Float fresn = fresnelDielectric(_intIor, _extIor, cosI, cosT);
 
     // Account for interreflections on the thin sheet
-    // This is a sum of the geometric series of interreflections
+    // This is the sum of the geometric series of interreflections
     if (fresn < 1)
         fresn += (1.0 - fresn) * (1.0 - fresn) * fresn / (1.0 - fresn * fresn);
 
     // Choose BSDF lobe
-    // - Choose randomly if we want to sample both
+    // - If we want to sample both, choose randomly
     // - Choose the specific if only one is requested
     Float u = rand.x;
     bool both = refr && refl;
